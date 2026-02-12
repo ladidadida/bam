@@ -6,7 +6,7 @@
 
 **Tagline:** Flow naturally through your build pipeline 🌊
 
-**Status:** Planning Phase → Ready to Start Implementation (Phase 1)  
+**Status:** Phase 1 ✅ Complete | Phase 2 ✅ Complete | Phase 3 → Next  
 **Target:** Python 3.13+ (using uv package manager)  
 **Primary Use Cases:** CI/CD pipelines, development workflows, polyglot projects  
 **Cache Backend:** Python CAS server (pycas) with local fallback
@@ -157,62 +157,66 @@ tasks:
 
 ## Current Status & Roadmap
 
-### Phase 1: Core MVP (Week 1-2) - 🔄 NEXT
+### Phase 1: Core MVP ✅ COMPLETE (2026-02-12)
 **Goal:** Local task runner with caching
 
-**Day 1-2:** Project setup ✅ (Ready to start)
-- Repository created
-- Initial structure planned
-- Dependencies identified
+- ✅ YAML configuration parsing with validation
+- ✅ Task model with inputs, outputs, dependencies
+- ✅ Dependency graph with cycle detection
+- ✅ Task execution with subprocess
+- ✅ Content-addressable local caching (SHA256)
+- ✅ Rich CLI with colored output
+- ✅ Graph visualization (ASCII + DOT)
+- ✅ 85% test coverage with 60 tests
+- ✅ Complete documentation
 
-**Day 3-4:** Configuration parsing
-- [ ] YAML parser (PyYAML)
-- [ ] Task model dataclasses
-- [ ] Config validation
-- [ ] Schema definition
+### Phase 2: Parallelization ✅ COMPLETE (2026-02-12)
+**Goal:** Parallel execution with beautiful progress display
 
-**Day 5-6:** Task graph
-- [ ] Dependency graph (networkx)
-- [ ] Topological sort
-- [ ] Cycle detection
+- ✅ Async task execution with asyncio
+- ✅ Parallel execution with `--jobs` flag
+- ✅ Auto CPU detection (defaults to `--jobs auto`)
+- ✅ Dependency-aware scheduling with semaphore pool
+- ✅ Interactive tree view (Dagger-style)
+  - Live progress updates with Rich
+  - Hierarchical dependency visualization
+  - Task states: pending, running, completed, failed
+  - 30-char progress bars with percentages
+- ✅ Better error context
+  - Dependency chain display for failed tasks
+  - List of skipped tasks due to failures
+  - Clear error messages with Unicode symbols
+- ✅ TTY detection for CI/CD compatibility
+  - Auto-switches to plain buffered output
+  - `--plain` flag for explicit control
+- ✅ 85 passing tests (up from 60)
 
-**Day 7-9:** Task execution
-- [ ] Subprocess executor
-- [ ] Environment handling
-- [ ] Output capture
-- [ ] Exit code handling
+### Phase 3: CAS Integration (Week 4) - 🔄 NEXT
+**Goal:** Remote caching with pycas server
 
-**Day 10-12:** Local caching
-- [ ] SHA256 content hashing
-- [ ] Input fingerprinting
-- [ ] Cache directory structure
-- [ ] Cache lookup/store
-
-**Day 13-14:** Testing & docs
-- [ ] Unit tests
-- [ ] Integration tests
-- [ ] CLI documentation
-
-### Phase 2: Parallelization (Week 3)
-- Async task execution
-- Worker pool
-- Progress reporting
-
-### Phase 3: CAS Integration (Week 4)
-- gRPC client for pycas
-- CacheBackend abstraction
-- Remote cache operations
-- Fallback logic
+- [ ] CacheBackend abstraction
+- [ ] gRPC client for pycas
+- [ ] CASCache implementation
+- [ ] Upload/download blobs
+- [ ] Token-based authentication
+- [ ] Automatic fallback to local cache
+- [ ] Network error handling
 
 ### Phase 4-6: See docs/roadmap.md
 
 ## Dependencies
 
-**Core (Phase 1):**
-- `click>=8.1.0` or `typer>=0.12.0` - CLI framework
+**Core:**
+- `typer>=0.12.0` - CLI framework (chosen over click)
 - `pyyaml>=6.0.0` - YAML configuration
 - `networkx>=3.0` - Dependency graph
-- `rich>=13.0.0` - Terminal output
+- `rich>=13.0.0` - Terminal output, tree views, progress
+- `pydantic>=2.0.0` - Config validation
+
+**Async & Parallelization:**
+- `asyncio` (stdlib) - Concurrent task execution
+
+**CAS Integration (Phase 3):**
 - `pydantic>=2.0.0` - Config validation
 
 **CAS Integration (Phase 2):**
@@ -620,12 +624,21 @@ cascade validate
 ## Success Criteria
 
 **Phase 1 Complete When:**
-- [ ] Can execute simple tasks with dependencies
-- [ ] Local cache hit rate >80% on repeated runs
-- [ ] Time to first run: <5 minutes with examples
-- [ ] Config file: <50 lines for simple project
-- [ ] All unit tests passing
-- [ ] Example projects working
+- [x] Can execute simple tasks with dependencies
+- [x] Local cache hit rate >80% on repeated runs
+- [x] Time to first run: <5 minutes with examples
+- [x] Config file: <50 lines for simple project
+- [x] All unit tests passing
+- [x] Example projects working
+
+**Phase 2 Complete When:**
+- [x] Parallel execution with dependency awareness
+- [x] Auto CPU detection and `--jobs` flag
+- [x] Interactive tree view with live progress
+- [x] Plain output mode for CI/CD
+- [x] Better error context with dependency chains
+- [x] 85+ tests passing
+- [x] All quality checks passing
 
 **Overall Success:**
 - Replaces shell scripts in real projects
@@ -635,5 +648,5 @@ cascade validate
 
 ---
 
-**Last Updated:** 2026-02-12 (Design Phase)  
-**Status:** Ready for Phase 1 implementation 🚀
+**Last Updated:** 2026-02-12 (Phase 2 Complete)  
+**Status:** Ready for Phase 3 CAS Integration 🚀

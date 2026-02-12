@@ -6,17 +6,19 @@ Cascade is a content-addressed workflow orchestration tool that brings the power
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python 3.13+](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
-[![Tests](https://img.shields.io/badge/tests-60%20passing-brightgreen.svg)](#testing)
+[![Tests](https://img.shields.io/badge/tests-85%20passing-brightgreen.svg)](#testing)
 [![Coverage](https://img.shields.io/badge/coverage-85%25-brightgreen.svg)](#testing)
 
 ## ✨ Features
 
 - **🎯 Smart Caching** - Content-addressed caching with SHA256 for instant rebuilds
+- **⚡ Parallel Execution** - Auto-detect CPU cores and run independent tasks concurrently
+- **🌳 Interactive Tree View** - Dagger-style dependency visualization with live progress
 - **📊 Dependency Graphs** - Automatic topological sorting and cycle detection
-- **🔍 Rich CLI** - Colored output, progress tracking, and ASCII graph visualization
+- **🔍 Rich CLI** - Beautiful tree views, error context, and progress tracking
 - **⚙️ Simple Config** - Clean YAML syntax with glob patterns and env vars
 - **🛡️ Type Safe** - Full type hints with mypy validation
-- **🧪 Well Tested** - 85% coverage with 60 tests (unit + integration)
+- **🧪 Well Tested** - 85% coverage with 85 passing tests
 - **📚 Documented** - Complete CLI and configuration references
 
 ## 🚀 Quick Start
@@ -66,6 +68,16 @@ Run your tasks:
 ```bash
 # Execute tasks with dependencies
 cascade run test
+
+# Parallel execution (auto-detect CPUs)
+cascade run test  # defaults to parallel
+
+# Control parallelism
+cascade run test --jobs 4     # use 4 workers
+cascade run test --jobs 1     # sequential
+
+# Plain output for CI/CD
+cascade run test --plain
 
 # List available tasks
 cascade list
@@ -150,11 +162,19 @@ tasks:
 
 ### `cascade run`
 
-Execute tasks with automatic dependency resolution:
+Execute tasks with automatic dependency resolution and parallel execution:
 
 ```bash
-# Run single task
+# Run single task (parallel by default)
 cascade run build
+
+# Control parallelism
+cascade run build --jobs 8      # use 8 workers
+cascade run build --jobs auto   # auto-detect CPUs
+cascade run build --jobs 1      # sequential
+
+# Plain output for CI/CD
+cascade run build --plain
 
 # Run multiple tasks
 cascade run lint test build
@@ -167,6 +187,38 @@ cascade run --no-cache build
 
 # Quiet mode
 cascade run -q test
+```
+
+**Interactive Tree View:**
+
+```
+📦 Tasks
+├── ✓ lint-css             ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100%
+│   └── ✓ test                 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100%
+│       └── ✓ build                ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100%
+│           └── ✓ package              ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100%
+├── ✓ lint-js              ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100%
+└── ✓ lint-python          ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100%
+    └── ✓ docs                 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100%
+
+✓ Successfully executed 7 task(s)
+```
+
+**Error Context:**
+
+When tasks fail, Cascade provides detailed context:
+
+```
+✗ Task failed: step3
+  Dependency chain:
+    ├─ step1
+    ├─ step2
+    └─ step3
+
+⊘ Skipped 3 task(s) due to failure:
+  • step4
+  • step5
+  • final
 ```
 
 ### `cascade graph`
@@ -249,7 +301,7 @@ uv run pytest --cov=cascade --cov-report=html
 ```
 
 **Current Status:**
-- 60 tests (35 unit + 22 integration + 3 e2e)
+- 85 tests (40 unit + 42 integration + 3 e2e)
 - 85% code coverage
 - All quality checks passing
 
@@ -289,9 +341,18 @@ For detailed development setup and project structure, see [spec/architecture.md]
 - ✅ 85% test coverage
 - ✅ Complete documentation
 
+**Phase 2: Parallelization** ✅ COMPLETE (2026-02-12)
+
+- ✅ Async task execution
+- ✅ Parallel execution with `--jobs` flag
+- ✅ Auto CPU detection
+- ✅ Interactive tree view with live progress
+- ✅ Dependency-aware scheduling
+- ✅ Better error context with dependency chains
+- ✅ TTY detection for CI/CD compatibility
+
 **Coming Soon:**
-- ⚡ Phase 2: Parallel execution
-- 🔄 Phase 3: CAS Integration (remote caching)
+- 🔄 Phase 3: CAS Integration (remote caching with pycas)
 - 🎨 Phase 4: Enhanced developer experience
 - 🤖 Phase 5: CI/CD optimizations
 

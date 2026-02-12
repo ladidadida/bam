@@ -92,6 +92,28 @@ def _parse_jobs_value(jobs: str | None) -> int:
         ) from exc
 
 
+def _get_dependency_chain(graph: nx.DiGraph, task_name: str) -> list[str]:
+    """Get the dependency chain leading to a task.
+
+    Args:
+        graph: Task dependency graph.
+        task_name: Name of the task.
+
+    Returns:
+        List of task names in dependency order (roots first, task last).
+    """
+    # Get all ancestors (transitive dependencies)
+    ancestors = nx.ancestors(graph, task_name)
+    # Create subgraph with task and its dependencies
+    subgraph = graph.subgraph(ancestors | {task_name})
+    # Topologically sort to get dependency order
+    try:
+        return list(nx.topological_sort(subgraph))
+    except nx.NetworkXError:
+        # Fallback if there's an issue
+        return [task_name]
+
+
 def _format_task_label(task_name: str, state: str, progress: int) -> str:
     """Format a task label with icon, name, progress bar, and percentage.
 
@@ -210,7 +232,7 @@ async def _execute_tasks_parallel(  # noqa: C901
     executor: TaskExecutor,
     max_workers: int,
     use_rich: bool = False,
-) -> list[str]:
+) -> tuple[list[str], list[str]]:
     """Execute tasks in parallel respecting dependencies.
 
     Args:
@@ -222,7 +244,7 @@ async def _execute_tasks_parallel(  # noqa: C901
         use_rich: Whether to use rich progress display.
 
     Returns:
-        List of failed task names (empty if all succeeded).
+        Tuple of (failed_tasks, skipped_tasks).
     """
     completed: set[str] = set()
     failed: list[str] = []
@@ -297,19 +319,21 @@ async def _execute_tasks_parallel(  # noqa: C901
                     completed.add(task_name)
                 else:
                     failed.append(task_name)
+                    # Skipped tasks are those that were never started
+                    skipped = list(remaining)
                     # Cancel remaining tasks on failure
                     for pending_task in running.values():
                         pending_task.cancel()
                     # Wait for cancellations
                     await asyncio.gather(*running.values(), return_exceptions=True)
-                    return failed
+                    return failed, skipped
 
-        return failed
+        return failed, []
 
     # Execute with or without rich tree display
     if use_rich:
         # Use Live display with tree view
-        async def execute_with_tree() -> list[str]:
+        async def execute_with_tree() -> tuple[list[str], list[str]]:
             tree = _build_task_tree(graph, execution_order, task_states, task_progress_pct)
             with Live(tree, console=console, refresh_per_second=4) as live:
                 # Start execution
@@ -330,6 +354,42 @@ async def _execute_tasks_parallel(  # noqa: C901
         return await execute_with_tree()
     else:
         return await execute_loop()
+
+
+def _display_execution_errors(
+    graph: nx.DiGraph,
+    failed_tasks: list[str],
+    skipped_tasks: list[str],
+) -> None:
+    """Display detailed error information for failed tasks.
+
+    Args:
+        graph: Task dependency graph.
+        failed_tasks: List of failed task names.
+        skipped_tasks: List of skipped task names.
+    """
+    typer.echo()
+    for failed_task in failed_tasks:
+        typer.secho(f"✗ Task failed: {failed_task}", fg=typer.colors.RED, err=True)
+
+        # Show dependency chain
+        dep_chain = _get_dependency_chain(graph, failed_task)
+        if len(dep_chain) > 1:
+            typer.secho("  Dependency chain:", fg=typer.colors.YELLOW, err=True)
+            for i, dep in enumerate(dep_chain):
+                prefix = "    └─" if i == len(dep_chain) - 1 else "    ├─"
+                typer.echo(f"{prefix} {dep}", err=True)
+
+    # Show skipped tasks if any
+    if skipped_tasks:
+        typer.echo()
+        typer.secho(
+            f"⊘ Skipped {len(skipped_tasks)} task(s) due to failure:",
+            fg=typer.colors.YELLOW,
+            err=True,
+        )
+        for skipped in skipped_tasks:
+            typer.echo(f"  • {skipped}", err=True)
 
 
 async def _run_task_async(
@@ -385,16 +445,13 @@ async def _run_task_async(
 
     # Use parallel execution path for both sequential and parallel
     # (provides tree view and better progress tracking)
-    failed_tasks = await _execute_tasks_parallel(
+    failed_tasks, skipped_tasks = await _execute_tasks_parallel(
         graph, execution_order, loaded_config, executor, max_workers, use_rich_progress
     )
 
     if failed_tasks:
-        typer.secho(
-            f"\nExecution stopped due to task failure: {', '.join(failed_tasks)}",
-            fg=typer.colors.RED,
-            err=True,
-        )
+        # Display detailed error information
+        _display_execution_errors(graph, failed_tasks, skipped_tasks)
         raise typer.Exit(code=1)
 
     typer.secho(

@@ -1,0 +1,38 @@
+version: 1
+
+tasks:
+  step1:
+    command: echo "Step 1 OK"
+    
+  step2:
+    command: echo "Step 2 OK"
+    depends_on:
+      - step1
+      
+  step3:
+    command: echo "Step 3 FAILS" && exit 1
+    depends_on:
+      - step2
+      
+  step4:
+    command: echo "Step 4"
+    depends_on:
+      - step3
+      
+  step5:
+    command: echo "Step 5"
+    depends_on:
+      - step4
+      
+  parallel1:
+    command: echo "Parallel 1"
+    
+  parallel2:
+    command: echo "Parallel 2"
+    
+  final:
+    command: echo "Final"
+    depends_on:
+      - step5
+      - parallel1
+      - parallel2
