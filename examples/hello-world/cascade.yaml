@@ -1,0 +1,7 @@
+version: 1
+
+tasks:
+  hello:
+    command: echo "Hello from Cascade"
+    inputs: []
+    outputs: []

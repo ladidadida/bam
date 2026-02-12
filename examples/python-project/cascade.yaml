@@ -1,0 +1,18 @@
+version: 1
+
+tasks:
+  lint:
+    command: uv run ruff check src tests
+    inputs:
+      - src/**/*.py
+      - tests/**/*.py
+    outputs: []
+
+  test:
+    command: uv run pytest -q
+    inputs:
+      - src/**/*.py
+      - tests/**/*.py
+    outputs: []
+    depends_on:
+      - lint

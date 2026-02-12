@@ -24,6 +24,7 @@ def test_help_lists_skeleton_commands() -> None:
     assert "list" in result.stdout
     assert "clean" in result.stdout
     assert "graph" in result.stdout
+    assert "validate" in result.stdout
 
 
 def test_main_help() -> None:
@@ -44,3 +45,100 @@ def test_run_command() -> None:
     result = runner.invoke(app, ["run", "build"])
     assert result.exit_code == 0
     assert "Running task: build" in result.stdout
+
+
+def test_run_dry_run_shows_execution_plan() -> None:
+    """Test --dry-run prints dependency-respecting plan."""
+    with runner.isolated_filesystem():
+        with open("cascade.yaml", "w", encoding="utf-8") as file:
+            file.write(
+                "version: 1\n\n"
+                "tasks:\n"
+                "  lint:\n"
+                "    command: echo lint\n"
+                "  build:\n"
+                "    command: echo build\n"
+                "    depends_on:\n"
+                "      - lint\n"
+            )
+
+        result = runner.invoke(app, ["run", "build", "--dry-run"])
+
+    assert result.exit_code == 0
+    assert "Dry-run execution order:" in result.stdout
+    assert "1. lint" in result.stdout
+    assert "2. build" in result.stdout
+
+
+def test_graph_command_ascii_output() -> None:
+    """Test graph command default ASCII output."""
+    with runner.isolated_filesystem():
+        with open("cascade.yaml", "w", encoding="utf-8") as file:
+            file.write(
+                "version: 1\n\n"
+                "tasks:\n"
+                "  lint:\n"
+                "    command: echo lint\n"
+                "  build:\n"
+                "    command: echo build\n"
+                "    depends_on:\n"
+                "      - lint\n"
+            )
+
+        result = runner.invoke(app, ["graph"])
+
+    assert result.exit_code == 0
+    assert "Roots (no dependencies)" in result.stdout
+    assert "build ← [lint]" in result.stdout
+
+
+def test_graph_command_dot_output() -> None:
+    """Test graph command DOT output."""
+    with runner.isolated_filesystem():
+        with open("cascade.yaml", "w", encoding="utf-8") as file:
+            file.write(
+                "version: 1\n\n"
+                "tasks:\n"
+                "  lint:\n"
+                "    command: echo lint\n"
+                "  build:\n"
+                "    command: echo build\n"
+                "    depends_on:\n"
+                "      - lint\n"
+            )
+
+        result = runner.invoke(app, ["graph", "--format", "dot"])
+
+    assert result.exit_code == 0
+    assert "digraph cascade {" in result.stdout
+    assert '"lint" -> "build";' in result.stdout
+
+
+def test_validate_command_with_valid_config() -> None:
+    """Test validate command with a valid local config file."""
+    with runner.isolated_filesystem():
+        with open("cascade.yaml", "w", encoding="utf-8") as file:
+            file.write(
+                "version: 1\n\n"
+                "tasks:\n"
+                "  build:\n"
+                "    command: echo build\n"
+            )
+
+        result = runner.invoke(app, ["validate"])
+
+    assert result.exit_code == 0
+    assert "Configuration is valid:" in result.stdout
+    assert "Discovered 1 task(s)." in result.stdout
+
+
+def test_validate_command_with_invalid_config() -> None:
+    """Test validate command fails with invalid config."""
+    with runner.isolated_filesystem():
+        with open("cascade.yaml", "w", encoding="utf-8") as file:
+            file.write("tasks: []\n")
+
+        result = runner.invoke(app, ["validate"])
+
+    assert result.exit_code == 1
+    assert "Configuration validation failed" in result.stdout

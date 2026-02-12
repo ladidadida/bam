@@ -54,7 +54,7 @@ Week 7+:  Advanced        ━━━━━━━━━━━━━━━━━━
 - [x] Contributing guidelines
 - [x] License file (MIT or Apache 2.0)
 - [x] .gitignore for Python projects
-- [ ] Initial commit and push
+- [x] Initial commit and push
 
 **Deliverables:**
 - Working `cascade --help` command
@@ -67,17 +67,19 @@ Week 7+:  Advanced        ━━━━━━━━━━━━━━━━━━
 
 ### Day 3-4: Configuration Parsing
 
+**Status:** ✅ COMPLETE (2026-02-12)
+
 **Objectives:**
 - Load and parse cascade.yaml files
 - Validate configuration structure
 - Define task model
 
 **Tasks:**
-- [ ] YAML parser implementation
+- [x] YAML parser implementation
   - Load cascade.yaml files
   - Environment variable expansion
   - Config file discovery (walk up directory tree)
-- [ ] Task model (dataclasses)
+- [x] Task model (dataclasses)
   ```python
   @dataclass
   class Task:
@@ -88,16 +90,16 @@ Week 7+:  Advanced        ━━━━━━━━━━━━━━━━━━
       depends_on: list[str]
       env: dict[str, str]
   ```
-- [ ] Configuration validation
+- [x] Configuration validation
   - Schema definition (pydantic)
   - Required field validation
   - Type checking
   - Helpful error messages
-- [ ] Example cascade.yaml files
+- [x] Example cascade.yaml files
   - Hello world example
   - Python project example
   - Multi-task example with dependencies
-- [ ] Config file discovery logic
+- [x] Config file discovery logic
   - `--config` CLI flag
   - `CASCADE_CONFIG` environment variable
   - Search current and parent directories
@@ -118,29 +120,31 @@ Week 7+:  Advanced        ━━━━━━━━━━━━━━━━━━
 
 ### Day 5-6: Task Graph
 
+**Status:** ✅ COMPLETE (2026-02-12)
+
 **Objectives:**
 - Build dependency graph from tasks
 - Detect cycles and invalid dependencies
 - Determine execution order
 
 **Tasks:**
-- [ ] Dependency graph builder (networkx)
+- [x] Dependency graph builder (networkx)
   - Create directed graph from tasks
   - Add nodes (tasks) and edges (dependencies)
   - Validate task references
-- [ ] Topological sort for execution order
+- [x] Topological sort for execution order
   - Order tasks respecting dependencies
   - Handle multiple valid orderings
-- [ ] Cycle detection
+- [x] Cycle detection
   - Detect circular dependencies
   - Report cycle path to user
   - Clear error messages
-- [ ] Graph visualization
+- [x] Graph visualization
   - `cascade graph` command
   - ASCII art output for terminal
   - DOT format for graphviz
   - HTML visualization (optional)
-- [ ] Dry-run mode
+- [x] Dry-run mode
   - Show execution plan without running
   - `cascade run --dry-run` flag
 
@@ -1055,7 +1059,9 @@ Decision needed: Week 3
 4. [x] Move docs to cascade repository
 5. [x] Initialize project with uv
 6. [x] Complete Phase 1 Day 1-2 (Project Setup)
-7. [ ] Start Phase 1 Day 3-4 (Configuration Parsing)
+7. [x] Complete Phase 1 Day 3-4 (Configuration Parsing)
+8. [x] Complete Phase 1 Day 5-6 (Task Graph)
+9. [ ] Start Phase 1 Day 7-9 (Task Execution)
 
 **Phase 1 Week 1:**
 - Days 1-2: Project setup
@@ -1076,5 +1082,5 @@ Decision needed: Week 3
 ---
 
 **Last Updated:** 2026-02-12  
-**Status:** Phase 1 In Progress (Day 1-2 complete) 🚧  
-**Next Milestone:** Phase 1 Day 3-4 (Configuration Parsing)
+**Status:** Phase 1 In Progress (Day 1-6 complete) 🚧  
+**Next Milestone:** Phase 1 Day 7-9 (Task Execution)

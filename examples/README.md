@@ -7,3 +7,4 @@ Planned examples:
 - `hello-world/`
 - `python-project/`
 - `multi-language/`
+- `complex-graph/`

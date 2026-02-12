@@ -1,0 +1,25 @@
+version: 1
+
+tasks:
+  proto:
+    command: echo "Generate protocol artifacts"
+    inputs:
+      - proto/**/*.proto
+    outputs:
+      - generated/
+
+  backend-test:
+    command: echo "Run Python backend tests"
+    inputs:
+      - src/**/*.py
+    outputs: []
+    depends_on:
+      - proto
+
+  frontend-test:
+    command: echo "Run frontend tests"
+    inputs:
+      - web/src/**/*
+    outputs: []
+    depends_on:
+      - proto

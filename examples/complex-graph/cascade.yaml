@@ -1,0 +1,110 @@
+version: 1
+
+cache:
+  type: local
+
+tasks:
+  setup-python:
+    command: echo "Set up Python toolchain"
+    inputs:
+      - pyproject.toml
+      - uv.lock
+    outputs: []
+
+  setup-node:
+    command: echo "Set up Node toolchain"
+    inputs:
+      - web/package.json
+      - web/pnpm-lock.yaml
+    outputs: []
+
+  lint-backend:
+    command: echo "Lint backend"
+    inputs:
+      - src/**/*.py
+      - tests/**/*.py
+    outputs: []
+    depends_on:
+      - setup-python
+
+  typecheck-backend:
+    command: echo "Type-check backend"
+    inputs:
+      - src/**/*.py
+    outputs: []
+    depends_on:
+      - setup-python
+
+  unit-test-backend:
+    command: echo "Run backend unit tests"
+    inputs:
+      - src/**/*.py
+      - tests/unit/**/*.py
+    outputs: []
+    depends_on:
+      - lint-backend
+      - typecheck-backend
+
+  lint-frontend:
+    command: echo "Lint frontend"
+    inputs:
+      - web/src/**/*
+    outputs: []
+    depends_on:
+      - setup-node
+
+  unit-test-frontend:
+    command: echo "Run frontend unit tests"
+    inputs:
+      - web/src/**/*
+      - web/test/**/*
+    outputs: []
+    depends_on:
+      - lint-frontend
+
+  build-backend:
+    command: echo "Build backend package"
+    inputs:
+      - src/**/*.py
+      - pyproject.toml
+    outputs:
+      - dist/backend/
+    depends_on:
+      - unit-test-backend
+
+  build-frontend:
+    command: echo "Build frontend bundle"
+    inputs:
+      - web/src/**/*
+    outputs:
+      - dist/frontend/
+    depends_on:
+      - unit-test-frontend
+
+  package-image:
+    command: echo "Build container image"
+    inputs:
+      - Dockerfile
+      - dist/backend/
+      - dist/frontend/
+    outputs:
+      - artifacts/image.tar
+    depends_on:
+      - build-backend
+      - build-frontend
+
+  smoke-test:
+    command: echo "Run smoke tests"
+    inputs:
+      - tests/smoke/**/*
+    outputs: []
+    depends_on:
+      - package-image
+
+  deploy-staging:
+    command: echo "Deploy to staging"
+    inputs:
+      - deploy/staging/**/*
+    outputs: []
+    depends_on:
+      - smoke-test
