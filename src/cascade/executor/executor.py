@@ -56,6 +56,7 @@ class TaskExecutor:
         console: Console | None = None,
         quiet: bool = False,
         cache: CacheBackend | None = None,
+        buffer_output: bool = False,
     ):
         """Initialize executor.
 
@@ -63,10 +64,12 @@ class TaskExecutor:
             console: Rich console for output formatting (creates default if None).
             quiet: Suppress command output streaming.
             cache: Cache backend for artifact storage (None disables caching).
+            buffer_output: Buffer output until task completes (for parallel mode).
         """
         self.console = console or Console()
         self.quiet = quiet
         self.cache = cache
+        self.buffer_output = buffer_output
 
     async def execute_task(  # noqa: C901
         self,
@@ -119,7 +122,8 @@ class TaskExecutor:
 
         cwd = working_dir.resolve() if working_dir else Path.cwd()
 
-        if not self.quiet:
+        # Show task start (unless buffering output)
+        if not self.quiet and not self.buffer_output:
             self.console.print(f"[cyan]Running:[/cyan] {task_name}")
             self.console.print(f"[dim]Command:[/dim] {command}")
 
@@ -138,23 +142,34 @@ class TaskExecutor:
             stdout = stdout_bytes.decode("utf-8", errors="replace")
             stderr = stderr_bytes.decode("utf-8", errors="replace")
 
-            if not self.quiet and stdout:
-                self.console.print(stdout, end="")
-            if not self.quiet and stderr:
-                self.console.print(f"[yellow]{stderr}[/yellow]", end="")
+            # Display output based on mode
+            if not self.quiet:
+                if self.buffer_output:
+                    # Buffered mode: Show task header with output
+                    self.console.print(f"\n[cyan]→[/cyan] {task_name}")
+                    if stdout:
+                        self.console.print(stdout, end="")
+                    if stderr:
+                        self.console.print(f"[yellow]{stderr}[/yellow]", end="")
+                else:
+                    # Streaming mode: Output already shown above, just print it
+                    if stdout:
+                        self.console.print(stdout, end="")
+                    if stderr:
+                        self.console.print(f"[yellow]{stderr}[/yellow]", end="")
 
             # After communicate(), returncode should never be None
             exit_code = process.returncode if process.returncode is not None else -1
 
             if exit_code != 0:
                 if not self.quiet:
-                    self.console.print(
-                        f"[red]✗[/red] Task '{task_name}' failed with exit code {exit_code}"
-                    )
+                    status_msg = f"[red]✗[/red] {task_name} (exit {exit_code})"
+                    self.console.print(status_msg)
                 raise TaskExecutionError(task_name, command, exit_code)
 
             if not self.quiet:
-                self.console.print(f"[green]✓[/green] Task '{task_name}' completed")
+                status_msg = f"[green]✓[/green] {task_name}"
+                self.console.print(status_msg)
 
             # Store outputs in cache if enabled
             if self.cache and output_paths:

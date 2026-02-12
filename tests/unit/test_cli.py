@@ -64,7 +64,7 @@ def test_run_command_with_failing_task() -> None:
         result = runner.invoke(app, ["run", "fail"])
 
     assert result.exit_code == 1
-    assert "Execution stopped" in result.stdout or "failed" in result.stdout
+    assert "✗ fail" in result.stdout or "Execution stopped" in result.stdout
 
 
 def test_run_dry_run_shows_execution_plan() -> None:
@@ -163,8 +163,13 @@ def test_validate_command_with_invalid_config() -> None:
 
 
 def test_parse_jobs_value_none() -> None:
-    """Test _parse_jobs_value with None returns 1."""
-    assert _parse_jobs_value(None) == 1
+    """Test _parse_jobs_value with None defaults to auto (CPU count)."""
+    result = _parse_jobs_value(None)
+    # Should be same as auto - CPU count capped at 8
+    import os
+
+    expected = min(os.cpu_count() or 1, 8)
+    assert result == expected
 
 
 def test_parse_jobs_value_one() -> None:

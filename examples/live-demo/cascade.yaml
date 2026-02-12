@@ -1,0 +1,19 @@
+version: 1
+
+tasks:
+  fast:
+    command: echo "Fast task" && sleep 0.2
+    
+  slow:
+    command: echo "Slow task starting..." && sleep 1 && echo "Slow task done"
+    
+  medium:
+    command: echo "Medium task" && sleep 0.5
+    depends_on:
+      - fast
+      
+  final:
+    command: echo "Final task"
+    depends_on:
+      - slow
+      - medium

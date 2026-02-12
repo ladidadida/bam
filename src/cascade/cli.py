@@ -4,11 +4,15 @@ from __future__ import annotations
 
 import asyncio
 import os
+import sys
 from pathlib import Path
 from typing import Annotated
 
 import networkx as nx
 import typer
+from rich.console import Console
+from rich.live import Live
+from rich.tree import Tree
 
 from ._version import __version__
 from .cache import LocalCache, expand_globs
@@ -60,12 +64,16 @@ def _parse_jobs_value(jobs: str | None) -> int:
     """Parse --jobs flag value into max_workers count.
 
     Args:
-        jobs: Either 'auto', an integer string, or None.
+        jobs: Either 'auto', an integer string, or None (defaults to 'auto').
 
     Returns:
         Number of parallel workers (1 for sequential, >1 for parallel).
     """
-    if jobs is None or jobs == "1":
+    # Default to auto if not specified
+    if jobs is None:
+        jobs = "auto"
+
+    if jobs == "1":
         return 1
 
     if jobs.lower() == "auto":
@@ -82,6 +90,87 @@ def _parse_jobs_value(jobs: str | None) -> int:
         raise typer.BadParameter(
             f"--jobs must be 'auto' or a positive integer, got: {jobs}"
         ) from exc
+
+
+def _format_task_label(task_name: str, state: str, progress: int) -> str:
+    """Format a task label with icon, name, progress bar, and percentage.
+
+    Args:
+        task_name: Name of the task.
+        state: Task state (pending, running, completed, failed).
+        progress: Task progress percentage (0-100).
+
+    Returns:
+        Formatted label string with Rich markup.
+    """
+    if state == "completed":
+        icon = "[green]✓[/]"
+        bar = "━" * 30
+        return f"{icon} {task_name:20} {bar} 100%"
+    elif state == "failed":
+        icon = "[red]✗[/]"
+        bar = "━" * 30
+        return f"{icon} {task_name:20} {bar} {progress:3}%"
+    elif state == "running":
+        filled = int(progress * 30 / 100)
+        bar = "━" * filled + "╸" + " " * (29 - filled)
+        return f"[cyan]⠿[/] {task_name:20} {bar} {progress:3}%"
+    else:  # pending
+        bar = " " * 30
+        return f"[dim]○ {task_name:20} {bar}   0%[/]"
+
+
+def _build_task_tree(
+    graph: nx.DiGraph,
+    execution_order: list[str],
+    task_states: dict[str, str],
+    task_progress: dict[str, int],
+) -> Tree:
+    """Build a tree visualization of task dependencies with status.
+
+    Args:
+        graph: Task dependency graph.
+        execution_order: Topologically sorted task list.
+        task_states: Task states (pending, running, completed, failed).
+        task_progress: Task progress percentages (0-100).
+
+    Returns:
+        Rich Tree object representing the task hierarchy.
+    """
+    # Find root tasks (tasks with no dependencies)
+    root_tasks = [t for t in execution_order if graph.in_degree(t) == 0]
+
+    tree = Tree("📦 Tasks")
+    added_tasks: set[str] = set()
+
+    def add_task_to_tree(task_name: str, parent_node: Tree) -> None:
+        """Recursively add a task and its dependents to the tree."""
+        if task_name in added_tasks:
+            return
+        added_tasks.add(task_name)
+
+        # Format task label based on current state
+        state = task_states.get(task_name, "pending")
+        progress = task_progress.get(task_name, 0)
+        label = _format_task_label(task_name, state, progress)
+
+        node = parent_node.add(label)
+
+        # Add dependents (tasks that depend on this one)
+        for successor in graph.successors(task_name):
+            if successor in execution_order:
+                add_task_to_tree(successor, node)
+
+    # Add root tasks and their dependencies
+    for root_task in root_tasks:
+        add_task_to_tree(root_task, tree)
+
+    # Add any remaining tasks that weren't added (shouldn't happen with valid graph)
+    for task_name in execution_order:
+        if task_name not in added_tasks:
+            add_task_to_tree(task_name, tree)
+
+    return tree
 
 
 async def _execute_single_task(
@@ -120,6 +209,7 @@ async def _execute_tasks_parallel(  # noqa: C901
     loaded_config: CascadeConfig,
     executor: TaskExecutor,
     max_workers: int,
+    use_rich: bool = False,
 ) -> list[str]:
     """Execute tasks in parallel respecting dependencies.
 
@@ -129,6 +219,7 @@ async def _execute_tasks_parallel(  # noqa: C901
         loaded_config: Loaded cascade configuration.
         executor: Task executor instance.
         max_workers: Maximum number of concurrent tasks.
+        use_rich: Whether to use rich progress display.
 
     Returns:
         List of failed task names (empty if all succeeded).
@@ -141,13 +232,28 @@ async def _execute_tasks_parallel(  # noqa: C901
     # Track tasks remaining to execute
     remaining = set(execution_order)
 
+    # Task state tracking for tree view
+    task_states: dict[str, str] = {task: "pending" for task in execution_order}
+    task_progress_pct: dict[str, int] = {task: 0 for task in execution_order}
+    console = Console()
+
     async def run_with_semaphore(task_name: str) -> tuple[str, bool]:
         """Run a task with semaphore limiting concurrency."""
         async with semaphore:
+            # Update state when starting
+            task_states[task_name] = "running"
+            task_progress_pct[task_name] = 0
+
             try:
                 await _execute_single_task(task_name, loaded_config, executor)
+                # Mark as completed
+                task_states[task_name] = "completed"
+                task_progress_pct[task_name] = 100
                 return task_name, True
             except TaskExecutionError:
+                # Mark as failed
+                task_states[task_name] = "failed"
+                task_progress_pct[task_name] = 100
                 return task_name, False
 
     def get_ready_tasks() -> list[str]:
@@ -160,43 +266,70 @@ async def _execute_tasks_parallel(  # noqa: C901
                 ready.append(task_name)
         return ready
 
-    # Main execution loop
-    while remaining or running:
-        # Start new tasks if workers available
-        ready_tasks = get_ready_tasks()
-        for task_name in ready_tasks:
-            if task_name not in running:
-                remaining.remove(task_name)
-                task = asyncio.create_task(run_with_semaphore(task_name))
-                running[task_name] = task
+    async def execute_loop() -> list[str]:
+        """Main execution loop."""
+        # Main execution loop
+        while remaining or running:
+            # Start new tasks if workers available
+            ready_tasks = get_ready_tasks()
+            for task_name in ready_tasks:
+                if task_name not in running:
+                    remaining.remove(task_name)
+                    task = asyncio.create_task(run_with_semaphore(task_name))
+                    running[task_name] = task
 
-        if not running:
-            # No tasks running and none ready - should not happen with valid graph
-            break
+            if not running:
+                # No tasks running and none ready - should not happen with valid graph
+                break
 
-        # Wait for at least one task to complete
-        done, pending = await asyncio.wait(
-            running.values(),
-            return_when=asyncio.FIRST_COMPLETED,
-        )
+            # Wait for at least one task to complete
+            done, pending = await asyncio.wait(
+                running.values(),
+                return_when=asyncio.FIRST_COMPLETED,
+            )
 
-        # Process completed tasks
-        for task in done:
-            task_name, success = await task
-            del running[task_name]
+            # Process completed tasks
+            for task in done:
+                task_name, success = await task
+                del running[task_name]
 
-            if success:
-                completed.add(task_name)
-            else:
-                failed.append(task_name)
-                # Cancel remaining tasks on failure
-                for pending_task in running.values():
-                    pending_task.cancel()
-                # Wait for cancellations
-                await asyncio.gather(*running.values(), return_exceptions=True)
-                return failed
+                if success:
+                    completed.add(task_name)
+                else:
+                    failed.append(task_name)
+                    # Cancel remaining tasks on failure
+                    for pending_task in running.values():
+                        pending_task.cancel()
+                    # Wait for cancellations
+                    await asyncio.gather(*running.values(), return_exceptions=True)
+                    return failed
 
-    return failed
+        return failed
+
+    # Execute with or without rich tree display
+    if use_rich:
+        # Use Live display with tree view
+        async def execute_with_tree() -> list[str]:
+            tree = _build_task_tree(graph, execution_order, task_states, task_progress_pct)
+            with Live(tree, console=console, refresh_per_second=4) as live:
+                # Start execution
+                loop_task = asyncio.create_task(execute_loop())
+
+                # Update tree periodically
+                while not loop_task.done():
+                    tree = _build_task_tree(graph, execution_order, task_states, task_progress_pct)
+                    live.update(tree)
+                    await asyncio.sleep(0.25)
+
+                # Final update
+                result = await loop_task
+                tree = _build_task_tree(graph, execution_order, task_states, task_progress_pct)
+                live.update(tree)
+                return result
+
+        return await execute_with_tree()
+    else:
+        return await execute_loop()
 
 
 async def _run_task_async(
@@ -206,8 +339,19 @@ async def _run_task_async(
     no_cache: bool,
     config: Path | None,
     max_workers: int = 1,
+    plain: bool = False,
 ) -> None:
-    """Internal async implementation of run command."""
+    """Internal async implementation of run command.
+
+    Args:
+        task: Target task to execute.
+        dry_run: Show execution plan without running.
+        quiet: Suppress output.
+        no_cache: Disable caching.
+        config: Path to config file.
+        max_workers: Number of parallel workers.
+        plain: Use plain output mode (buffered for parallel).
+    """
     try:
         _, loaded_config = load_config(config_path=config)
         graph = build_task_graph(loaded_config.tasks)
@@ -227,23 +371,23 @@ async def _run_task_async(
     # Initialize cache
     cache = None if no_cache else LocalCache()
 
-    # Execute tasks
-    executor = TaskExecutor(quiet=quiet, cache=cache)
+    # Determine display mode
+    is_interactive = sys.stdout.isatty() and not plain
+    # Use rich progress by default in interactive mode
+    use_rich_progress = is_interactive
+    # Buffer output only in parallel plain mode
+    use_buffered = max_workers > 1 and not use_rich_progress
+    # Quiet mode when using rich progress (progress display handles feedback)
+    use_quiet = quiet or use_rich_progress
 
-    if max_workers > 1:
-        # Parallel execution
-        failed_tasks = await _execute_tasks_parallel(
-            graph, execution_order, loaded_config, executor, max_workers
-        )
-    else:
-        # Sequential execution
-        failed_tasks = []
-        for task_name in execution_order:
-            try:
-                await _execute_single_task(task_name, loaded_config, executor)
-            except TaskExecutionError:
-                failed_tasks.append(task_name)
-                break
+    # Execute tasks
+    executor = TaskExecutor(quiet=use_quiet, cache=cache, buffer_output=use_buffered)
+
+    # Use parallel execution path for both sequential and parallel
+    # (provides tree view and better progress tracking)
+    failed_tasks = await _execute_tasks_parallel(
+        graph, execution_order, loaded_config, executor, max_workers, use_rich_progress
+    )
 
     if failed_tasks:
         typer.secho(
@@ -279,9 +423,16 @@ def run_command(
         typer.Option(
             "--jobs",
             "-j",
-            help="Number of parallel workers. Use 'auto' to detect CPU count, or specify a number (default: 1).",
+            help="Number of parallel workers. Use 'auto' to detect CPU count, or specify a number (default: auto).",
         ),
     ] = None,
+    plain: Annotated[
+        bool,
+        typer.Option(
+            "--plain",
+            help="Use plain output mode with task sections (auto-detected for non-TTY).",
+        ),
+    ] = False,
     config: Annotated[
         Path | None,
         typer.Option(
@@ -295,7 +446,11 @@ def run_command(
 ) -> None:
     """Run a task from cascade.yaml."""
     max_workers = _parse_jobs_value(jobs)
-    asyncio.run(_run_task_async(task, dry_run, quiet, no_cache, config, max_workers))
+
+    # Auto-detect plain mode if not explicitly set
+    use_plain = plain or not sys.stdout.isatty()
+
+    asyncio.run(_run_task_async(task, dry_run, quiet, no_cache, config, max_workers, use_plain))
 
 
 @app.command("list")
