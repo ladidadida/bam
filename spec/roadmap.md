@@ -878,10 +878,38 @@ Week 7+:  Advanced        ━━━━━━━━━━━━━━━━━━
 
 ### Remote Execution
 
-- [ ] Execute tasks on remote workers
-- [ ] Distributed task queue
-- [ ] Resource allocation (CPU, memory)
-- [ ] Worker management and health
+**Architecture:**
+- Configure remote machines with pre-installed tools
+- Exchange artifacts via pycas (content-addressable storage)
+- Remote machine runs task runner instance
+- Simple SSH-based communication
+
+**Tasks:**
+- [ ] Remote machine configuration (hostname, credentials, pycas URL)
+- [ ] Remote task executor implementation
+- [ ] Artifact upload/download via pycas
+- [ ] Remote execution status tracking
+- [ ] Error handling and fallback to local
+- [ ] SSH connection management
+- [ ] Remote environment validation
+- [ ] Network failure recovery
+
+**Configuration Example:**
+```yaml
+remote:
+  workers:
+    - name: build-server
+      host: build1.company.com
+      cas_url: grpc://cas.company.com:50051
+      capabilities: [docker, large-memory]
+
+tasks:
+  heavy-build:
+    command: make build
+    inputs: ["src/**"]
+    outputs: ["dist/"]
+    remote: build-server  # Run on remote machine
+```
 
 ### Language API
 
@@ -890,14 +918,50 @@ Week 7+:  Advanced        ━━━━━━━━━━━━━━━━━━
 - [ ] Dynamic task generation
 - [ ] Integration with Python build tools
 
+### Docker Integration
+
+**Goal:** Run tasks in isolated Docker containers
+
+**Architecture:**
+- Specify Docker image per task
+- Mount input directories as volumes
+- Capture outputs from container
+- Cache docker image pulls
+- Support custom registry authentication
+
+**Tasks:**
+- [ ] Docker image configuration in task definition
+- [ ] Volume mounting for inputs/outputs
+- [ ] Docker image pull and caching
+- [ ] Container lifecycle management (create, start, stop, cleanup)
+- [ ] Environment variable passing to container
+- [ ] Registry authentication (Docker Hub, private registries)
+- [ ] Resource limits (CPU, memory)
+- [ ] Network configuration
+
+**Configuration Example:**
+```yaml
+tasks:
+  test:
+    command: pytest tests/
+    inputs: ["src/**", "tests/**"]
+    docker:
+      image: python:3.13-slim
+      volumes:
+        - src:/workspace/src
+        - tests:/workspace/tests
+      env:
+        PYTHONPATH: /workspace
+```
+
 ### Plugins & Extensions
 
 - [ ] Plugin system architecture
 - [ ] Built-in plugins:
-  - Docker (run tasks in containers)
   - Kubernetes (deploy to clusters)
   - Slack (notifications)
   - Custom cache backends
+  - Build monitoring
 - [ ] Community plugin registry
 - [ ] Plugin development guide
 

@@ -675,8 +675,7 @@ flow graph ci
 3. **Versioning:** How to handle flow.yaml format evolution?
 4. **Secrets:** How to handle secrets in tasks? Environment? Vault integration?
 5. **Artifacts:** Should we support artifact metadata (size, hash, creator)?
-6. **Remote Execution:** Future feature - execute tasks on remote workers?
-7. **Language API:** Python API for programmatic task definition?
+6. **Language API:** Python API for programmatic task definition?
 
 ## 12. Success Metrics
 
@@ -994,11 +993,99 @@ tasks:
 
 ### Phase 6+: Advanced Features (Week 7+) - Optional Enhancements
 
+**Docker Integration:**
+
+Run tasks in isolated Docker containers for reproducible builds.
+
+- [ ] Task-level Docker configuration
+- [ ] Volume mounting for inputs/outputs
+- [ ] Docker image pull and caching
+- [ ] Container lifecycle management
+- [ ] Environment variable passing
+- [ ] Registry authentication (Docker Hub, private registries)
+- [ ] Resource limits (CPU, memory)
+
+**Configuration Example:**
+```yaml
+tasks:
+  test:
+    command: pytest tests/
+    inputs: ["src/**", "tests/**"]
+    docker:
+      image: python:3.13-slim
+      volumes:
+        - src:/workspace/src
+        - tests:/workspace/tests
+      env:
+        PYTHONPATH: /workspace
+      resources:
+        cpu: 2
+        memory: 4G
+```
+
+**Benefits:**
+- Reproducible execution environment
+- Isolated dependencies
+- Cross-platform builds
+- Security through containerization
+
 **Remote Execution:**
-- [ ] Execute tasks on remote workers
-- [ ] Distributed task queue
-- [ ] Resource allocation (CPU, memory)
-- [ ] Worker management
+
+Execute tasks on remote machines with pre-configured environments.
+
+**Architecture:**
+- Configure remote machines with pre-installed tools
+- Exchange artifacts via pycas (content-addressable storage)
+- Remote machine runs task runner instance
+- Simple SSH-based communication for coordination
+
+**Components:**
+1. Local coordinator (cascade CLI)
+2. Remote task runner (cascade worker daemon)
+3. pycas server (artifact exchange)
+4. SSH connection for control
+
+**Configuration Example:**
+```yaml
+remote:
+  workers:
+    - name: build-server
+      host: build1.company.com
+      cas_url: grpc://cas.company.com:50051
+      capabilities: [docker, large-memory]
+      max_concurrent: 4
+
+tasks:
+  heavy-build:
+    command: make build
+    inputs: ["src/**"]
+    outputs: ["dist/"]
+    remote: build-server  # Execute on remote machine
+    requires: [large-memory]
+```
+
+**Workflow:**
+1. Local: Compute input hash and check cache
+2. Local: If cache miss, upload inputs to pycas
+3. Local: Send task execution request to remote worker
+4. Remote: Download inputs from pycas
+5. Remote: Execute task command
+6. Remote: Upload outputs to pycas
+7. Local: Download outputs from pycas
+8. Local: Cache result
+
+**Benefits:**
+- Offload heavy builds to powerful machines
+- Utilize specialized hardware (GPU, large RAM)
+- Share build resources across team
+- Consistent build environment
+- Automatic artifact caching
+
+**Requirements:**
+- Remote machines fully set up with all required tools
+- SSH access configured
+- pycas server accessible from all machines
+- Network connectivity for artifact transfer
 
 **Language API:**
 - [ ] Python API for programmatic task definition
@@ -1007,7 +1094,7 @@ tasks:
 
 **Plugins & Extensions:**
 - [ ] Plugin system architecture
-- [ ] Built-in plugins (Docker, Kubernetes, etc.)
+- [ ] Built-in plugins (Kubernetes, Slack notifications)
 - [ ] Community plugin registry
 
 **Advanced Caching:**
