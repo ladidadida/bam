@@ -1,0 +1,43 @@
+# Build & Distribution
+build/
+dist/
+*.egg-info/
+.eggs/
+*.whl
+*.tar.gz
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+env/
+venv/
+ENV/
+.venv
+
+# Testing
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+.tox/
+
+# Type checking
+.pyright/
+.mypy_cache/
+
+# Linting & Formatting
+.ruff_cache/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# OS
+Thumbs.db
+*.log
