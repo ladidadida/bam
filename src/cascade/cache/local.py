@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
 import shutil
 import tarfile
@@ -22,13 +23,19 @@ class LocalCache(CacheBackend):
         self.cache_dir = cache_dir or Path(".cascade/cache")
         self.cache_dir.mkdir(parents=True, exist_ok=True)
 
-    def exists(self, cache_key: str) -> bool:
+    async def exists(self, cache_key: str) -> bool:
         """Check if cache entry exists."""
         entry_dir = self.cache_dir / cache_key
-        return (entry_dir / "outputs.tar.gz").exists()
+        # Run in executor to avoid blocking
+        return await asyncio.to_thread(lambda: (entry_dir / "outputs.tar.gz").exists())
 
-    def get(self, cache_key: str, output_paths: list[Path]) -> bool:
+    async def get(self, cache_key: str, output_paths: list[Path]) -> bool:
         """Restore cached outputs."""
+        # Run in executor to avoid blocking the event loop
+        return await asyncio.to_thread(self._get_sync, cache_key, output_paths)
+
+    def _get_sync(self, cache_key: str, output_paths: list[Path]) -> bool:
+        """Synchronous implementation of get."""
         entry_dir = self.cache_dir / cache_key
         archive_path = entry_dir / "outputs.tar.gz"
 
@@ -68,8 +75,13 @@ class LocalCache(CacheBackend):
         except (OSError, tarfile.TarError, json.JSONDecodeError):
             return False
 
-    def put(self, cache_key: str, output_paths: list[Path]) -> bool:
+    async def put(self, cache_key: str, output_paths: list[Path]) -> bool:
         """Store task outputs in cache."""
+        # Run in executor to avoid blocking the event loop
+        return await asyncio.to_thread(self._put_sync, cache_key, output_paths)
+
+    def _put_sync(self, cache_key: str, output_paths: list[Path]) -> bool:
+        """Synchronous implementation of put."""
         entry_dir = self.cache_dir / cache_key
         entry_dir.mkdir(parents=True, exist_ok=True)
 
@@ -95,8 +107,12 @@ class LocalCache(CacheBackend):
         except (OSError, tarfile.TarError):
             return False
 
-    def clear(self) -> None:
+    async def clear(self) -> None:
         """Clear all cached artifacts."""
+        await asyncio.to_thread(self._clear_sync)
+
+    def _clear_sync(self) -> None:
+        """Synchronous implementation of clear."""
         if self.cache_dir.exists():
             shutil.rmtree(self.cache_dir)
             self.cache_dir.mkdir(parents=True, exist_ok=True)

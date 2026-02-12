@@ -161,25 +161,26 @@ def test_env_var_expansion(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     assert task_config.env["MY_VAR"] == "expanded_value"
 
 
-def test_cache_backend_interface(tmp_path: Path):
+@pytest.mark.asyncio
+async def test_cache_backend_interface(tmp_path: Path):
     """Test cache backend interface contract."""
     from cascade.cache import LocalCache
 
     cache = LocalCache(tmp_path / ".cascade/cache")
 
     # Non-existent key
-    assert not cache.exists("nonexistent_key")
-    assert not cache.get("nonexistent_key", [])
+    assert not await cache.exists("nonexistent_key")
+    assert not await cache.get("nonexistent_key", [])
 
     # Put/get cycle
     (tmp_path / "test.txt").write_text("test data")
-    success = cache.put("test_key", [tmp_path / "test.txt"])
+    success = await cache.put("test_key", [tmp_path / "test.txt"])
     assert success
-    assert cache.exists("test_key")
+    assert await cache.exists("test_key")
 
     # Clear
-    cache.clear()
-    assert not cache.exists("test_key")
+    await cache.clear()
+    assert not await cache.exists("test_key")
 
 
 def test_config_defaults(tmp_path: Path):

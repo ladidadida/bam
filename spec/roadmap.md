@@ -485,18 +485,54 @@ Task output should dominate the terminal. Users run `cascade run test` to see te
 
 **Goal:** Share cache across team and CI
 
-**Status:** ⏳ PLANNED
+**Status:** 🔄 IN PROGRESS (2026-02-12)
 
-### Day 1-2: CAS Client
+### Day 1: Async Cache Refactoring ✅
+
+**Status:** ✅ COMPLETE (2026-02-12)
 
 **Tasks:**
+- [x] CacheBackend interface converted to async
+  ```python
+  class CacheBackend(ABC):
+      async def exists(self, key: str) -> bool
+      async def get(self, key: str, output_paths: list[Path]) -> bool
+      async def put(self, key: str, output_paths: list[Path]) -> bool
+      async def clear(self) -> None
+  ```
+- [x] LocalCache implementation refactored to async
+  - Uses asyncio.to_thread() for blocking I/O
+  - Preserved tar.gz compression logic
+  - Non-blocking for event loop compatibility
+- [x] Executor updated to await cache operations
+  - `await cache.exists()`
+  - `await cache.get()`
+  - `await cache.put()`
+- [x] Tests updated to async
+  - All cache tests now use `async def`
+  - 85 tests passing
+- [x] CLI cache.clear() uses asyncio.run()
+- [x] Type errors fixed (mypy clean)
+
+**Deliverables:**
+- ✅ Async cache interface ready for gRPC
+- ✅ All tests passing (85/85)
+- ✅ Type safety validated
+
+---
+
+### Day 2-3: CAS Client
+
+**Tasks:**
+- [ ] Copy proto files from pycas
+  - build/bazel/remote/execution protos
+  - Generate Python gRPC bindings
 - [ ] gRPC client for pycas server
-  - Reuse proto definitions from pycas
   - Connection management
   - Channel pooling for performance
 - [ ] Authentication
   - Token-based auth (read from file)
-  - Token refresh logic
+  - Bearer token in metadata
   - Secure token storage
 - [ ] Error handling and retries
   - Exponential backoff
@@ -511,26 +547,21 @@ Task output should dominate the terminal. Users run `cascade run test` to see te
 
 ---
 
-### Day 3-4: Cache Backend Abstraction
+### Day 4-5: CASCache Implementation
 
 **Tasks:**
-- [ ] CacheBackend interface
-  ```python
-  class CacheBackend(ABC):
-      async def get(self, key: str) -> bytes | None
-      async def put(self, key: str, data: bytes) -> None
-      async def exists(self, key: str) -> bool
-  ```
-- [ ] LocalCache implementation
-  - Refactor Phase 1 cache to use interface
-  - Async file I/O (aiofiles)
 - [ ] CASCache implementation
   - Upload/download via gRPC
   - Streaming for large artifacts
   - Compression handling
+- [ ] CacheManager to orchestrate local + remote
+  - Check local first, then remote
+  - Automatic sync on put
+  - Fallback on network errors
 - [ ] Cache configuration
-  - `cache.type`: local, cas, layered
-  - `cache.url`: CAS server URL
+  - `cache.local.enabled`: true/false
+  - `cache.remote.url`: CAS server URL
+  - `cache.remote.upload`: true/false
   - `cache.local_fallback`: true/false
 - [ ] Cache selection logic
   - Choose backend based on config
@@ -604,7 +635,7 @@ Task output should dominate the terminal. Users run `cascade run test` to see te
 
 ---
 
-## Phase 2 Success Criteria ✅
+## Phase 3 Success Criteria
 
 **Must Have:**
 - [ ] CAS integration working (upload/download)
@@ -619,141 +650,52 @@ Task output should dominate the terminal. Users run `cascade run test` to see te
 
 ---
 
-## Phase 3: CAS Integration (Week 4) - Distributed Caching
+## Phase 3 Future Enhancements
 
-**Goal:** Share cache across team and CI
-
-**Status:** ⏳ PLANNED
-
-### Day 1-2: CAS Client
-
-**Tasks:**
-- [ ] gRPC client for pycas server
-  - Reuse proto definitions from pycas
-  - Connection management
-  - Channel pooling for performance
-- [ ] Authentication
-  - Token-based auth (read from file)
-  - Token refresh logic
-  - Secure token storage
-- [ ] Error handling and retries
-  - Exponential backoff
-  - Transient error detection
-  - Connection recovery
-- [ ] Testing with mock pycas server
-
-**Deliverables:**
-- CAS gRPC client module
-- Authentication handling
-- Retry logic
-
----
-
-### Day 3-4: Cache Backend Abstraction
-
-**Tasks:**
-- [ ] CacheBackend interface
-  ```python
-  class CacheBackend(ABC):
-      async def get(self, key: str) -> bytes | None
-      async def put(self, key: str, data: bytes) -> None
-      async def exists(self, key: str) -> bool
+### Cache Upload Configuration
+- [ ] **Per-task upload control**: Allow tasks to opt-out of remote upload
+  ```yaml
+  tasks:
+    local-only-task:
+      command: ...
+      cache:
+        remote_upload: false  # don't push to remote
   ```
-- [ ] LocalCache implementation
-  - Refactor Phase 1 cache to use interface
-  - Async file I/O (aiofiles)
-- [ ] CASCache implementation
-  - Upload/download via gRPC
-  - Streaming for large artifacts
-  - Compression handling
-- [ ] Cache configuration
-  - `cache.type`: local, cas, layered
-  - `cache.url`: CAS server URL
-  - `cache.local_fallback`: true/false
-- [ ] Cache selection logic
-  - Choose backend based on config
-  - Fallback chain: CAS → Local → No cache
+- [ ] **Global upload policy**: Make default upload behavior configurable
+  ```yaml
+  cache:
+    remote:
+      upload_policy: always | on-success | manual
+  ```
+- [ ] CLI flag: `cascade run --no-remote-upload` to disable temporarily
 
-**Deliverables:**
-- CacheBackend abstraction
-- LocalCache and CASCache implementations
-- Configuration for cache selection
+### ActionCache Support
+- [ ] Implement ActionCache client (cache entire command results)
+- [ ] Action result serialization
+- [ ] Command fingerprinting for cache keys
+- [ ] Update pycas to match on action cache
 
----
+### Performance Optimizations
+- [ ] Parallel upload/download of artifacts
+- [ ] Compression for large artifacts
+- [ ] Deduplication across tasks
+- [ ] Background upload (don't block task completion)
 
-### Day 5-6: Remote Cache Operations
+### Version Compatibility
+- [ ] Implement REAPI version negotiation
+- [ ] Support multiple REAPI versions
+- [ ] Graceful degradation for version mismatches
 
-**Tasks:**
-- [ ] Upload artifacts to CAS
-  - Compute digest (SHA256)
-  - Tar/compress outputs
-  - Stream upload to CAS
-  - Store mapping: cache_key → digest
-- [ ] Download artifacts from CAS
-  - Lookup cache_key → digest
-  - Stream download from CAS
-  - Extract to output locations
-  - Verify integrity
-- [ ] Fallback to local on CAS failure
-  - Detect CAS unavailability
-  - Automatic fallback to LocalCache
-  - Log warnings, don't fail workflow
-- [ ] Cache statistics tracking
-  - Hit/miss rates (local vs remote)
-  - Upload/download counts
-  - Bytes transferred
-  - Time savings
-- [ ] `cascade cache stats` command
-  - Show cache statistics
-  - Breakdown by task
-  - Local vs remote hits
+### Multi-Remote Support
+- [ ] Support multiple remote caches (team + CI)
+- [ ] Cache priority/fallback chain
+- [ ] Smart routing (which artifacts go where)
 
-**Deliverables:**
-- Full CAS integration
-- Fallback logic working
-- Cache statistics tracking
-
----
-
-### Day 7: Testing
-
-**Tasks:**
-- [ ] Unit tests with mock CAS server
-  - Mock gRPC responses
-  - Test error scenarios
-  - Test fallback logic
-- [ ] Integration tests with real pycas
-  - Start pycas server in test
-  - Upload/download blobs
-  - Multi-machine simulation
-- [ ] Network failure scenarios
-  - CAS server down
-  - Network timeout
-  - Partial upload/download
-- [ ] Documentation updates
-  - CAS configuration guide
-  - Deployment with pycas
-  - Troubleshooting guide
-
-**Deliverables:**
-- All CAS tests passing
-- Integration with pycas validated
-- Documentation for team deployment
-
----
-
-## Phase 3 Success Criteria ✅
-
-**Must Have:**
-- [ ] CAS integration working (upload/download)
-- [ ] Cache shared across machines
-- [ ] Fallback to local on CAS failure
-- [ ] Team cache hit rate: >70%
-
-**Performance Targets:**
-- CAS upload: <100ms overhead for small artifacts
-- CAS download: <50ms overhead for cache hit
-- Network timeout: <5s before fallback
+### Monitoring & Observability
+- [ ] Cache hit/miss statistics
+- [ ] Remote cache latency tracking
+- [ ] Upload/download bandwidth metrics
+- [ ] Dashboard integration
 
 ---
 

@@ -108,7 +108,7 @@ def _get_dependency_chain(graph: nx.DiGraph, task_name: str) -> list[str]:
     subgraph = graph.subgraph(ancestors | {task_name})
     # Topologically sort to get dependency order
     try:
-        return list(nx.topological_sort(subgraph))
+        return list(nx.topological_sort(subgraph))  # type: ignore[call-overload]
     except nx.NetworkXError:
         # Fallback if there's an issue
         return [task_name]
@@ -288,7 +288,7 @@ async def _execute_tasks_parallel(  # noqa: C901
                 ready.append(task_name)
         return ready
 
-    async def execute_loop() -> list[str]:
+    async def execute_loop() -> tuple[list[str], list[str]]:
         """Main execution loop."""
         # Main execution loop
         while remaining or running:
@@ -572,7 +572,7 @@ def clean_command(
             typer.echo("Aborted.")
             raise typer.Exit()
 
-    cache.clear()
+    asyncio.run(cache.clear())
     typer.secho("✓ Cache cleared", fg=typer.colors.GREEN)
 
 

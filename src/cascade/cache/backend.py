@@ -7,15 +7,19 @@ from pathlib import Path
 
 
 class CacheBackend(ABC):
-    """Abstract cache backend interface for storing task outputs."""
+    """Abstract cache backend interface for storing task outputs.
+
+    Backends can be implemented synchronously or asynchronously.
+    Async implementations should override the async methods.
+    """
 
     @abstractmethod
-    def exists(self, cache_key: str) -> bool:
+    async def exists(self, cache_key: str) -> bool:
         """Check if cached artifact exists for given key."""
         pass
 
     @abstractmethod
-    def get(self, cache_key: str, output_paths: list[Path]) -> bool:
+    async def get(self, cache_key: str, output_paths: list[Path]) -> bool:
         """Restore cached outputs to their target locations.
 
         Args:
@@ -28,7 +32,7 @@ class CacheBackend(ABC):
         pass
 
     @abstractmethod
-    def put(self, cache_key: str, output_paths: list[Path]) -> bool:
+    async def put(self, cache_key: str, output_paths: list[Path]) -> bool:
         """Store task outputs in cache.
 
         Args:
@@ -41,6 +45,6 @@ class CacheBackend(ABC):
         pass
 
     @abstractmethod
-    def clear(self) -> None:
+    async def clear(self) -> None:
         """Clear all cached artifacts."""
         pass

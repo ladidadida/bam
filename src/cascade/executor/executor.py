@@ -103,13 +103,13 @@ class TaskExecutor:
         if self.cache and output_paths:
             cache_key = compute_cache_key(command, input_paths, env)
 
-            if self.cache.exists(cache_key):
+            if await self.cache.exists(cache_key):
                 if not self.quiet:
                     self.console.print(
                         f"[green]↻[/green] Cache hit for '{task_name}' (key: {cache_key[:12]}...)"
                     )
 
-                if self.cache.get(cache_key, output_paths):
+                if await self.cache.get(cache_key, output_paths):
                     return TaskResult(
                         task_name=task_name,
                         state=TaskState.COMPLETED,
@@ -174,7 +174,7 @@ class TaskExecutor:
             # Store outputs in cache if enabled
             if self.cache and output_paths:
                 cache_key = compute_cache_key(command, input_paths, env)
-                if self.cache.put(cache_key, output_paths):
+                if await self.cache.put(cache_key, output_paths):
                     if not self.quiet:
                         self.console.print(f"[dim]Cached outputs (key: {cache_key[:12]}...)[/dim]")
 

@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
+
 from cascade.cache import LocalCache, compute_cache_key, expand_globs
 
 
@@ -44,7 +46,8 @@ def test_expand_globs(tmp_path: Path) -> None:
     assert all(p.suffix == ".txt" for p in paths)
 
 
-def test_local_cache_put_and_get(tmp_path: Path) -> None:
+@pytest.mark.asyncio
+async def test_local_cache_put_and_get(tmp_path: Path) -> None:
     """Store and retrieve cached outputs."""
     cache_dir = tmp_path / "cache"
     cache = LocalCache(cache_dir)
@@ -56,20 +59,21 @@ def test_local_cache_put_and_get(tmp_path: Path) -> None:
     cache_key = "testkey123"
 
     # Store in cache
-    assert cache.put(cache_key, [output_file])
-    assert cache.exists(cache_key)
+    assert await cache.put(cache_key, [output_file])
+    assert await cache.exists(cache_key)
 
     # Remove original
     output_file.unlink()
     assert not output_file.exists()
 
     # Restore from cache
-    assert cache.get(cache_key, [output_file])
+    assert await cache.get(cache_key, [output_file])
     assert output_file.exists()
     assert output_file.read_text(encoding="utf-8") == "test output"
 
 
-def test_local_cache_clear(tmp_path: Path) -> None:
+@pytest.mark.asyncio
+async def test_local_cache_clear(tmp_path: Path) -> None:
     """Clear all cached artifacts."""
     cache_dir = tmp_path / "cache"
     cache = LocalCache(cache_dir)
@@ -77,16 +81,17 @@ def test_local_cache_clear(tmp_path: Path) -> None:
     output_file = tmp_path / "output.txt"
     output_file.write_text("data", encoding="utf-8")
 
-    cache.put("key1", [output_file])
-    assert cache.exists("key1")
+    await cache.put("key1", [output_file])
+    assert await cache.exists("key1")
 
-    cache.clear()
-    assert not cache.exists("key1")
+    await cache.clear()
+    assert not await cache.exists("key1")
 
 
-def test_local_cache_nonexistent_key(tmp_path: Path) -> None:
+@pytest.mark.asyncio
+async def test_local_cache_nonexistent_key(tmp_path: Path) -> None:
     """Return False for nonexistent cache keys."""
     cache = LocalCache(tmp_path / "cache")
 
-    assert not cache.exists("nonexistent")
-    assert not cache.get("nonexistent", [tmp_path / "fake.txt"])
+    assert not await cache.exists("nonexistent")
+    assert not await cache.get("nonexistent", [tmp_path / "fake.txt"])

@@ -325,7 +325,8 @@ def test_cache_key_computation(tmp_path: Path):
     assert key1 != key4
 
 
-def test_local_cache_workflow(tmp_path: Path):
+@pytest.mark.asyncio
+async def test_local_cache_workflow(tmp_path: Path):
     """Test complete cache put/get workflow."""
     cache = LocalCache(tmp_path / ".cascade/cache")
 
@@ -336,18 +337,18 @@ def test_local_cache_workflow(tmp_path: Path):
     cache_key = "test_cache_key_12345"
 
     # Store in cache
-    success = cache.put(cache_key, [tmp_path / "output1.txt", tmp_path / "output2.txt"])
+    success = await cache.put(cache_key, [tmp_path / "output1.txt", tmp_path / "output2.txt"])
     assert success
 
     # Should exist
-    assert cache.exists(cache_key)
+    assert await cache.exists(cache_key)
 
     # Delete outputs
     (tmp_path / "output1.txt").unlink()
     (tmp_path / "output2.txt").unlink()
 
     # Restore from cache
-    restored = cache.get(cache_key, [tmp_path / "output1.txt", tmp_path / "output2.txt"])
+    restored = await cache.get(cache_key, [tmp_path / "output1.txt", tmp_path / "output2.txt"])
     assert restored
 
     # Files should be back

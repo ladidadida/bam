@@ -157,6 +157,8 @@ tasks:
 
 ## Current Status & Roadmap
 
+**Important:** For detailed implementation planning and progress tracking, always refer to `spec/roadmap.md`. This is the single source of truth for phase-by-phase task tracking, deliverables, and completion status.
+
 ### Phase 1: Core MVP ✅ COMPLETE (2026-02-12)
 **Goal:** Local task runner with caching
 
@@ -202,7 +204,7 @@ tasks:
 - [ ] Automatic fallback to local cache
 - [ ] Network error handling
 
-### Phase 4-6: See docs/roadmap.md
+### Phase 4-6: See spec/roadmap.md
 
 ## Dependencies
 
@@ -369,9 +371,10 @@ cascade/
 │   ├── hello-world/
 │   ├── python-project/
 │   └── multi-language/
+├── spec/
+│   ├── roadmap.md (detailed implementation plan - track progress here)
+│   └── design.md (comprehensive design document)
 ├── docs/
-│   ├── roadmap.md
-│   ├── design.md (from workflow-tool-design.md)
 │   ├── configuration.md
 │   └── cli.md
 ├── .github/
@@ -576,18 +579,19 @@ class TaskExecutionError(Exception):
 
 ## When in Doubt
 
-1. **Keep it simple** - Start with minimal implementation, add complexity when needed
-2. **Follow YAML conventions** - Match GitHub Actions/GitLab CI patterns where possible
-3. **Fail fast with helpful messages** - Better to error early with guidance than fail mysteriously
-4. **Log extensively** - Debug-level logs for troubleshooting, info for user feedback
-5. **Test before optimizing** - Correctness first, performance second
-6. **Document decisions** - Comment non-obvious code, especially cache key computation
+1. **Check spec/roadmap.md first** - For implementation planning, progress tracking, and phase-specific tasks
+2. **Keep it simple** - Start with minimal implementation, add complexity when needed
+3. **Follow YAML conventions** - Match GitHub Actions/GitLab CI patterns where possible
+4. **Fail fast with helpful messages** - Better to error early with guidance than fail mysteriously
+5. **Log extensively** - Debug-level logs for troubleshooting, info for user feedback
+6. **Test before optimizing** - Correctness first, performance second
+7. **Document decisions** - Comment non-obvious code, especially cache key computation
 
 ## Resources
 
+- **Progress Tracking:** spec/roadmap.md (use this for tracking all implementation progress)
+- **Design Doc:** spec/design.md (comprehensive design document)
 - **pycas:** ../python-cas (CAS server implementation)
-- **Design Doc:** docs/design.md (comprehensive design document)
-- **Roadmap:** docs/roadmap.md (detailed implementation plan)
 - **Examples:** examples/ directory
 - **networkx docs:** https://networkx.org/documentation/stable/
 - **Rich CLI:** https://rich.readthedocs.io/
