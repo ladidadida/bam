@@ -7,6 +7,7 @@ from pathlib import Path
 import pytest
 from rich.console import Console
 
+from cascade.cache import LocalCache
 from cascade.executor import TaskExecutionError, TaskExecutor, TaskState
 
 
@@ -81,3 +82,45 @@ def test_execute_captures_stderr() -> None:
 
     assert result.state == TaskState.COMPLETED
     assert "error-output" in result.stderr
+
+
+def test_execute_with_cache_hit(tmp_path: Path) -> None:
+    """Skip execution on cache hit."""
+    cache_dir = tmp_path / "cache"
+    cache = LocalCache(cache_dir)
+
+    input_file = tmp_path / "input.txt"
+    input_file.write_text("data", encoding="utf-8")
+
+    output_file = tmp_path / "output.txt"
+    output_file.write_text("result", encoding="utf-8")
+
+    executor = TaskExecutor(console=Console(file=None), quiet=True, cache=cache)
+
+    # First run: should execute and cache
+    result1 = executor.execute_task(
+        task_name="cached-test",
+        command="cat input.txt > output.txt",
+        inputs=[input_file],
+        outputs=[output_file],
+        working_dir=tmp_path,
+    )
+
+    assert result1.state == TaskState.COMPLETED
+    assert not result1.cache_hit
+
+    # Remove output to verify cache restoration
+    output_file.unlink()
+
+    # Second run: should hit cache
+    result2 = executor.execute_task(
+        task_name="cached-test",
+        command="cat input.txt > output.txt",
+        inputs=[input_file],
+        outputs=[output_file],
+        working_dir=tmp_path,
+    )
+
+    assert result2.state == TaskState.COMPLETED
+    assert result2.cache_hit
+    assert output_file.exists()

@@ -10,6 +10,8 @@ from pathlib import Path
 
 from rich.console import Console
 
+from cascade.cache import CacheBackend, compute_cache_key
+
 
 class TaskState(StrEnum):
     """Task execution state."""
@@ -31,6 +33,7 @@ class TaskResult:
     stdout: str = ""
     stderr: str = ""
     error_message: str | None = None
+    cache_hit: bool = False
 
 
 class TaskExecutionError(Exception):
@@ -48,20 +51,29 @@ class TaskExecutionError(Exception):
 class TaskExecutor:
     """Execute tasks via subprocess with output capture."""
 
-    def __init__(self, console: Console | None = None, quiet: bool = False):
+    def __init__(
+        self,
+        console: Console | None = None,
+        quiet: bool = False,
+        cache: CacheBackend | None = None,
+    ):
         """Initialize executor.
 
         Args:
             console: Rich console for output formatting (creates default if None).
             quiet: Suppress command output streaming.
+            cache: Cache backend for artifact storage (None disables caching).
         """
         self.console = console or Console()
         self.quiet = quiet
+        self.cache = cache
 
-    def execute_task(
+    def execute_task(  # noqa: C901
         self,
         task_name: str,
         command: str,
+        inputs: list[Path] | None = None,
+        outputs: list[Path] | None = None,
         env: dict[str, str] | None = None,
         working_dir: Path | None = None,
     ) -> TaskResult:
@@ -70,6 +82,8 @@ class TaskExecutor:
         Args:
             task_name: Name of the task being executed.
             command: Shell command to execute.
+            inputs: List of input file paths for cache key computation.
+            outputs: List of output file paths to cache.
             env: Additional environment variables (merged with system env).
             working_dir: Working directory for command execution.
 
@@ -79,6 +93,26 @@ class TaskExecutor:
         Raises:
             TaskExecutionError: If command exits with non-zero code.
         """
+        input_paths = inputs or []
+        output_paths = outputs or []
+
+        # Check cache if enabled and outputs are specified
+        if self.cache and output_paths:
+            cache_key = compute_cache_key(command, input_paths, env)
+
+            if self.cache.exists(cache_key):
+                if not self.quiet:
+                    self.console.print(
+                        f"[green]↻[/green] Cache hit for '{task_name}' (key: {cache_key[:12]}...)"
+                    )
+
+                if self.cache.get(cache_key, output_paths):
+                    return TaskResult(
+                        task_name=task_name,
+                        state=TaskState.COMPLETED,
+                        exit_code=0,
+                        cache_hit=True,
+                    )
         merged_env = os.environ.copy()
         if env:
             merged_env.update(env)
@@ -114,6 +148,15 @@ class TaskExecutor:
 
             if not self.quiet:
                 self.console.print(f"[green]✓[/green] Task '{task_name}' completed")
+
+            # Store outputs in cache if enabled
+            if self.cache and output_paths:
+                cache_key = compute_cache_key(command, input_paths, env)
+                if self.cache.put(cache_key, output_paths):
+                    if not self.quiet:
+                        self.console.print(
+                            f"[dim]Cached outputs (key: {cache_key[:12]}...)[/dim]"
+                        )
 
             return TaskResult(
                 task_name=task_name,

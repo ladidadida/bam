@@ -8,6 +8,7 @@ from typing import Annotated
 import typer
 
 from ._version import __version__
+from .cache import LocalCache, expand_globs
 from .config import ConfigurationError, load_config
 from .executor import TaskExecutionError, TaskExecutor
 from .graph import (
@@ -63,6 +64,10 @@ def run_command(
         bool,
         typer.Option("--quiet", "-q", help="Suppress command output."),
     ] = False,
+    no_cache: Annotated[
+        bool,
+        typer.Option("--no-cache", help="Disable caching (always run tasks)."),
+    ] = False,
     config: Annotated[
         Path | None,
         typer.Option(
@@ -89,16 +94,28 @@ def run_command(
             typer.echo(f"{index}. {task_name}")
         return
 
+    # Initialize cache
+    cache = None if no_cache else LocalCache()
+
     # Execute tasks in dependency order
-    executor = TaskExecutor(quiet=quiet)
+    executor = TaskExecutor(quiet=quiet, cache=cache)
     failed_tasks: list[str] = []
 
     for task_name in execution_order:
         task_config = loaded_config.tasks[task_name]
+
+        # Resolve input and output paths
+        input_paths = expand_globs(task_config.inputs) if task_config.inputs else []
+        output_paths = [
+            Path(p) for p in task_config.outputs
+        ] if task_config.outputs else []
+
         try:
             executor.execute_task(
                 task_name=task_name,
                 command=task_config.command,
+                inputs=input_paths,
+                outputs=output_paths,
                 env=task_config.env,
             )
         except TaskExecutionError:
@@ -152,12 +169,41 @@ def list_command(
 
 @app.command("clean")
 def clean_command(
-    cache_dir: Annotated[Path, typer.Option("--cache-dir", help="Cache directory to clean.")] = Path(
-        ".cascade/cache"
-    ),
+    cache_dir: Annotated[
+        Path,
+        typer.Option("--cache-dir", help="Cache directory to clean."),
+    ] = Path(".cascade/cache"),
+    force: Annotated[
+        bool,
+        typer.Option("--force", "-f", help="Skip confirmation prompt."),
+    ] = False,
 ) -> None:
     """Clean local cache artifacts."""
-    typer.echo(f"Cleaning cache directory: {cache_dir}")
+    cache = LocalCache(cache_dir)
+
+    if not cache.cache_dir.exists() or not list(cache.cache_dir.iterdir()):
+        typer.echo("Cache is already empty.")
+        return
+
+    # Calculate cache size
+    total_size = sum(
+        f.stat().st_size
+        for f in cache.cache_dir.rglob("*")
+        if f.is_file()
+    )
+    size_mb = total_size / (1024 * 1024)
+
+    typer.secho(f"Cache directory: {cache.cache_dir}", fg=typer.colors.CYAN)
+    typer.echo(f"Cache size: {size_mb:.2f} MB")
+
+    if not force:
+        confirmed = typer.confirm("Delete all cached artifacts?")
+        if not confirmed:
+            typer.echo("Aborted.")
+            raise typer.Exit()
+
+    cache.clear()
+    typer.secho("✓ Cache cleared", fg=typer.colors.GREEN)
 
 
 @app.command("graph")
