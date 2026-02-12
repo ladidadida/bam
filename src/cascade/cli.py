@@ -9,6 +9,7 @@ import typer
 
 from ._version import __version__
 from .config import ConfigurationError, load_config
+from .executor import TaskExecutionError, TaskExecutor
 from .graph import (
     CyclicDependencyError,
     MissingTaskError,
@@ -58,6 +59,10 @@ def run_command(
         bool,
         typer.Option("--dry-run", help="Show task execution plan without running commands."),
     ] = False,
+    quiet: Annotated[
+        bool,
+        typer.Option("--quiet", "-q", help="Suppress command output."),
+    ] = False,
     config: Annotated[
         Path | None,
         typer.Option(
@@ -70,27 +75,79 @@ def run_command(
     ] = None,
 ) -> None:
     """Run a task from cascade.yaml."""
-    if dry_run:
-        try:
-            _, loaded_config = load_config(config_path=config)
-            graph = build_task_graph(loaded_config.tasks)
-            execution_order = execution_order_for_targets(graph, [task])
-        except (ConfigurationError, MissingTaskError, CyclicDependencyError) as exc:
-            typer.secho(str(exc), fg=typer.colors.RED, err=True)
-            raise typer.Exit(code=1) from exc
+    try:
+        _, loaded_config = load_config(config_path=config)
+        graph = build_task_graph(loaded_config.tasks)
+        execution_order = execution_order_for_targets(graph, [task])
+    except (ConfigurationError, MissingTaskError, CyclicDependencyError) as exc:
+        typer.secho(str(exc), fg=typer.colors.RED, err=True)
+        raise typer.Exit(code=1) from exc
 
+    if dry_run:
         typer.secho("Dry-run execution order:", fg=typer.colors.CYAN)
         for index, task_name in enumerate(execution_order, start=1):
             typer.echo(f"{index}. {task_name}")
         return
 
-    typer.echo(f"Running task: {task}")
+    # Execute tasks in dependency order
+    executor = TaskExecutor(quiet=quiet)
+    failed_tasks: list[str] = []
+
+    for task_name in execution_order:
+        task_config = loaded_config.tasks[task_name]
+        try:
+            executor.execute_task(
+                task_name=task_name,
+                command=task_config.command,
+                env=task_config.env,
+            )
+        except TaskExecutionError:
+            failed_tasks.append(task_name)
+            break
+
+    if failed_tasks:
+        typer.secho(
+            f"\nExecution stopped due to task failure: {', '.join(failed_tasks)}",
+            fg=typer.colors.RED,
+            err=True,
+        )
+        raise typer.Exit(code=1)
+
+    typer.secho(
+        f"\n✓ Successfully executed {len(execution_order)} task(s)",
+        fg=typer.colors.GREEN,
+    )
 
 
 @app.command("list")
-def list_command() -> None:
+def list_command(
+    config: Annotated[
+        Path | None,
+        typer.Option(
+            "--config",
+            exists=False,
+            file_okay=True,
+            dir_okay=False,
+            help="Path to a cascade configuration file.",
+        ),
+    ] = None,
+) -> None:
     """List configured tasks."""
-    typer.echo("No tasks discovered yet.")
+    try:
+        _, loaded_config = load_config(config_path=config)
+    except ConfigurationError as exc:
+        typer.secho(str(exc), fg=typer.colors.RED, err=True)
+        raise typer.Exit(code=1) from exc
+
+    if not loaded_config.tasks:
+        typer.echo("No tasks configured.")
+        return
+
+    typer.secho("Available tasks:", fg=typer.colors.CYAN)
+    for task_name, task_config in sorted(loaded_config.tasks.items()):
+        typer.echo(f"  • {task_name}")
+        if task_config.depends_on:
+            typer.echo(f"    depends on: {', '.join(task_config.depends_on)}")
 
 
 @app.command("clean")

@@ -41,10 +41,37 @@ def test_main_version() -> None:
 
 
 def test_run_command() -> None:
-    """Test run skeleton command."""
-    result = runner.invoke(app, ["run", "build"])
+    """Test run command executes tasks."""
+    with runner.isolated_filesystem():
+        with open("cascade.yaml", "w", encoding="utf-8") as file:
+            file.write(
+                "version: 1\n\n"
+                "tasks:\n"
+                "  build:\n"
+                "    command: echo 'Building project'\n"
+            )
+
+        result = runner.invoke(app, ["run", "build"])
+
     assert result.exit_code == 0
-    assert "Running task: build" in result.stdout
+    assert "Building project" in result.stdout or "Successfully executed" in result.stdout
+
+
+def test_run_command_with_failing_task() -> None:
+    """Test run command stops on task failure."""
+    with runner.isolated_filesystem():
+        with open("cascade.yaml", "w", encoding="utf-8") as file:
+            file.write(
+                "version: 1\n\n"
+                "tasks:\n"
+                "  fail:\n"
+                "    command: exit 1\n"
+            )
+
+        result = runner.invoke(app, ["run", "fail"])
+
+    assert result.exit_code == 1
+    assert "Execution stopped" in result.stdout or "failed" in result.stdout
 
 
 def test_run_dry_run_shows_execution_plan() -> None:
