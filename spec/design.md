@@ -745,8 +745,8 @@ python-cas/                 # Existing repository
 
 ```
 Week 1-2: Core MVP        ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ Phase 1
-Week 3:   CAS Integration ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ Phase 2  
-Week 4:   Parallelization ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ Phase 3
+Week 3:   Parallelization ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ Phase 2
+Week 4:   CAS Integration ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ Phase 3
 Week 5:   Dev Experience  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ Phase 4
 Week 6:   CI/CD Features  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ Phase 5
 Week 7+:  Advanced        ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ Phase 6+
@@ -815,7 +815,45 @@ cascade clean
 
 ---
 
-### Phase 2: CAS Integration (Week 3) - Distributed Caching
+### Phase 2: Parallelization (Week 3) - Fast Execution
+
+**Goal:** Execute independent tasks concurrently
+
+**Day 1-2: Parallel Executor**
+- [ ] Concurrent task execution (asyncio or threading)
+- [ ] Worker pool management
+- [ ] Max workers configuration
+- [ ] Task scheduling algorithm
+
+**Day 3-4: Dependencies & Coordination**
+- [ ] Wait for task dependencies
+- [ ] Propagate failures
+- [ ] Cancel dependent tasks on failure
+- [ ] Resource locking (optional)
+
+**Day 5-6: Progress Reporting**
+- [ ] Real-time task status
+- [ ] Rich terminal output (progress bars)
+- [ ] Parallel output handling
+- [ ] Summary statistics
+
+**Day 7: Testing & Optimization**
+- [ ] Stress tests (many parallel tasks)
+- [ ] Benchmark speedup measurements
+- [ ] Memory profiling
+- [ ] Documentation updates
+
+**Deliverable:** 2-4x speedup for independent tasks
+
+```bash
+# Example parallel execution
+cascade run --jobs 4 build  # Run up to 4 tasks in parallel
+cascade run --jobs auto build  # Auto-detect CPU count
+```
+
+---
+
+### Phase 3: CAS Integration (Week 4) - Distributed Caching
 
 **Goal:** Share cached artifacts via Python CAS server
 
@@ -855,44 +893,6 @@ cache:
   url: grpc://cas.company.com:50051
   token_file: ~/.cas/token
   local_fallback: true
-```
-
----
-
-### Phase 3: Parallelization (Week 4) - Fast Execution
-
-**Goal:** Execute independent tasks concurrently
-
-**Day 1-2: Parallel Executor**
-- [ ] Concurrent task execution (asyncio or threading)
-- [ ] Worker pool management
-- [ ] Max workers configuration
-- [ ] Task scheduling algorithm
-
-**Day 3-4: Dependencies & Coordination**
-- [ ] Wait for task dependencies
-- [ ] Propagate failures
-- [ ] Cancel dependent tasks on failure
-- [ ] Resource locking (optional)
-
-**Day 5-6: Progress Reporting**
-- [ ] Real-time task status
-- [ ] Rich terminal output (progress bars)
-- [ ] Parallel output handling
-- [ ] Summary statistics
-
-**Day 7: Testing & Optimization**
-- [ ] Stress tests (many parallel tasks)
-- [ ] Benchmark speedup measurements
-- [ ] Memory profiling
-- [ ] Documentation updates
-
-**Deliverable:** 2-4x speedup for independent tasks
-
-```bash
-# Example parallel execution
-cascade run --jobs 4 build  # Run up to 4 tasks in parallel
-cascade run --jobs auto build  # Auto-detect CPU count
 ```
 
 ---
@@ -1091,6 +1091,21 @@ tasks:
 - [ ] Python API for programmatic task definition
 - [ ] Task composition and reuse
 - [ ] Dynamic task generation
+
+**VSCode Integration:**
+- [ ] VSCode tasks.json generator (`cascade vscode-tasks`)
+- [ ] Optional: Full VSCode extension with task explorer
+- [ ] Task graph visualization in IDE
+- [ ] Integrated execution and output
+- [ ] Language server for cascade.yaml validation
+
+**CI Pipeline Generation:**
+- [ ] Auto-generate CI configs from cascade.yaml
+- [ ] Support for GitHub Actions, GitLab CI, Jenkins, CircleCI
+- [ ] Automatic parallelization detection
+- [ ] Smart caching strategy generation
+- [ ] Platform-specific optimizations
+- [ ] Command: `cascade ci-gen github|gitlab|jenkins`
 
 **Plugins & Extensions:**
 - [ ] Plugin system architecture

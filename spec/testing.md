@@ -589,17 +589,17 @@ def test_config_everything():
 
 ## Future Testing Plans
 
-### Phase 2: CAS Integration
-- gRPC client mocking
-- Network error scenarios
-- Authentication testing
-- Fallback behavior
-
-### Phase 3: Parallel Execution
+### Phase 2: Parallel Execution
 - Race condition testing
 - Deadlock detection
 - Resource contention
 - Performance benchmarks
+
+### Phase 3: CAS Integration
+- gRPC client mocking
+- Network error scenarios
+- Authentication testing
+- Fallback behavior
 
 ### Phase 4+
 - Property-based testing (Hypothesis)

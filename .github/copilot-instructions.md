@@ -191,16 +191,16 @@ tasks:
 - [ ] Integration tests
 - [ ] CLI documentation
 
-### Phase 2: CAS Integration (Week 3)
+### Phase 2: Parallelization (Week 3)
+- Async task execution
+- Worker pool
+- Progress reporting
+
+### Phase 3: CAS Integration (Week 4)
 - gRPC client for pycas
 - CacheBackend abstraction
 - Remote cache operations
 - Fallback logic
-
-### Phase 3: Parallelization (Week 4)
-- Async task execution
-- Worker pool
-- Progress reporting
 
 ### Phase 4-6: See docs/roadmap.md
 

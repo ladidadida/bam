@@ -476,15 +476,15 @@ cascade/
 
 ## Future Enhancements
 
-### Phase 2: CAS Integration
-- Remote cache backend (gRPC)
-- Multi-machine sharing
-- Bandwidth optimization
-
-### Phase 3: Parallel Execution
+### Phase 2: Parallel Execution
 - Async task executor
 - Worker pool management
 - Resource constraints
+
+### Phase 3: CAS Integration
+- Remote cache backend (gRPC)
+- Multi-machine sharing
+- Bandwidth optimization
 
 ### Phase 4: Developer Experience
 - Watch mode for incremental builds
@@ -513,11 +513,27 @@ cascade/
 - Automatic input/output transfer
 - Support for specialized hardware (GPU, large RAM)
 
+**VSCode Integration:**
+- Generate VSCode tasks.json from cascade.yaml
+- Optional full VSCode extension
+- Task explorer in IDE sidebar
+- Graph visualization panel
+- Integrated terminal execution
+
+**CI Pipeline Generation:**
+- Auto-generate CI configs (GitHub Actions, GitLab CI, Jenkins)
+- Parse cascade.yaml to create optimized pipelines
+- Automatic parallelization and caching strategies
+- Platform-specific best practices
+- Multi-platform support
+
 **Benefits:**
 - Reproducible builds across environments
 - Utilize powerful remote infrastructure
 - Team resource sharing
 - Specialized build capabilities
+- Reduced configuration effort
+- IDE integration for better DX
 
 ## References
 

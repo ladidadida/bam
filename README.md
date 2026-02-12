@@ -290,8 +290,8 @@ For detailed development setup and project structure, see [spec/architecture.md]
 - ✅ Complete documentation
 
 **Coming Soon:**
-- 🔄 Phase 2: CAS Integration (remote caching)
-- ⚡ Phase 3: Parallel execution
+- ⚡ Phase 2: Parallel execution
+- 🔄 Phase 3: CAS Integration (remote caching)
 - 🎨 Phase 4: Enhanced developer experience
 - 🤖 Phase 5: CI/CD optimizations
 
@@ -300,6 +300,8 @@ For detailed development setup and project structure, see [spec/architecture.md]
 - 🌐 Remote Execution - Execute tasks on remote machines via pycas
 - 🔌 Plugin System - Extensible architecture for custom integrations
 - 📊 Web Dashboard - Real-time monitoring and analytics
+- 🎨 VSCode Integration - Tasks generator or full extension
+- 🤖 CI Pipeline Generation - Auto-generate GitHub Actions, GitLab CI, etc.
 
 See [roadmap.md](spec/roadmap.md) for details.
 

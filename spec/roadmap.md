@@ -10,8 +10,8 @@
 
 ```
 Week 1-2: Core MVP        ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ Phase 1
-Week 3:   CAS Integration ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ Phase 2  
-Week 4:   Parallelization ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ Phase 3
+Week 3:   Parallelization ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ Phase 2
+Week 4:   CAS Integration ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ Phase 3  
 Week 5:   Dev Experience  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ Phase 4
 Week 6:   CI/CD Features  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ Phase 5
 Week 7+:  Advanced        ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ Phase 6+
@@ -355,9 +355,125 @@ Week 7+:  Advanced        ━━━━━━━━━━━━━━━━━━
 
 ---
 
-## Phase 2: CAS Integration (Week 3) - Distributed Caching
+## Phase 2: Parallelization (Week 3) - Fast Execution
 
-**Goal:** Share cached artifacts via Python CAS server
+**Goal:** Execute independent tasks concurrently
+
+**Status:** ⏳ PLANNED
+
+### Day 1-2: Parallel Executor
+
+**Tasks:**
+- [ ] Concurrent task execution (asyncio)
+  - Convert executor to async
+  - Worker pool management
+  - Semaphore for max workers
+- [ ] Max workers configuration
+  - `--jobs` CLI flag
+  - `CASCADE_MAX_PARALLEL` env var
+  - Auto-detect CPU count
+- [ ] Task scheduling algorithm
+  - Execute ready tasks immediately
+  - Balance load across workers
+  - Prioritize critical path
+
+**Deliverables:**
+- Async task executor
+- Parallel execution working
+
+---
+
+### Day 3-4: Dependencies & Coordination
+
+**Tasks:**
+- [ ] Wait for task dependencies
+  - Async waiting with `asyncio.Event`
+  - Task completion signals
+  - Dependency tracking
+- [ ] Propagate failures
+  - Cancel dependent tasks on failure
+  - Option to continue independent tasks
+  - Configurable failure modes
+- [ ] Resource locking (optional)
+  - Shared resource declarations
+  - Mutex for exclusive access
+  - Deadlock detection
+
+**Deliverables:**
+- Safe parallel execution
+- Failure handling
+
+---
+
+### Day 5-6: Progress Reporting
+
+**Tasks:**
+- [ ] Real-time task status
+  - Live status updates
+  - Task progress bars
+  - ETA calculation
+- [ ] Rich terminal output
+  - Parallel progress bars (rich.progress)
+  - Colored status indicators
+  - Spinner for running tasks
+- [ ] Parallel output handling
+  - Buffer task output
+  - Show output on task completion
+  - Real-time mode for debugging
+- [ ] Summary statistics
+  - Total time, time saved
+  - Cache hit rate
+  - Parallelism achieved
+
+**Deliverables:**
+- Beautiful progress reporting
+- Parallel output handling
+
+---
+
+### Day 7: Testing & Optimization
+
+**Tasks:**
+- [ ] Stress tests (many parallel tasks)
+  - 100+ task workflows
+  - Resource exhaustion tests
+  - Race condition detection
+- [ ] Benchmark speedup measurements
+  - Compare sequential vs parallel
+  - Measure overhead
+  - Identify bottlenecks
+- [ ] Memory profiling
+  - Check for leaks
+  - Optimize memory usage
+  - Document memory requirements
+- [ ] Documentation updates
+  - Parallel execution guide
+  - Performance tuning tips
+
+**Deliverables:**
+- Performance benchmarks
+- Memory usage documented
+
+---
+
+## Phase 2 Success Criteria ✅
+
+**Must Have:**
+- [ ] 2-4x speedup for independent tasks
+- [ ] No race conditions in parallel execution
+- [ ] Clean parallel output
+- [ ] Deterministic results
+
+**Performance Targets:**
+- Parallelism efficiency: >80%
+- Memory: <100MB baseline + <10MB per parallel task
+- No deadlocks or race conditions
+
+---
+
+## Phase 3: CAS Integration (Week 4) - Distributed Caching
+
+**Goal:** Share cache across team and CI
 
 **Status:** ⏳ PLANNED
 
@@ -493,119 +609,141 @@ Week 7+:  Advanced        ━━━━━━━━━━━━━━━━━━
 
 ---
 
-## Phase 3: Parallelization (Week 4) - Fast Execution
+## Phase 3: CAS Integration (Week 4) - Distributed Caching
 
-**Goal:** Execute independent tasks concurrently
+**Goal:** Share cache across team and CI
 
 **Status:** ⏳ PLANNED
 
-### Day 1-2: Parallel Executor
+### Day 1-2: CAS Client
 
 **Tasks:**
-- [ ] Concurrent task execution (asyncio)
-  - Convert executor to async
-  - Worker pool management
-  - Semaphore for max workers
-- [ ] Max workers configuration
-  - `--jobs` CLI flag
-  - `CASCADE_MAX_PARALLEL` env var
-  - Auto-detect CPU count
-- [ ] Task scheduling algorithm
-  - Execute ready tasks immediately
-  - Balance load across workers
-  - Prioritize critical path
+- [ ] gRPC client for pycas server
+  - Reuse proto definitions from pycas
+  - Connection management
+  - Channel pooling for performance
+- [ ] Authentication
+  - Token-based auth (read from file)
+  - Token refresh logic
+  - Secure token storage
+- [ ] Error handling and retries
+  - Exponential backoff
+  - Transient error detection
+  - Connection recovery
+- [ ] Testing with mock pycas server
 
 **Deliverables:**
-- Async task executor
-- Parallel execution working
+- CAS gRPC client module
+- Authentication handling
+- Retry logic
 
 ---
 
-### Day 3-4: Dependencies & Coordination
+### Day 3-4: Cache Backend Abstraction
 
 **Tasks:**
-- [ ] Wait for task dependencies
-  - Async waiting with `asyncio.Event`
-  - Task completion signals
-  - Dependency tracking
-- [ ] Propagate failures
-  - Cancel dependent tasks on failure
-  - Option to continue independent tasks
-  - Configurable failure modes
-- [ ] Resource locking (optional)
-  - Shared resource declarations
-  - Mutex for exclusive access
-  - Deadlock detection
+- [ ] CacheBackend interface
+  ```python
+  class CacheBackend(ABC):
+      async def get(self, key: str) -> bytes | None
+      async def put(self, key: str, data: bytes) -> None
+      async def exists(self, key: str) -> bool
+  ```
+- [ ] LocalCache implementation
+  - Refactor Phase 1 cache to use interface
+  - Async file I/O (aiofiles)
+- [ ] CASCache implementation
+  - Upload/download via gRPC
+  - Streaming for large artifacts
+  - Compression handling
+- [ ] Cache configuration
+  - `cache.type`: local, cas, layered
+  - `cache.url`: CAS server URL
+  - `cache.local_fallback`: true/false
+- [ ] Cache selection logic
+  - Choose backend based on config
+  - Fallback chain: CAS → Local → No cache
 
 **Deliverables:**
-- Safe parallel execution
-- Failure handling
+- CacheBackend abstraction
+- LocalCache and CASCache implementations
+- Configuration for cache selection
 
 ---
 
-### Day 5-6: Progress Reporting
+### Day 5-6: Remote Cache Operations
 
 **Tasks:**
-- [ ] Real-time task status
-  - Live status updates
-  - Task progress bars
-  - ETA calculation
-- [ ] Rich terminal output
-  - Parallel progress bars (rich.progress)
-  - Colored status indicators
-  - Spinner for running tasks
-- [ ] Parallel output handling
-  - Buffer task output
-  - Show output on task completion
-  - Real-time mode for debugging
-- [ ] Summary statistics
-  - Total time, time saved
-  - Cache hit rate
-  - Parallelism achieved
+- [ ] Upload artifacts to CAS
+  - Compute digest (SHA256)
+  - Tar/compress outputs
+  - Stream upload to CAS
+  - Store mapping: cache_key → digest
+- [ ] Download artifacts from CAS
+  - Lookup cache_key → digest
+  - Stream download from CAS
+  - Extract to output locations
+  - Verify integrity
+- [ ] Fallback to local on CAS failure
+  - Detect CAS unavailability
+  - Automatic fallback to LocalCache
+  - Log warnings, don't fail workflow
+- [ ] Cache statistics tracking
+  - Hit/miss rates (local vs remote)
+  - Upload/download counts
+  - Bytes transferred
+  - Time savings
+- [ ] `cascade cache stats` command
+  - Show cache statistics
+  - Breakdown by task
+  - Local vs remote hits
 
 **Deliverables:**
-- Beautiful progress reporting
-- Parallel output handling
+- Full CAS integration
+- Fallback logic working
+- Cache statistics tracking
 
 ---
 
-### Day 7: Testing & Optimization
+### Day 7: Testing
 
 **Tasks:**
-- [ ] Stress tests (many parallel tasks)
-  - 100+ task workflows
-  - Resource exhaustion tests
-  - Race condition detection
-- [ ] Benchmark speedup measurements
-  - Compare sequential vs parallel
-  - Measure overhead
-  - Identify bottlenecks
-- [ ] Memory profiling
-  - Check for leaks
-  - Optimize memory usage
-  - Document memory requirements
+- [ ] Unit tests with mock CAS server
+  - Mock gRPC responses
+  - Test error scenarios
+  - Test fallback logic
+- [ ] Integration tests with real pycas
+  - Start pycas server in test
+  - Upload/download blobs
+  - Multi-machine simulation
+- [ ] Network failure scenarios
+  - CAS server down
+  - Network timeout
+  - Partial upload/download
 - [ ] Documentation updates
-  - Parallel execution guide
-  - Performance tuning tips
+  - CAS configuration guide
+  - Deployment with pycas
+  - Troubleshooting guide
 
 **Deliverables:**
-- Performance benchmarks
-- Memory usage documented
+- All CAS tests passing
+- Integration with pycas validated
+- Documentation for team deployment
 
 ---
 
 ## Phase 3 Success Criteria ✅
 
 **Must Have:**
-- [ ] 2-4x speedup for independent tasks
-- [ ] No race conditions in parallel execution
-- [ ] Clean parallel output
-- [ ] Deterministic results
+- [ ] CAS integration working (upload/download)
+- [ ] Cache shared across machines
+- [ ] Fallback to local on CAS failure
+- [ ] Team cache hit rate: >70%
 
 **Performance Targets:**
-- Parallelism efficiency: >80%
-- Memory: <100MB baseline + <10MB per parallel task
-- No deadlocks or race conditions
+- CAS upload: <100ms overhead for small artifacts
+- CAS download: <50ms overhead for cache hit
+- Network timeout: <5s before fallback
 
 ---
 
@@ -918,6 +1056,171 @@ tasks:
 - [ ] Dynamic task generation
 - [ ] Integration with Python build tools
 
+### VSCode Integration
+
+**Goal:** Seamless IDE integration for better developer experience
+
+**Options:**
+1. **VSCode Tasks Generator** (simpler)
+   - Convert `cascade.yaml` to `.vscode/tasks.json`
+   - `cascade vscode-tasks` command
+   - Keep cascade.yaml as source of truth
+   - VSCode tasks call cascade commands
+
+2. **VSCode Extension** (richer)
+   - Task explorer in sidebar
+   - Run tasks from command palette
+   - Task graph visualization
+   - Real-time execution status
+   - Integrated terminal output
+
+**Tasks:**
+- [ ] VSCode tasks.json generator
+  - Parse cascade.yaml
+  - Generate VSCode task definitions
+  - Map dependencies correctly
+  - Problem matchers for error highlighting
+- [ ] VSCode extension (optional)
+  - Task tree view provider
+  - Commands integration
+  - Language server for cascade.yaml
+  - Syntax highlighting and validation
+  - Graph visualization panel
+- [ ] Keyboard shortcuts and snippets
+- [ ] Documentation for VSCode users
+
+**Generated tasks.json Example:**
+```json
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "cascade: build",
+      "type": "shell",
+      "command": "cascade run build",
+      "group": "build",
+      "problemMatcher": ["$eslint-stylish"],
+      "dependsOn": ["cascade: lint", "cascade: test"]
+    }
+  ]
+}
+```
+
+**Benefits:**
+- Run tasks via Ctrl+Shift+B (build tasks)
+- Task list in command palette
+- Integration with debugging
+- Familiar VSCode workflow
+
+### CI Pipeline Generation
+
+**Goal:** Automatically generate CI pipeline configurations from cascade.yaml
+
+**Architecture:**
+- Read cascade.yaml task definitions
+- Generate platform-specific CI config
+- Optimize for caching and artifacts
+- Support multiple CI platforms
+
+**Supported Platforms:**
+- GitHub Actions (.github/workflows/)
+- GitLab CI (.gitlab-ci.yml)
+- Jenkins (Jenkinsfile)
+- CircleCI (.circleci/config.yml)
+- Azure Pipelines (azure-pipelines.yml)
+
+**Tasks:**
+- [ ] CI config generator framework
+  - Abstract CI config model
+  - Platform-specific renderers
+  - Template system
+- [ ] GitHub Actions generator
+  - Workflow file generation
+  - Matrix builds support
+  - Caching strategy
+  - Artifact uploads
+- [ ] GitLab CI generator
+  - Pipeline stages
+  - Docker image selection
+  - Cache configuration
+  - Parallel job execution
+- [ ] Jenkins generator
+  - Declarative pipeline syntax
+  - Stage definitions
+  - Post actions
+- [ ] Smart optimization
+  - Detect independent tasks → parallel jobs
+  - Setup task reuse (install once)
+  - Caching strategy recommendations
+  - Minimal container images
+
+**Commands:**
+```bash
+# Generate CI config for specific platform
+cascade ci-gen github    # → .github/workflows/cascade.yml
+cascade ci-gen gitlab    # → .gitlab-ci.yml
+cascade ci-gen jenkins   # → Jenkinsfile
+
+# Interactive wizard
+cascade ci-gen --interactive
+
+# With customization
+cascade ci-gen github --cache-strategy aggressive --parallel
+```
+
+**Generated GitHub Actions Example:**
+```yaml
+name: Cascade CI
+on: [push, pull_request]
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup environment
+        run: cascade run setup
+      - uses: actions/cache@v3
+        with:
+          path: .cascade/cache
+          key: cascade-${{ hashFiles('**/cascade.yaml') }}
+  
+  parallel-checks:
+    needs: setup
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        task: [lint, typecheck, test]
+    steps:
+      - name: Run ${{ matrix.task }}
+        run: cascade run ${{ matrix.task }}
+  
+  build:
+    needs: parallel-checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Build
+        run: cascade run build
+      - uses: actions/upload-artifact@v3
+        with:
+          name: dist
+          path: dist/
+```
+
+**Benefits:**
+- Quick CI setup from existing cascade.yaml
+- Best practices baked in (caching, artifacts)
+- Automatic parallelization detection
+- Platform-specific optimizations
+- Reduces CI configuration complexity
+
+**Advanced Features:**
+- [ ] Multi-platform CI (run same tasks on Linux/Mac/Windows)
+- [ ] Environment-specific configs (staging, production)
+- [ ] Secret detection and handling
+- [ ] Cost optimization (shorter job times)
+- [ ] CI config validation before generation
+
 ### Docker Integration
 
 **Goal:** Run tasks in isolated Docker containers
@@ -992,14 +1295,14 @@ tasks:
 - Example projects: 3+
 
 ### Phase 2 Metrics
-- CAS integration success rate: >99%
-- Team cache hit rate: >70%
-- Network overhead: <100ms per artifact
-
-### Phase 3 Metrics
 - Parallel speedup: 2-4x for independent tasks
 - Parallelism efficiency: >80%
 - No race conditions
+
+### Phase 3 Metrics
+- CAS integration success rate: >99%
+- Team cache hit rate: >70%
+- Network overhead: <100ms per artifact
 
 ### Phase 4 Metrics
 - Watch mode latency: <500ms to restart
