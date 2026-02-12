@@ -18,7 +18,8 @@ def test_cli_entrypoint() -> None:
         check=False,
     )
     assert result.returncode == 0
-    assert "**Cascade** is a content-addressed workflow orchestration tool that brings the power of content-addressable storage (CAS) to everyday development workflows" in result.stdout or "usage:" in result.stdout
+    assert "Usage:" in result.stdout
+    assert "run" in result.stdout
 
 
 @pytest.mark.component
@@ -31,7 +32,8 @@ def test_cli_module_invocation() -> None:
         check=False,
     )
     assert result.returncode == 0
-    assert "**Cascade** is a content-addressed workflow orchestration tool that brings the power of content-addressable storage (CAS) to everyday development workflows" in result.stdout or "usage:" in result.stdout
+    assert "Usage:" in result.stdout
+    assert "graph" in result.stdout
 
 
 @pytest.mark.component

@@ -8,8 +8,7 @@ default:
 
 # Install development dependencies
 install:
-  uv sync
-  uv run pip install -e ".[dev]"
+  uv sync --all-groups
 
 # Run all tests (unit + component)
 test:
@@ -35,9 +34,9 @@ lint-fix:
 format:
   uv run ruff format src tests
 
-# Type-check with pyright
+# Type-check with mypy
 typecheck:
-  uv run pyright
+  uv run mypy src/cascade
 
 # Build distribution (wheel + sdist)
 build:
@@ -51,6 +50,10 @@ clean:
 # Run CI checks locally (lint → typecheck → test)
 ci: lint typecheck test
   @echo "✓ All CI checks passed!"
+
+# Run checks matching GitLab stages
+ci-gitlab: lint typecheck test-unit test-component
+  @echo "✓ GitLab CI-equivalent checks passed!"
 
 # Create a release (bumps version, creates git tag, builds dist)
 release:
