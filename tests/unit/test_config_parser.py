@@ -31,10 +31,7 @@ def test_load_config_expands_environment_variables(
 
     config_path = sample_workspace / "cascade.yaml"
     config_path.write_text(
-        "version: 1\n\n"
-        "tasks:\n"
-        "  greet:\n"
-        "    command: echo ${CASCADE_GREETING}\n",
+        "version: 1\n\ntasks:\n  greet:\n    command: echo ${CASCADE_GREETING}\n",
         encoding="utf-8",
     )
 
@@ -53,10 +50,7 @@ def test_cascade_config_env_var_has_priority(
 
     explicit_config = sample_workspace / "custom.yaml"
     explicit_config.write_text(
-        "version: 1\n\n"
-        "tasks:\n"
-        "  from_env:\n"
-        "    command: echo env\n",
+        "version: 1\n\ntasks:\n  from_env:\n    command: echo env\n",
         encoding="utf-8",
     )
 

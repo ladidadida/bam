@@ -44,7 +44,7 @@ class TaskExecutionError(Exception):
         self.command = command
         self.exit_code = exit_code
         super().__init__(
-            f"Task '{task_name}' failed with exit code {exit_code}\n" f"Command: {command}"
+            f"Task '{task_name}' failed with exit code {exit_code}\nCommand: {command}"
         )
 
 
@@ -161,9 +161,7 @@ class TaskExecutor:
                 cache_key = compute_cache_key(command, input_paths, env)
                 if self.cache.put(cache_key, output_paths):
                     if not self.quiet:
-                        self.console.print(
-                            f"[dim]Cached outputs (key: {cache_key[:12]}...)[/dim]"
-                        )
+                        self.console.print(f"[dim]Cached outputs (key: {cache_key[:12]}...)[/dim]")
 
             return TaskResult(
                 task_name=task_name,

@@ -1,0 +1,74 @@
+version: 1
+
+tasks:
+  # Independent tasks that can run in parallel
+  lint-python:
+    inputs: []
+    outputs: []
+    command: |
+      echo "Linting Python..."
+      sleep 0.5
+      echo "✓ Python linting complete"
+
+  lint-js:
+    inputs: []
+    outputs: []
+    command: |
+      echo "Linting JavaScript..."
+      sleep 0.5
+      echo "✓ JavaScript linting complete"
+
+  lint-css:
+    inputs: []
+    outputs: []
+    command: |
+      echo "Linting CSS..."
+      sleep 0.5
+      echo "✓ CSS linting complete"
+
+  # Depends on all lint tasks
+  test:
+    inputs: []
+    outputs: []
+    command: |
+      echo "Running tests..."
+      sleep 0.3
+      echo "✓ Tests passed"
+    depends_on:
+      - lint-python
+      - lint-js
+      - lint-css
+
+  # Depends on test
+  build:
+    inputs: []
+    outputs: []
+    command: |
+      echo "Building application..."
+      sleep 0.4
+      echo "✓ Build complete"
+    depends_on:
+      - test
+
+  # Independent of build, can run in parallel with build
+  docs:
+    inputs: []
+    outputs: []
+    command: |
+      echo "Building documentation..."
+      sleep 0.4
+      echo "✓ Docs complete"
+    depends_on:
+      - lint-python
+
+  # Final task depending on build and docs
+  package:
+    inputs: []
+    outputs: []
+    command: |
+      echo "Packaging..."
+      sleep 0.2
+      echo "✓ Package complete"
+    depends_on:
+      - build
+      - docs

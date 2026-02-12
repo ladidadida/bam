@@ -423,4 +423,3 @@ def test_cli_graph_dot(multi_stage_workspace: Path, runner: CliRunner):
     assert "digraph" in result.stdout
     assert "generate" in result.stdout
     assert "->" in result.stdout
-

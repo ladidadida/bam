@@ -64,7 +64,8 @@ def render_ascii_graph(graph: nx.DiGraph) -> str:
     while remaining:
         # Find tasks with no unprocessed dependencies
         current_layer = sorted(
-            node for node in remaining
+            node
+            for node in remaining
             if all(pred not in remaining for pred in graph.predecessors(node))
         )
         if not current_layer:

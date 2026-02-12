@@ -92,6 +92,8 @@ def load_config(
     try:
         config = CascadeConfig.model_validate(expanded_data)
     except ValidationError as exc:
-        raise ConfigurationError(f"Configuration validation failed in {resolved_path}:\n{exc}") from exc
+        raise ConfigurationError(
+            f"Configuration validation failed in {resolved_path}:\n{exc}"
+        ) from exc
 
     return resolved_path, config

@@ -152,7 +152,7 @@ def test_env_var_expansion(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
             env:
               MY_VAR: "${TEST_VALUE}"
     """)
-    ( tmp_path / "cascade.yaml").write_text(config)
+    (tmp_path / "cascade.yaml").write_text(config)
 
     _, loaded_config = load_config(tmp_path / "cascade.yaml")
     task_config = loaded_config.tasks["test"]

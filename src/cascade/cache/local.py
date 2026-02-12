@@ -32,7 +32,6 @@ class LocalCache(CacheBackend):
         entry_dir = self.cache_dir / cache_key
         archive_path = entry_dir / "outputs.tar.gz"
 
-
         if not archive_path.exists():
             return False
 
