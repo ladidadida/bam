@@ -1,0 +1,90 @@
+// Simplified Capabilities service for Bazel compatibility
+// Based on Remote Execution API v2
+
+syntax = "proto3";
+
+package build.bazel.remote.execution.v2;
+
+option java_multiple_files = true;
+option java_package = "build.bazel.remote.execution.v2";
+
+// Capabilities of the remote cache/execution system.
+message ServerCapabilities {
+  // Capabilities of the remote cache.
+  CacheCapabilities cache_capabilities = 1;
+
+  // Capabilities of the remote execution system (not implemented in MVP).
+  ExecutionCapabilities execution_capabilities = 2;
+
+  // Earliest RE API version supported.
+  ApiVersion low_api_version = 3;
+
+  // Latest RE API version supported.
+  ApiVersion high_api_version = 4;
+}
+
+// Capabilities of the remote cache system.
+message CacheCapabilities {
+  // All the digest functions supported by the remote cache.
+  repeated DigestFunction.Value digest_function = 1;
+
+  // Capabilities for updating the action cache.
+  ActionCacheUpdateCapabilities action_cache_update_capabilities = 2;
+
+  // Maximum total size of blobs to be uploaded/downloaded using
+  // batch methods. A value of 0 means no limit is enforced.
+  int64 max_batch_total_size_bytes = 3;
+
+  // Whether the server supports compression for blobs.
+  bool compression_supported = 4;
+}
+
+// Capabilities for updating the action cache.
+message ActionCacheUpdateCapabilities {
+  bool update_enabled = 1;
+}
+
+// Capabilities of the remote execution system (stub for MVP).
+message ExecutionCapabilities {
+  // Digest function to use for uploaded blobs.
+  DigestFunction.Value digest_function = 1;
+
+  // Whether remote execution is enabled (false for cache-only MVP).
+  bool exec_enabled = 2;
+}
+
+// The digest function used for converting values into keys.
+message DigestFunction {
+  enum Value {
+    UNKNOWN = 0;
+    SHA256 = 1;
+    SHA1 = 2;
+    MD5 = 3;
+    VSO = 4;
+    SHA384 = 5;
+    SHA512 = 6;
+    MURMUR3 = 7;
+  }
+}
+
+// API version
+message ApiVersion {
+  int32 major = 1;
+  int32 minor = 2;
+  int32 patch = 3;
+  string prerelease = 4;
+}
+
+// Request for GetCapabilities
+message GetCapabilitiesRequest {
+  // The instance of the execution system to query capabilities for.
+  // Format: instance_name
+  string instance_name = 1;
+}
+
+// Capabilities service allows clients to query what the server supports.
+service Capabilities {
+  // GetCapabilities returns the capabilities configuration of the
+  // remote endpoint.
+  rpc GetCapabilities(GetCapabilitiesRequest) returns (ServerCapabilities) {}
+}

@@ -1,0 +1,125 @@
+// ActionCache service for caching build action results
+// Based on Remote Execution API v2
+
+syntax = "proto3";
+
+package build.bazel.remote.execution.v2;
+
+option java_multiple_files = true;
+option java_package = "build.bazel.remote.execution.v2";
+
+// Import the digest definition from capabilities
+// Note: In practice, we'll redefine it here for simplicity
+
+// A content digest.
+message Digest {
+  // The hash, in lowercase hexadecimal.
+  string hash = 1;
+
+  // The size of the blob, in bytes.
+  int64 size_bytes = 2;
+}
+
+// An ActionResult represents the result of an Action being run.
+message ActionResult {
+  // The output files of the action. For each output file requested in the
+  // `output_files` or `output_paths` field of the Action, if the corresponding
+  // file existed after the action completed, a single entry will be present.
+  repeated OutputFile output_files = 2;
+
+  // The output directories of the action.
+  repeated OutputDirectory output_directories = 3;
+
+  // The exit code of the command.
+  int32 exit_code = 4;
+
+  // The standard output buffer of the action.
+  bytes stdout_raw = 5;
+
+  // The standard error buffer of the action.
+  bytes stderr_raw = 6;
+
+  // The digest of the stdout artifact.
+  Digest stdout_digest = 7;
+
+  // The digest of the stderr artifact.
+  Digest stderr_digest = 8;
+}
+
+// An OutputFile is similar to a FileNode, but is used to reference an output
+// file from an action.
+message OutputFile {
+  // The path of the file relative to the working directory.
+  string path = 1;
+
+  // The digest of the file's content.
+  Digest digest = 2;
+
+  // True if file is executable, false otherwise.
+  bool is_executable = 3;
+
+  // The contents of the file if inlining was requested.
+  bytes contents = 4;
+}
+
+// An OutputDirectory is the output in an ActionResult corresponding to a
+// directory's full contents rather than a single file.
+message OutputDirectory {
+  // The full path of the directory relative to the working directory.
+  string path = 1;
+
+  // The digest of the encoded Tree proto.
+  Digest tree_digest = 2;
+}
+
+// A request message for ActionCache.GetActionResult.
+message GetActionResultRequest {
+  // The instance of the execution system to operate against.
+  string instance_name = 1;
+
+  // The digest of the Action whose result is requested.
+  Digest action_digest = 2;
+
+  // A hint to the server to request inlining stdout in the ActionResult message.
+  bool inline_stdout = 3;
+
+  // A hint to the server to request inlining stderr in the ActionResult message.
+  bool inline_stderr = 4;
+
+  // A hint to the server to inline the contents of the listed output files.
+  repeated string inline_output_files = 5;
+}
+
+// A request message for ActionCache.UpdateActionResult.
+message UpdateActionResultRequest {
+  // The instance of the execution system to operate against.
+  string instance_name = 1;
+
+  // The digest of the Action whose result is being uploaded.
+  Digest action_digest = 2;
+
+  // The action result to store in the cache.
+  ActionResult action_result = 3;
+
+  // The priority of this result. Results with higher priority will be retained
+  // longer. A value of 0 means default priority.
+  int32 results_cache_policy_priority = 4;
+}
+
+// The action cache API is used to query whether a given action has already been
+// performed and, if so, retrieve its result.
+service ActionCache {
+  // Retrieve a cached execution result.
+  //
+  // Implementations SHOULD ensure that any blobs referenced from the
+  // ContentAddressableStorage are available at the time of returning the
+  // ActionResult and will be for some period of time afterwards.
+  rpc GetActionResult(GetActionResultRequest) returns (ActionResult) {}
+
+  // Upload a new execution result.
+  //
+  // In order to allow the server to perform access control based on the type of
+  // action, the client MUST first upload the Action that produced the result,
+  // along with its Command, into the ContentAddressableStorage.
+  rpc UpdateActionResult(UpdateActionResultRequest) returns (ActionResult) {}
+}

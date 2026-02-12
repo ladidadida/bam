@@ -363,6 +363,50 @@ else:
     return EXECUTED
 ```
 
+**CAS Implementation Details:**
+
+The CASCache client provides production-ready distributed caching with:
+
+1. **Retry Logic with Exponential Backoff**
+   - Transient errors (UNAVAILABLE, DEADLINE_EXCEEDED, RESOURCE_EXHAUSTED) are retried automatically
+   - Configurable `max_retries` (default: 3) and `initial_backoff` (default: 0.1s)
+   - Exponential backoff: 100ms → 200ms → 400ms (capped at 5 seconds)
+   - Non-retryable errors (UNAUTHENTICATED, PERMISSION_DENIED, INVALID_ARGUMENT) fail immediately
+   - Zero overhead in success case, ~0.3s retry time for typical transient failures
+
+2. **Connection Pooling**
+   - gRPC keepalive configuration (30s keepalive time, 10s timeout)
+   - Connection reuse across requests eliminates handshake overhead
+   - Automatic reconnection on network failures
+   - HTTP/2 multiplexing for concurrent operations
+
+3. **Error Handling**
+   - User-friendly error messages translated from gRPC status codes
+   - Connection failure tracking for monitoring
+   - Graceful fallback to local cache on remote failures
+   - No workflow interruption on cache errors
+
+Configuration:
+```yaml
+cache:
+  local:
+    enabled: true
+    path: .cascade/cache
+  remote:
+    enabled: true
+    type: cas
+    url: grpc://localhost:50051
+    timeout: 30.0          # Request timeout in seconds
+    max_retries: 3         # Retry attempts (default: 3)
+    initial_backoff: 0.1   # Initial backoff delay in seconds (default: 0.1)
+```
+
+**Cache Hierarchy:**
+- Check local cache first (fast, always available)
+- If miss, check remote CAS (shared across team)
+- If found in remote, populate local cache for future hits
+- On put: store in local immediately, upload to remote asynchronously
+
 ### 6.3 Parallelization
 
 Tasks with no dependencies run in parallel:

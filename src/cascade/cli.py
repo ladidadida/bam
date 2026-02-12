@@ -15,7 +15,7 @@ from rich.live import Live
 from rich.tree import Tree
 
 from ._version import __version__
-from .cache import LocalCache, expand_globs
+from .cache import LocalCache, create_cache, expand_globs
 from .config import CascadeConfig, ConfigurationError, load_config
 from .executor import TaskExecutionError, TaskExecutor
 from .graph import (
@@ -429,7 +429,7 @@ async def _run_task_async(
         return
 
     # Initialize cache
-    cache = None if no_cache else LocalCache()
+    cache = None if no_cache else create_cache(loaded_config.cache)
 
     # Determine display mode
     is_interactive = sys.stdout.isatty() and not plain

@@ -22,6 +22,19 @@ test-unit:
 test-component:
   uv run pytest -q -m component tests/component
 
+# Run pycas integration tests with Docker Compose
+test-pycas:
+  @echo "🚀 Starting pycas integration tests with Docker Compose..."
+  ./tests/integration-pycas/run-tests.sh
+
+# Run pycas integration tests (just build and up)
+test-pycas-up:
+  docker compose -f tests/integration-pycas/docker-compose.yml up --abort-on-container-exit --exit-code-from cascade-client
+
+# Clean up pycas test containers
+test-pycas-clean:
+  docker compose -f tests/integration-pycas/docker-compose.yml down -v
+
 # Lint with ruff
 lint:
   uv run ruff check src tests

@@ -1,0 +1,55 @@
+version: 1
+
+# Hierarchical cache configuration
+cache:
+  local:
+    enabled: true
+    path: .cascade/cache
+  
+  remote:
+    enabled: true
+    type: cas
+    url: grpc://localhost:50051
+    token_file: ~/.cascade/cas-token
+    upload: true
+    download: true
+    timeout: 30.0
+
+tasks:
+  build:
+    inputs:
+      - "src/**/*.py"
+      - "pyproject.toml"
+    outputs:
+      - "dist/"
+    command: uv build
+    env:
+      PYTHON_VERSION: "3.13"
+
+  test:
+    inputs:
+      - "tests/**/*.py"
+      - "src/**/*.py"
+    command: uv run pytest tests/ -v
+    depends_on:
+      - build
+
+  lint:
+    inputs:
+      - "src/**/*.py"
+      - "tests/**/*.py"
+    command: uv run ruff check src/ tests/
+
+  typecheck:
+    inputs:
+      - "src/**/*.py"
+    command: uv run mypy src/ --ignore-missing-imports
+    depends_on:
+      - build
+
+  all:
+    command: echo "All checks complete"
+    depends_on:
+      - test
+      - lint
+      - typecheck

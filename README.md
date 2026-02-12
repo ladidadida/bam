@@ -6,19 +6,20 @@ Cascade is a content-addressed workflow orchestration tool that brings the power
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python 3.13+](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
-[![Tests](https://img.shields.io/badge/tests-85%20passing-brightgreen.svg)](#testing)
+[![Tests](https://img.shields.io/badge/tests-101%20passing-brightgreen.svg)](#testing)
 [![Coverage](https://img.shields.io/badge/coverage-85%25-brightgreen.svg)](#testing)
 
 ## ✨ Features
 
 - **🎯 Smart Caching** - Content-addressed caching with SHA256 for instant rebuilds
+- **🌐 Distributed Cache** - Share cache across team with automatic retry and fallback
 - **⚡ Parallel Execution** - Auto-detect CPU cores and run independent tasks concurrently
 - **🌳 Interactive Tree View** - Dagger-style dependency visualization with live progress
 - **📊 Dependency Graphs** - Automatic topological sorting and cycle detection
 - **🔍 Rich CLI** - Beautiful tree views, error context, and progress tracking
 - **⚙️ Simple Config** - Clean YAML syntax with glob patterns and env vars
 - **🛡️ Type Safe** - Full type hints with mypy validation
-- **🧪 Well Tested** - 85% coverage with 85 passing tests
+- **🧪 Well Tested** - 85% coverage with 101 passing tests
 - **📚 Documented** - Complete CLI and configuration references
 
 ## 🚀 Quick Start
@@ -88,6 +89,33 @@ cascade graph
 # Validate configuration
 cascade validate
 ```
+
+### Distributed Caching
+
+Share cache across your team with a remote CAS server:
+
+```yaml
+cache:
+  local:
+    enabled: true
+    path: .cascade/cache
+  remote:
+    enabled: true
+    type: cas
+    url: grpc://cas.example.com:50051
+    token_file: ~/.cascade/cas-token
+    timeout: 30.0
+    max_retries: 3  # Automatic retry on transient errors
+```
+
+**Features:**
+- 🔄 Automatic retry with exponential backoff
+- 🔌 Connection pooling for low latency
+- ⚡ Local-first strategy (check local → remote → miss)
+- 🛡️ Graceful fallback to local on network errors
+- 📊 Statistics tracking (future: `cascade cache stats`)
+
+See [examples/remote-cache/](examples/remote-cache/) for complete setup guide.
 
 ## 📖 Documentation
 
@@ -293,19 +321,29 @@ For detailed architecture documentation, see [spec/architecture.md](spec/archite
 Cascade maintains high code quality with comprehensive testing:
 
 ```bash
-# Run all tests
+# Run unit and integration tests
 uv run pytest
 
 # With coverage report
 uv run pytest --cov=cascade --cov-report=html
+
+# pycas integration tests (requires Docker)
+./tests/integration-pycas/run-tests.sh
 ```
 
 **Current Status:**
-- 85 tests (40 unit + 42 integration + 3 e2e)
+- 101 tests (51 unit + 47 integration + 3 component)
 - 85% code coverage
 - All quality checks passing
+- Optional: pycas integration tests with Docker Compose
 
-For detailed testing strategy and practices, see [spec/testing.md](spec/testing.md).
+**Test Levels:**
+- **Unit tests** (`tests/unit/`) - Fast, mocked dependencies
+- **Integration tests** (`tests/integration/`) - Component interaction, local only
+- **Component tests** (`tests/component/`) - CLI end-to-end tests
+- **pycas integration** (`tests/integration-pycas/`) - Real pycas server (Docker-based)
+
+For detailed testing strategy, see [spec/testing.md](spec/testing.md) and [tests/integration-pycas/README.md](tests/integration-pycas/README.md).
 
 ## 🛠️ Development
 
@@ -324,6 +362,7 @@ uv sync
 just lint        # Run linter (ruff)
 just typecheck   # Type checking (mypy)
 just test        # Run tests (pytest)
+just test-pycas  # pycas integration tests (Docker)
 just ci-gitlab   # Full CI pipeline
 ```
 

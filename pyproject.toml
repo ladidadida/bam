@@ -27,6 +27,8 @@ dependencies = [
   "rich>=13.0.0",
   "aiofiles>=23.0.0",
   "anyio>=4.0.0",
+  "grpcio>=1.64.0",
+  "protobuf>=5.26.0",
 ]
 
 [dependency-groups]
@@ -42,6 +44,12 @@ dev = [
   "build>=1.0",
   "twine>=4.0",
   "python-semantic-release>=8.0",
+  "grpcio-tools>=1.64.0",
+]
+# Optional: pycas integration tests (requires Docker or local pycas)
+# Install with: uv sync --group pycas
+pycas = [
+  "pycas @ git+https://github.com/TraceMachina/python-cas@main",
 ]
 
 [project.scripts]
@@ -65,6 +73,7 @@ include = [
 addopts = "--strict-markers"
 markers = [
   "component: marks tests as component-level (integration, CLI, fixtures)",
+  "pycas: marks tests requiring real pycas server (integration-pycas)",
 ]
 testpaths = ["tests"]
 
