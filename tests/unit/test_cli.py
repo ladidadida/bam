@@ -6,7 +6,7 @@ from typer.testing import CliRunner
 
 from cascade.cli import app
 
-runner = CliRunner()
+runner = CliRunner(mix_stderr=False)
 
 
 def test_main_no_args_shows_help() -> None:
@@ -168,4 +168,4 @@ def test_validate_command_with_invalid_config() -> None:
         result = runner.invoke(app, ["validate"])
 
     assert result.exit_code == 1
-    assert "Configuration validation failed" in result.stdout
+    assert "Configuration validation failed" in result.stdout or "Configuration validation failed" in result.stderr

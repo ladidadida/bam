@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 from pathlib import Path
 from typing import Annotated
 
@@ -53,33 +54,14 @@ def common_options(
     """Cascade command group."""
 
 
-@app.command("run")
-def run_command(
+async def _run_task_async(
     task: str,
-    dry_run: Annotated[
-        bool,
-        typer.Option("--dry-run", help="Show task execution plan without running commands."),
-    ] = False,
-    quiet: Annotated[
-        bool,
-        typer.Option("--quiet", "-q", help="Suppress command output."),
-    ] = False,
-    no_cache: Annotated[
-        bool,
-        typer.Option("--no-cache", help="Disable caching (always run tasks)."),
-    ] = False,
-    config: Annotated[
-        Path | None,
-        typer.Option(
-            "--config",
-            exists=False,
-            file_okay=True,
-            dir_okay=False,
-            help="Path to a cascade configuration file.",
-        ),
-    ] = None,
+    dry_run: bool,
+    quiet: bool,
+    no_cache: bool,
+    config: Path | None,
 ) -> None:
-    """Run a task from cascade.yaml."""
+    """Internal async implementation of run command."""
     try:
         _, loaded_config = load_config(config_path=config)
         graph = build_task_graph(loaded_config.tasks)
@@ -111,7 +93,7 @@ def run_command(
         ] if task_config.outputs else []
 
         try:
-            executor.execute_task(
+            await executor.execute_task(
                 task_name=task_name,
                 command=task_config.command,
                 inputs=input_paths,
@@ -134,6 +116,36 @@ def run_command(
         f"\n✓ Successfully executed {len(execution_order)} task(s)",
         fg=typer.colors.GREEN,
     )
+
+
+@app.command("run")
+def run_command(
+    task: str,
+    dry_run: Annotated[
+        bool,
+        typer.Option("--dry-run", help="Show task execution plan without running commands."),
+    ] = False,
+    quiet: Annotated[
+        bool,
+        typer.Option("--quiet", "-q", help="Suppress command output."),
+    ] = False,
+    no_cache: Annotated[
+        bool,
+        typer.Option("--no-cache", help="Disable caching (always run tasks)."),
+    ] = False,
+    config: Annotated[
+        Path | None,
+        typer.Option(
+            "--config",
+            exists=False,
+            file_okay=True,
+            dir_okay=False,
+            help="Path to a cascade configuration file.",
+        ),
+    ] = None,
+) -> None:
+    """Run a task from cascade.yaml."""
+    asyncio.run(_run_task_async(task, dry_run, quiet, no_cache, config))
 
 
 @app.command("list")

@@ -17,6 +17,7 @@ A flexible workflow planning and execution tool that integrates seamlessly into 
 - **Cache everything:** Every step's output is cached by content
 - **Fail gracefully:** Errors don't break the flow, they redirect it  
 - **Progressive complexity:** Start with simple tasks, scale to orchestration
+- **Task output first:** What matters is your tool's output, not Cascade's messages
 
 ### Primary Goals
 1. **Flexibility First:** Integrate with any developer workflow without enforcing concepts

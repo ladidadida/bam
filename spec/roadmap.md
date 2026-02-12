@@ -417,17 +417,27 @@ Week 7+:  Advanced        ━━━━━━━━━━━━━━━━━━
   - Colored status indicators
   - Spinner for running tasks
 - [ ] Parallel output handling
-  - Buffer task output
-  - Show output on task completion
-  - Real-time mode for debugging
+  - **Buffer task output** (don't interleave with Cascade messages)
+  - Show complete task output on completion
+  - Real-time streaming mode (`--stream` flag)
+  - **Principle: Task output is primary, Cascade messages minimal**
+- [ ] Output verbosity levels
+  - `--quiet`: Only task output
+  - Default: Minimal Cascade messages + task output
+  - `--verbose`: Include timing and diagnostics
+  - `--format json`: Machine-readable for CI
 - [ ] Summary statistics
   - Total time, time saved
   - Cache hit rate
   - Parallelism achieved
 
+**Design Principle:**
+Task output should dominate the terminal. Users run `cascade run test` to see test results, not Cascade orchestration details. Keep Cascade messages minimal, clearly prefixed, and never interleaved with task output.
+
 **Deliverables:**
 - Beautiful progress reporting
-- Parallel output handling
+- Clean task output handling
+- Multiple verbosity modes
 
 ---
 

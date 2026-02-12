@@ -18,12 +18,14 @@
 2. **Cache Everything** - Content-addressed caching for instant rebuilds
 3. **Fail Gracefully** - Degrade to local when remote unavailable
 4. **Progressive Complexity** - Simple tasks simple, complex tasks possible
+5. **Task Output First** - Users care about tool output, not orchestration noise
 
 **Design Tenets:**
 - Declarative over imperative (YAML configuration)
 - Integration over invasion (wrap existing commands)
 - Local-first, remote-optional (works offline)
 - Zero-config defaults with escape hatches
+- Minimal Cascade messages, maximum task visibility
 
 ## Architecture Overview
 

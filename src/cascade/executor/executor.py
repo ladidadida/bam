@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
+import asyncio
 import os
-import subprocess
 from dataclasses import dataclass
 from enum import StrEnum
 from pathlib import Path
@@ -68,7 +68,7 @@ class TaskExecutor:
         self.quiet = quiet
         self.cache = cache
 
-    def execute_task(  # noqa: C901
+    async def execute_task(  # noqa: C901
         self,
         task_name: str,
         command: str,
@@ -77,7 +77,7 @@ class TaskExecutor:
         env: dict[str, str] | None = None,
         working_dir: Path | None = None,
     ) -> TaskResult:
-        """Execute a task command via subprocess.
+        """Execute a task command via subprocess asynchronously.
 
         Args:
             task_name: Name of the task being executed.
@@ -124,27 +124,34 @@ class TaskExecutor:
             self.console.print(f"[dim]Command:[/dim] {command}")
 
         try:
-            process = subprocess.run(
+            # Create subprocess with asyncio
+            process = await asyncio.create_subprocess_shell(
                 command,
-                shell=True,
                 cwd=cwd,
                 env=merged_env,
-                capture_output=True,
-                text=True,
-                check=False,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
             )
 
-            if not self.quiet and process.stdout:
-                self.console.print(process.stdout, end="")
-            if not self.quiet and process.stderr:
-                self.console.print(f"[yellow]{process.stderr}[/yellow]", end="")
+            # Wait for process to complete and capture output
+            stdout_bytes, stderr_bytes = await process.communicate()
+            stdout = stdout_bytes.decode("utf-8", errors="replace")
+            stderr = stderr_bytes.decode("utf-8", errors="replace")
 
-            if process.returncode != 0:
+            if not self.quiet and stdout:
+                self.console.print(stdout, end="")
+            if not self.quiet and stderr:
+                self.console.print(f"[yellow]{stderr}[/yellow]", end="")
+
+            # After communicate(), returncode should never be None
+            exit_code = process.returncode if process.returncode is not None else -1
+
+            if exit_code != 0:
                 if not self.quiet:
                     self.console.print(
-                        f"[red]✗[/red] Task '{task_name}' failed with exit code {process.returncode}"
+                        f"[red]✗[/red] Task '{task_name}' failed with exit code {exit_code}"
                     )
-                raise TaskExecutionError(task_name, command, process.returncode)
+                raise TaskExecutionError(task_name, command, exit_code)
 
             if not self.quiet:
                 self.console.print(f"[green]✓[/green] Task '{task_name}' completed")
@@ -162,11 +169,15 @@ class TaskExecutor:
                 task_name=task_name,
                 state=TaskState.COMPLETED,
                 exit_code=0,
-                stdout=process.stdout,
-                stderr=process.stderr,
+                stdout=stdout,
+                stderr=stderr,
             )
 
-        except subprocess.SubprocessError as exc:
+        except TaskExecutionError:
+            # Re-raise TaskExecutionError as-is (already has correct exit code)
+            raise
+        except Exception as exc:
+            # Catch all other exceptions (OSError, asyncio errors, etc.)
             if not self.quiet:
                 self.console.print(f"[red]✗[/red] Task '{task_name}' failed: {exc}")
             raise TaskExecutionError(task_name, command, -1) from exc

@@ -429,6 +429,56 @@ cascade/
 - Progressive disclosure
 - Sane defaults
 
+### 7. Task Output Focus
+- **Task output is primary:** Users care about what their tools produce (build errors, test results)
+- **Cascade messages are secondary:** Orchestration messages should be minimal and unobtrusive
+- **Clear separation:** Distinguish Cascade metadata from task output
+- **Verbosity control:** Support different output modes for different contexts
+
+**Output Modes:**
+- `--quiet` / `-q`: Only task output, no Cascade messages
+- Default: Minimal Cascade messages (task start/complete), full task output
+- `--verbose` / `-v`: Include Cascade diagnostics and timing
+- `--debug`: Full debug output for troubleshooting
+
+**Implementation Guidelines:**
+- Stream task stdout/stderr directly (don't buffer unnecessarily)
+- Prefix Cascade messages with colored markers (e.g., `[cascade]`)
+- Never interleave Cascade messages with task output
+- For parallel execution: buffer task output, show complete on finish
+- Provide `--format json` for machine-readable output
+
+**Examples:**
+
+**Good (minimal):**
+```
+$ cascade run test
+============================= test session starts ==============================
+platform linux -- Python 3.13.0, pytest-9.0.0
+collected 60 items
+
+tests/unit/test_config.py ........                                       [ 13%]
+tests/unit/test_executor.py .........                                    [ 28%]
+...
+============================== 60 passed in 2.83s ==============================
+```
+
+**Bad (too much Cascade noise):**
+```
+$ cascade run test
+[cascade] Loading configuration from cascade.yaml
+[cascade] Validating task graph
+[cascade] Computing cache keys
+[cascade] Cache miss for task: test
+[cascade] Executing task: test
+[cascade] Task started at 2026-02-12 14:32:01
+============================= test session starts ==============================
+[cascade] Task output detected
+...
+[cascade] Task completed at 2026-02-12 14:32:04
+[cascade] Storing outputs in cache
+```
+
 ## Error Handling Strategy
 
 ### Configuration Errors
