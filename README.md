@@ -11,6 +11,7 @@
 **Flow naturally through your build pipeline**
 
 Cascade is a content-addressed workflow orchestration tool that brings the power of content-addressable storage to everyday development workflows. It bridges the gap between simple task runners (like Make/Just) and complex build systems (like Bazel), providing intelligent caching without forcing teams to restructure their projects.
+There exists a companion server app [pycas](https://gitlab.com/ladidadida/pycas) that is used for remote caching.
 
 **Warning**: Large parts of this tool were generated with the help of AI. Special thanks to Claude Sonnet for the excellent support!
 
