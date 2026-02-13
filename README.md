@@ -1,13 +1,18 @@
 # Cascade 🌊
 
+> **⚠️ PROOF OF CONCEPT - NOT PRODUCTION READY**
+>
+> This is a **conceptual implementation** for research and development purposes.
+> While it demonstrates core CAS functionality and includes comprehensive testing,
+> it is **not intended for production use**. Use at your own risk.
+>
+> See [docs/concept.md](docs/concept.md) for more details about the concept and technologies used.
+
 **Flow naturally through your build pipeline**
 
 Cascade is a content-addressed workflow orchestration tool that brings the power of content-addressable storage to everyday development workflows. It bridges the gap between simple task runners (like Make/Just) and complex build systems (like Bazel), providing intelligent caching without forcing teams to restructure their projects.
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Python 3.13+](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
-[![Tests](https://img.shields.io/badge/tests-101%20passing-brightgreen.svg)](#testing)
-[![Coverage](https://img.shields.io/badge/coverage-85%25-brightgreen.svg)](#testing)
+**Warning**: Large parts of this tool were generated with the help of AI. Special thanks to Claude Sonnet for the excellent support!
 
 ## ✨ Features
 
@@ -120,6 +125,7 @@ See [examples/remote-cache/](examples/remote-cache/) for complete setup guide.
 ## 📖 Documentation
 
 **User Guides:**
+- [Concept Document](docs/concept.md) - What is Cascade? Core concepts and technology stack
 - [CLI Reference](docs/cli.md) - Complete command documentation
 - [Configuration Guide](docs/configuration.md) - Full cascade.yaml reference
 
@@ -329,6 +335,8 @@ uv run pytest --cov=cascade --cov-report=html
 
 # pycas integration tests (requires Docker)
 ./tests/integration-pycas/run-tests.sh
+# Or with just:
+just test-pycas
 ```
 
 **Current Status:**
@@ -423,6 +431,7 @@ MIT License - see [LICENSE](LICENSE) for details.
 ## 🔗 Links
 
 **Documentation:**
+- [Concept Document](docs/concept.md) - Core concepts and technology stack
 - [CLI Reference](docs/cli.md) - Command documentation
 - [Configuration Guide](docs/configuration.md) - YAML reference
 

@@ -49,7 +49,8 @@ If you have pycas installed locally:
 
 ```bash
 # Terminal 1: Start pycas server
-uv run --from git+https://github.com/TraceMachina/python-cas pycas serve \
+uv tool install --from git+https://gitlab.com/ladidadida/pycas pycas
+uv tool run pycas serve \
   --host 0.0.0.0 \
   --port 50051 \
   --storage-path /tmp/pycas-test
@@ -117,6 +118,6 @@ To add new integration tests:
 
 ## References
 
-- pycas GitHub: https://github.com/TraceMachina/python-cas
+- pycas GitLab: https://gitlab.com/ladidadida/pycas
 - Remote Execution API: https://github.com/bazelbuild/remote-apis
 - Cascade remote cache docs: ../../examples/remote-cache/README.md

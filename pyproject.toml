@@ -49,7 +49,7 @@ dev = [
 # Optional: pycas integration tests (requires Docker or local pycas)
 # Install with: uv sync --group pycas
 pycas = [
-  "pycas @ git+https://github.com/TraceMachina/python-cas@main",
+  "pycas @ git+https://gitlab.com/ladidadida/pycas@main",
 ]
 
 [project.scripts]

@@ -724,13 +724,13 @@ Task output should dominate the terminal. Users run `cascade run test` to see te
 
 **Deliverables:**
 - ✅ All 101 tests passing (unit + integration + component)
-- ✅ pycas integration validated (Docker-based, optional)
-- ✅ CI workflow for pycas integration tests
+- ✅ pycas integration tests (Docker-based, optional)
+- ✅ CI workflow for pycas integration tests  
 - ✅ Complete documentation for team deployment
 
 **Implementation Notes:**
 - pycas integration tests are optional (require Docker)
-- Use `./tests/integration-pycas/run-tests.sh` to run with Docker Compose
+- Use `./tests/integration-pycas/run-tests.sh` or `just test-pycas` to run
 - Tests simulate multi-machine cache sharing
 - No need to install pycas locally (runs in container)
 

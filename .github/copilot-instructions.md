@@ -6,10 +6,13 @@
 
 **Tagline:** Flow naturally through your build pipeline 🌊
 
-**Status:** Phase 1 ✅ Complete | Phase 2 ✅ Complete | Phase 3 → Next  
+**⚠️ Project Status:** Concept/Experimental - NOT production-ready  
+**Development Status:** Phase 1 ✅ Complete | Phase 2 ✅ Complete | Phase 3 ✅ Complete  
 **Target:** Python 3.13+ (using uv package manager)  
-**Primary Use Cases:** CI/CD pipelines, development workflows, polyglot projects  
+**Primary Use Cases:** Research, experimentation, feedback gathering  
 **Cache Backend:** Python CAS server (pycas) with local fallback
+
+**Purpose:** This is a proof-of-concept implementation to explore content-addressed workflow orchestration patterns. It demonstrates feasibility and gathers insights for potential future production development.
 
 ## Philosophy
 

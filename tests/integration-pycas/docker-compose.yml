@@ -5,14 +5,16 @@ services:
     image: python:3.13-slim
     container_name: cascade-test-pycas
     command: >
-      sh -c "
+      bash -c '
+        apt-get update && apt-get install -y git &&
         pip install uv &&
-        uv run --with git+https://gitlab.com/ladidadida/pycas pycas serve
+        uv tool install --from git+https://gitlab.com/ladidadida/pycas pycas &&
+        uv tool run pycas serve
           --host 0.0.0.0
           --port 50051
           --storage-path /tmp/pycas-storage
           --log-level DEBUG
-      "
+      '
     ports:
       - "50051:50051"
     volumes:
@@ -37,11 +39,12 @@ services:
     environment:
       - CASCADE_CAS_URL=grpc://pycas:50051
     command: >
-      sh -c "
+      bash -c '
+        apt-get update && apt-get install -y git &&
         pip install uv &&
         uv sync &&
         uv run pytest tests/integration-pycas/test_pycas_integration.py -v
-      "
+      '
 
 volumes:
   pycas-storage:
