@@ -373,8 +373,8 @@ For more information:
 
 - **Quick help:** `cascade --help`
 - **Command help:** `cascade run --help`
-- **Documentation:** https://github.com/yourusername/cascade
-- **Issues:** https://github.com/yourusername/cascade/issues
+- **Documentation:** https://gitlab.com/cascascade/cascade
+- **Issues:** https://gitlab.com/cascascade/cascade/-/issues
 - **Examples:** See `examples/` directory
 
 ---

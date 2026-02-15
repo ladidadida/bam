@@ -40,7 +40,7 @@ uv pip install cascade
 pip install cascade
 
 # From source
-git clone https://gitlab.com/yourusername/cascade.git
+git clone https://gitlab.com/cascascade/cascade.git
 cd cascade
 uv sync
 ```

@@ -31,6 +31,12 @@ dependencies = [
   "protobuf>=5.26.0",
 ]
 
+[project.urls]
+Homepage = "https://gitlab.com/cascascade/cascade"
+Repository = "https://gitlab.com/cascascade/cascade"
+Issues = "https://gitlab.com/cascascade/cascade/-/issues"
+Documentation = "https://gitlab.com/cascascade/cascade/-/blob/main/README.md"
+
 [dependency-groups]
 dev = [
   "pytest>=9.0.0",

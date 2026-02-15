@@ -5,7 +5,7 @@
 **Status:** Design Phase  
 **Date:** 2026-02-12  
 **Integration:** Python CAS Server for artifact caching  
-**Repository:** TBD (new separate repo recommended)
+**Repository:** https://gitlab.com/cascascade/cascade
 
 ## 1. Vision & Goals
 
@@ -752,7 +752,7 @@ flow graph ci
 
 **Recommended: Separate Repository**
 
-Create new repo: `github.com/[org]/cascade`
+Create new repo: `gitlab.com/cascascade/cascade`
 
 **Reasons:**
 - Different audiences (developers vs ops)
