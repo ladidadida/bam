@@ -207,8 +207,8 @@ Cascade is built with modern Python technologies, prioritizing developer experie
   - Connection pooling with keepalive
   - Status codes for error handling
 
-#### pycas (CAS Server)
-- **GitLab:** https://gitlab.com/ladidadida/pycas
+#### cascache (CAS Server)
+- **GitLab:** https://gitlab.com/cascascade/cascache
 - **Why:** Simple, standalone CAS server compatible with Bazel/Buck2 protocols
 - **Features Used:**
   - Content-addressable blob storage

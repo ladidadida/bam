@@ -49,7 +49,7 @@ If you have pycas installed locally:
 
 ```bash
 # Terminal 1: Start pycas server
-uv tool install --from git+https://gitlab.com/ladidadida/pycas pycas
+uv tool install --from git+https://gitlab.com/cascascade/cascache pycas
 uv tool run pycas serve \
   --host 0.0.0.0 \
   --port 50051 \
@@ -118,6 +118,6 @@ To add new integration tests:
 
 ## References
 
-- pycas GitLab: https://gitlab.com/ladidadida/pycas
+- cascache GitLab: https://gitlab.com/cascascade/cascache
 - Remote Execution API: https://github.com/bazelbuild/remote-apis
 - Cascade remote cache docs: ../../examples/remote-cache/README.md

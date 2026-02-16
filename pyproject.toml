@@ -52,10 +52,10 @@ dev = [
   "python-semantic-release>=8.0",
   "grpcio-tools>=1.64.0",
 ]
-# Optional: pycas integration tests (requires Docker or local pycas)
+# Optional: pycas integration tests (requires Docker or local cascache)
 # Install with: uv sync --group pycas
 pycas = [
-  "pycas @ git+https://gitlab.com/ladidadida/pycas@main",
+  "pycas @ git+https://gitlab.com/cascascade/cascache@main",
 ]
 
 [project.scripts]

@@ -8,7 +8,7 @@ services:
       bash -c '
         apt-get update && apt-get install -y git &&
         pip install uv &&
-        uv tool install --from git+https://gitlab.com/ladidadida/pycas pycas &&
+        uv tool install --from git+https://gitlab.com/cascascade/cascache pycas &&
         uv tool run pycas serve
           --host 0.0.0.0
           --port 50051
