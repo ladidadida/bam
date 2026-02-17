@@ -1,24 +1,21 @@
-version: '3.8'
-
 services:
-  pycas:
+  cascache:
     image: python:3.13-slim
-    container_name: cascade-test-pycas
+    container_name: cascade-test-cascache
     command: >
       bash -c '
-        apt-get update && apt-get install -y git &&
-        pip install uv &&
-        uv tool install --from git+https://gitlab.com/cascascade/cascache pycas &&
-        uv tool run pycas serve
-          --host 0.0.0.0
-          --port 50051
-          --storage-path /tmp/pycas-storage
-          --log-level DEBUG
+        pip install cascache &&
+        python -m cascache
       '
+    environment:
+      - CAS_HOST=0.0.0.0
+      - CAS_PORT=50051
+      - CAS_STORAGE_PATH=/tmp/cascache-storage
+      - CAS_LOG_LEVEL=DEBUG
     ports:
       - "50051:50051"
     volumes:
-      - pycas-storage:/tmp/pycas-storage
+      - cascache-storage:/tmp/cascache-storage
     healthcheck:
       test: ["CMD", "python", "-c", "import socket; s = socket.socket(); s.connect(('localhost', 50051)); s.close()"]
       interval: 2s
@@ -30,22 +27,22 @@ services:
     image: python:3.13-slim
     container_name: cascade-test-client
     depends_on:
-      pycas:
+      cascache:
         condition: service_healthy
     working_dir: /workspace
     volumes:
       - ../..:/workspace
       - cascade-cache:/workspace/.cascade/cache
     environment:
-      - CASCADE_CAS_URL=grpc://pycas:50051
+      - CASCADE_CAS_URL=grpc://cascache:50051
+      - UV_PROJECT_ENVIRONMENT=/tmp/.venv  # Use container-specific venv location
     command: >
       bash -c '
-        apt-get update && apt-get install -y git &&
         pip install uv &&
         uv sync &&
-        uv run pytest tests/integration-pycas/test_pycas_integration.py -v
+        uv run pytest tests/integration-cascache/test_cascache_integration.py -v
       '
 
 volumes:
-  pycas-storage:
+  cascache-storage:
   cascade-cache:

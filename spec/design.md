@@ -512,7 +512,7 @@ Tasks with no dependencies run in parallel:
 **Key Libraries:**
 - `pyyaml` / `toml` - Configuration parsing
 - `networkx` - Dependency graph
-- `grpc` - CAS server communication (reuse from pycas)
+- `grpc` - CAS server communication (reuse from cascache)
 - `rich` - Beautiful CLI output
 - `watchdog` - File watching for dev mode
 - `asyncio` - Parallel task execution
@@ -757,13 +757,13 @@ Create new repo: `gitlab.com/cascascade/cascade`
 **Reasons:**
 - Different audiences (developers vs ops)
 - Independent versioning and releases  
-- Clear dependency: cascade → pycas (client to server)
+- Clear dependency: cascade → cascache (client to server)
 - Focused development and CI
 - Separate documentation and examples
 
 **Integration:**
-- Cascade uses pycas as remote cache backend
-- Reuse gRPC client code from pycas
+- Cascade uses cascache as remote cache backend
+- Reuse gRPC client code from cascache
 - Share proto definitions
 - Cross-reference documentation
 
@@ -777,7 +777,7 @@ cascade/                    # New repository
 └── pyproject.toml
 
 python-cas/                 # Existing repository
-├── src/pycas/             # Server stays here
+├── src/cascache/             # Server stays here
 └── docs/
     └── cascade-design.md  # Planning doc (move to cascade repo later)
 ```
@@ -904,7 +904,7 @@ cascade run --jobs auto build  # Auto-detect CPU count
 
 **Day 1-2: CAS Client**
 - [ ] gRPC client for CAS server
-- [ ] Reuse proto definitions from pycas
+- [ ] Reuse proto definitions from cascache
 - [ ] Connection management
 - [ ] Authentication (token-based)
 - [ ] Error handling and retries
@@ -925,7 +925,7 @@ cascade run --jobs auto build  # Auto-detect CPU count
 
 **Day 7: Testing**
 - [ ] Unit tests with mock CAS server
-- [ ] Integration tests with real pycas
+- [ ] Integration tests with real cascache
 - [ ] Multi-machine cache sharing tests
 - [ ] Network failure scenarios
 
@@ -1080,14 +1080,14 @@ Execute tasks on remote machines with pre-configured environments.
 
 **Architecture:**
 - Configure remote machines with pre-installed tools
-- Exchange artifacts via pycas (content-addressable storage)
+- Exchange artifacts via cascache (content-addressable storage)
 - Remote machine runs task runner instance
 - Simple SSH-based communication for coordination
 
 **Components:**
 1. Local coordinator (cascade CLI)
 2. Remote task runner (cascade worker daemon)
-3. pycas server (artifact exchange)
+3. cascache server (artifact exchange)
 4. SSH connection for control
 
 **Configuration Example:**
@@ -1111,12 +1111,12 @@ tasks:
 
 **Workflow:**
 1. Local: Compute input hash and check cache
-2. Local: If cache miss, upload inputs to pycas
+2. Local: If cache miss, upload inputs to cascache
 3. Local: Send task execution request to remote worker
-4. Remote: Download inputs from pycas
+4. Remote: Download inputs from cascache
 5. Remote: Execute task command
-6. Remote: Upload outputs to pycas
-7. Local: Download outputs from pycas
+6. Remote: Upload outputs to cascache
+7. Local: Download outputs from cascache
 8. Local: Cache result
 
 **Benefits:**
@@ -1129,7 +1129,7 @@ tasks:
 **Requirements:**
 - Remote machines fully set up with all required tools
 - SSH access configured
-- pycas server accessible from all machines
+- cascache server accessible from all machines
 - Network connectivity for artifact transfer
 
 **Language API:**
@@ -1178,7 +1178,7 @@ tasks:
 **✅ Pros:**
 - Fast development iteration
 - Rich ecosystem (YAML, async, subprocess)
-- Integrates perfectly with pycas (same language)
+- Integrates perfectly with cascache (same language)
 - Excellent CLI libraries (click, rich, typer)
 - Strong async support for parallel execution
 
@@ -1187,7 +1187,7 @@ tasks:
 - Requires Python installation
 - Not a single binary
 
-**Decision: Python** - Development speed and integration with pycas outweigh performance concerns for a workflow orchestrator.
+**Decision: Python** - Development speed and integration with cascache outweigh performance concerns for a workflow orchestrator.
 
 ### Configuration: YAML
 

@@ -10,7 +10,7 @@
 **Development Status:** Phase 1 ✅ Complete | Phase 2 ✅ Complete | Phase 3 ✅ Complete  
 **Target:** Python 3.13+ (using uv package manager)  
 **Primary Use Cases:** Research, experimentation, feedback gathering  
-**Cache Backend:** Python CAS server (pycas) with local fallback
+**Cache Backend:** Python CAS server (cascache) with local fallback
 
 **Purpose:** This is a proof-of-concept implementation to explore content-addressed workflow orchestration patterns. It demonstrates feasibility and gathers insights for potential future production development.
 
@@ -62,7 +62,7 @@
            ↓
 ┌─────────────────────────────────────┐
 │    CAS Client (gRPC)                │  - Upload/download blobs
-│  Connect to pycas server            │  - Authentication
+│  Connect to cascache server            │  - Authentication
 └─────────────────────────────────────┘
 ```
 
@@ -197,10 +197,10 @@ tasks:
 - ✅ 85 passing tests (up from 60)
 
 ### Phase 3: CAS Integration (Week 4) - 🔄 NEXT
-**Goal:** Remote caching with pycas server
+**Goal:** Remote caching with cascache server
 
 - [ ] CacheBackend abstraction
-- [ ] gRPC client for pycas
+- [ ] gRPC client for cascache
 - [ ] CASCache implementation
 - [ ] Upload/download blobs
 - [ ] Token-based authentication
@@ -226,7 +226,7 @@ tasks:
 
 **CAS Integration (Phase 2):**
 - `grpcio>=1.64.0` - gRPC client
-- `protobuf>=5.26.0` - Proto definitions (from pycas)
+- `protobuf>=5.26.0` - Proto definitions (from cascache)
 
 **Parallelization (Phase 3):**
 - `aiofiles>=23.0.0` - Async file I/O
@@ -236,7 +236,7 @@ tasks:
 - `pytest>=9.0.0` - Testing
 - `pytest-asyncio>=0.23.0` - Async test support
 - `pytest-cov>=7.0.0` - Coverage
-- `mypy>=1.8.0` - Type checking
+- `pyright>=1.1.0` - Type checking
 - `ruff>=0.3.0` - Linting
 
 ## Configuration
@@ -401,7 +401,7 @@ uv run pytest
 uv run pytest --cov=cascade --cov-report=html
 
 # Type checking
-uv run mypy src/cascade
+uv run pyright
 
 # Linting
 uv run ruff check src/cascade
@@ -474,10 +474,10 @@ def create_cache_backend(config: CacheConfig) -> CacheBackend:
         raise ValueError(f"Unknown cache type: {config.type}")
 ```
 
-## Integration with pycas
+## Integration with cascache
 
 ### Proto Definitions
-- Reuse proto files from pycas (`protos/` directory)
+- Reuse proto files from cascache (`protos/` directory)
 - Generate Python bindings with `grpc_tools.protoc`
 - Import as: `from cascade.api.generated import cas_simple_pb2`
 
@@ -495,12 +495,12 @@ class CASClient:
         self.token = token
     
     async def upload_blob(self, digest: str, data: bytes) -> None:
-        # Implementation using pycas protocol
+        # Implementation using cascache protocol
         pass
 ```
 
 ### Cache Key Format
-- Same as pycas: `{sha256_hash}/{size_bytes}`
+- Same as cascache: `{sha256_hash}/{size_bytes}`
 - Example: `a3f8d9...7c2e/1024`
 
 ## Performance Considerations
@@ -524,7 +524,7 @@ class CASClient:
 - Command injection: validate command strings
 
 **Phase 2 (CAS Integration):**
-- Token-based authentication (reuse pycas tokens)
+- Token-based authentication (reuse cascache tokens)
 - TLS for gRPC connections
 - Validate cache keys (prevent path traversal)
 - Don't log secrets from environment

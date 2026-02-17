@@ -55,7 +55,7 @@ CAS: sha256:a3f8d9...7c2e/1024 (content-based)
 **Cascade Implementation:**
 - Uses SHA256 for content hashing
 - Local cache fallback when remote unavailable
-- Integration with pycas server for distributed caching
+- Integration with cascache server for distributed caching
 
 ### 2. Task Dependencies
 
@@ -145,7 +145,7 @@ Cascade is built with modern Python technologies, prioritizing developer experie
   - asyncio for parallel task execution
   - dataclasses for type-safe models
   - pathlib for cross-platform file operations
-  - Type hints throughout (mypy strict mode)
+  - Type hints throughout (pyright strict mode)
 
 #### uv Package Manager
 - **Website:** https://docs.astral.sh/uv/
@@ -226,12 +226,12 @@ Cascade is built with modern Python technologies, prioritizing developer experie
   - Fixtures for test data
   - Parametrized tests
   - Async test support (pytest-asyncio)
-  - Markers for test categories (unit, integration, pycas)
+  - Markers for test categories (unit, integration, cascache)
 
-#### mypy (Type Checking)
-- **Website:** https://mypy-lang.org/
-- **GitHub:** https://github.com/python/mypy
-- **Configuration:** Strict mode, 28 files checked
+#### pyright (Type Checking)
+- **Website:** https://microsoft.github.io/pyright/
+- **GitHub:** https://github.com/microsoft/pyright
+- **Configuration:** Strict mode, fast performance
 - **Benefits:**
   - Catch bugs before runtime
   - Better IDE autocomplete
@@ -289,7 +289,7 @@ Cascade uses a layered architecture with clear separation of concerns:
 └─────────────────────────────────────┘
            ↓
 ┌─────────────────────────────────────┐
-│    CAS Client (gRPC)                │  - pycas communication
+│    CAS Client (gRPC)                │  - cascache communication
 │  Upload/download blobs               │  - Retry logic
 │                                     │  - Token authentication
 └─────────────────────────────────────┘
@@ -323,7 +323,7 @@ Cascade uses a layered architecture with clear separation of concerns:
 - Better error context with dependency chains
 
 ### Phase 3 ✅ (CAS Integration)
-- gRPC client for pycas server
+- gRPC client for cascache server
 - Remote cache with automatic fallback
 - Retry logic with exponential backoff
 - Connection pooling with keepalive
@@ -332,7 +332,7 @@ Cascade uses a layered architecture with clear separation of concerns:
 
 ### Test Coverage
 - 101 tests passing (unit, integration, component)
-- Docker-based pycas integration tests
+- Docker-based cascache integration tests
 - 85%+ code coverage
 - Type safety validated with mypy
 

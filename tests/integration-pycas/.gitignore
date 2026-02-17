@@ -1,8 +1,0 @@
-# Ignore test artifacts
-*.pyc
-__pycache__/
-.pytest_cache/
-*.log
-
-# Ignore local pycas storage if running locally
-pycas-storage/

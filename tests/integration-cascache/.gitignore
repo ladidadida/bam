@@ -1,0 +1,8 @@
+# Ignore test artifacts
+*.pyc
+__pycache__/
+.pytest_cache/
+*.log
+
+# Ignore local cascache storage if running locally
+cascache-storage/

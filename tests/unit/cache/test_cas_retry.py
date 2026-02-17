@@ -2,13 +2,16 @@
 
 from __future__ import annotations
 
-from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import grpc
 import pytest
 
 from cascade.cache.cas import CASCache
+
+# Valid 64-character SHA256 hex for testing
+TEST_DIGEST = "a" * 64
+TEST_CACHE_KEY = f"{TEST_DIGEST}/1024"
 
 
 @pytest.fixture
@@ -48,7 +51,7 @@ async def test_retry_on_unavailable(cas_cache, tmp_path):
 
     with patch.object(cas_cache, "_ensure_connected"):
         cas_cache._stub = mock_stub
-        result = await cas_cache.exists("abc123/1024")
+        result = await cas_cache.exists(TEST_CACHE_KEY)
 
     assert result is True
     assert call_count == 3  # Should have retried twice
@@ -74,7 +77,7 @@ async def test_no_retry_on_authentication_error(cas_cache):
         cas_cache._stub = mock_stub
 
         try:
-            await cas_cache.exists("abc123/1024")
+            await cas_cache.exists(TEST_CACHE_KEY)
         except grpc.RpcError:
             pass  # Expected to raise
 
@@ -99,7 +102,7 @@ async def test_max_retries_exhausted(cas_cache):
 
     with patch.object(cas_cache, "_ensure_connected"):
         cas_cache._stub = mock_stub
-        result = await cas_cache.exists("abc123/1024")
+        result = await cas_cache.exists(TEST_CACHE_KEY)
 
     assert result is False
     assert call_count == 3  # Should have retried max_retries times
@@ -127,7 +130,7 @@ async def test_exponential_backoff(cas_cache):
         "cascade.cache.cas.asyncio.sleep", mock_sleep
     ):
         cas_cache._stub = mock_stub
-        await cas_cache.exists("abc123/1024")
+        await cas_cache.exists(TEST_CACHE_KEY)
 
     # Should have 2 delays (after 1st and 2nd attempts)
     assert len(delays) == 2
@@ -221,7 +224,7 @@ async def test_download_with_retry(cas_cache, tmp_path):
         cas_cache, "_extract_tarball", AsyncMock()
     ):
         cas_cache._stub = mock_stub
-        result = await cas_cache.get("abc123/1024", [output_path])
+        result = await cas_cache.get(TEST_CACHE_KEY, [output_path])
 
     assert result is True
     assert call_count == 2  # Should have retried once
@@ -257,7 +260,7 @@ async def test_upload_with_retry(cas_cache, tmp_path):
 
     with patch.object(cas_cache, "_ensure_connected"):
         cas_cache._stub = mock_stub
-        result = await cas_cache.put("abc123", [output_path])
+        result = await cas_cache.put(TEST_DIGEST, [output_path])
 
     assert result is True
     assert call_count == 2  # Should have retried once

@@ -1,6 +1,0 @@
-{
-  "typeCheckingMode": "strict",
-  "pythonVersion": "3.11",
-  "include": ["src", "tests"],
-  "exclude": ["**/node_modules", "**/__pycache__", ".venv"]
-}

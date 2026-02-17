@@ -135,7 +135,6 @@ class CacheManager(CacheBackend):
             True if successfully stored in at least local cache
         """
         stored_locally = False
-        stored_remotely = False
 
         # Store in local cache (required)
         try:
@@ -150,7 +149,6 @@ class CacheManager(CacheBackend):
         if self.remote_cache and self.auto_upload:
             try:
                 if await self.remote_cache.put(cache_key, output_paths):
-                    stored_remotely = True
                     self.stats["remote_uploads"] += 1
                     logger.debug(f"Uploaded to remote cache: {cache_key}")
                 else:

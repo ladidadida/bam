@@ -1,8 +1,10 @@
-from google.protobuf.internal import containers as _containers
+from collections.abc import Iterable as _Iterable
+from collections.abc import Mapping as _Mapping
+from typing import ClassVar as _ClassVar
+
 from google.protobuf import descriptor as _descriptor
 from google.protobuf import message as _message
-from collections.abc import Iterable as _Iterable, Mapping as _Mapping
-from typing import ClassVar as _ClassVar, Optional as _Optional, Union as _Union
+from google.protobuf.internal import containers as _containers
 
 DESCRIPTOR: _descriptor.FileDescriptor
 
@@ -12,25 +14,25 @@ class Digest(_message.Message):
     SIZE_BYTES_FIELD_NUMBER: _ClassVar[int]
     hash: str
     size_bytes: int
-    def __init__(self, hash: _Optional[str] = ..., size_bytes: _Optional[int] = ...) -> None: ...
+    def __init__(self, hash: str | None = ..., size_bytes: int | None = ...) -> None: ...
 
 class FindMissingBlobsRequest(_message.Message):
     __slots__ = ("blob_digests",)
     BLOB_DIGESTS_FIELD_NUMBER: _ClassVar[int]
     blob_digests: _containers.RepeatedCompositeFieldContainer[Digest]
-    def __init__(self, blob_digests: _Optional[_Iterable[_Union[Digest, _Mapping]]] = ...) -> None: ...
+    def __init__(self, blob_digests: _Iterable[Digest | _Mapping] | None = ...) -> None: ...
 
 class FindMissingBlobsResponse(_message.Message):
     __slots__ = ("missing_blob_digests",)
     MISSING_BLOB_DIGESTS_FIELD_NUMBER: _ClassVar[int]
     missing_blob_digests: _containers.RepeatedCompositeFieldContainer[Digest]
-    def __init__(self, missing_blob_digests: _Optional[_Iterable[_Union[Digest, _Mapping]]] = ...) -> None: ...
+    def __init__(self, missing_blob_digests: _Iterable[Digest | _Mapping] | None = ...) -> None: ...
 
 class BatchReadBlobsRequest(_message.Message):
     __slots__ = ("digests",)
     DIGESTS_FIELD_NUMBER: _ClassVar[int]
     digests: _containers.RepeatedCompositeFieldContainer[Digest]
-    def __init__(self, digests: _Optional[_Iterable[_Union[Digest, _Mapping]]] = ...) -> None: ...
+    def __init__(self, digests: _Iterable[Digest | _Mapping] | None = ...) -> None: ...
 
 class BatchReadBlobsResponse(_message.Message):
     __slots__ = ("responses",)
@@ -44,10 +46,10 @@ class BatchReadBlobsResponse(_message.Message):
         data: bytes
         status_code: int
         status_message: str
-        def __init__(self, digest: _Optional[_Union[Digest, _Mapping]] = ..., data: _Optional[bytes] = ..., status_code: _Optional[int] = ..., status_message: _Optional[str] = ...) -> None: ...
+        def __init__(self, digest: Digest | _Mapping | None = ..., data: bytes | None = ..., status_code: int | None = ..., status_message: str | None = ...) -> None: ...
     RESPONSES_FIELD_NUMBER: _ClassVar[int]
     responses: _containers.RepeatedCompositeFieldContainer[BatchReadBlobsResponse.Response]
-    def __init__(self, responses: _Optional[_Iterable[_Union[BatchReadBlobsResponse.Response, _Mapping]]] = ...) -> None: ...
+    def __init__(self, responses: _Iterable[BatchReadBlobsResponse.Response | _Mapping] | None = ...) -> None: ...
 
 class BatchUpdateBlobsRequest(_message.Message):
     __slots__ = ("requests",)
@@ -57,10 +59,10 @@ class BatchUpdateBlobsRequest(_message.Message):
         DATA_FIELD_NUMBER: _ClassVar[int]
         digest: Digest
         data: bytes
-        def __init__(self, digest: _Optional[_Union[Digest, _Mapping]] = ..., data: _Optional[bytes] = ...) -> None: ...
+        def __init__(self, digest: Digest | _Mapping | None = ..., data: bytes | None = ...) -> None: ...
     REQUESTS_FIELD_NUMBER: _ClassVar[int]
     requests: _containers.RepeatedCompositeFieldContainer[BatchUpdateBlobsRequest.Request]
-    def __init__(self, requests: _Optional[_Iterable[_Union[BatchUpdateBlobsRequest.Request, _Mapping]]] = ...) -> None: ...
+    def __init__(self, requests: _Iterable[BatchUpdateBlobsRequest.Request | _Mapping] | None = ...) -> None: ...
 
 class BatchUpdateBlobsResponse(_message.Message):
     __slots__ = ("responses",)
@@ -72,7 +74,7 @@ class BatchUpdateBlobsResponse(_message.Message):
         digest: Digest
         status_code: int
         status_message: str
-        def __init__(self, digest: _Optional[_Union[Digest, _Mapping]] = ..., status_code: _Optional[int] = ..., status_message: _Optional[str] = ...) -> None: ...
+        def __init__(self, digest: Digest | _Mapping | None = ..., status_code: int | None = ..., status_message: str | None = ...) -> None: ...
     RESPONSES_FIELD_NUMBER: _ClassVar[int]
     responses: _containers.RepeatedCompositeFieldContainer[BatchUpdateBlobsResponse.Response]
-    def __init__(self, responses: _Optional[_Iterable[_Union[BatchUpdateBlobsResponse.Response, _Mapping]]] = ...) -> None: ...
+    def __init__(self, responses: _Iterable[BatchUpdateBlobsResponse.Response | _Mapping] | None = ...) -> None: ...

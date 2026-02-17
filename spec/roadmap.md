@@ -41,7 +41,7 @@ Week 7+:  Advanced        ━━━━━━━━━━━━━━━━━━
 - [x] Configure pyproject.toml
   - Python 3.13+ requirement
   - Core dependencies: click/typer, pyyaml, networkx, rich
-  - Dev dependencies: pytest, pytest-asyncio, mypy, ruff
+  - Dev dependencies: pytest, pytest-asyncio, pyright, ruff
 - [x] Set up testing infrastructure
   - pytest configuration
   - Test directory structure
@@ -512,7 +512,7 @@ Task output should dominate the terminal. Users run `cascade run test` to see te
   - All cache tests now use `async def`
   - 85 tests passing
 - [x] CLI cache.clear() uses asyncio.run()
-- [x] Type errors fixed (mypy clean)
+- [x] Type errors fixed (pyright clean)
 
 **Deliverables:**
 - ✅ Async cache interface ready for gRPC
@@ -526,10 +526,10 @@ Task output should dominate the terminal. Users run `cascade run test` to see te
 **Status:** ✅ COMPLETE (2026-02-12)
 
 **Tasks:**
-- [x] Copy proto files from pycas
+- [x] Copy proto files from cascache
   - build/bazel/remote/execution protos (cas_simple, action_cache, capabilities)
   - Generate Python gRPC bindings
-- [x] gRPC client for pycas server
+- [x] gRPC client for cascache server
   - Connection management with grpc.aio
   - Async channel initialization
 - [x] Authentication
@@ -550,7 +550,7 @@ Task output should dominate the terminal. Users run `cascade run test` to see te
 - ✅ CASCache class with gRPC client
 - ✅ Authentication via Bearer token
 - ✅ All 85 tests passing
-- ✅ Type safety validated (mypy clean)
+- ✅ Type safety validated (pyright clean)
 
 ---
 
@@ -590,7 +590,7 @@ Task output should dominate the terminal. Users run `cascade run test` to see te
 - ✅ Updated configuration schema
 - ✅ Statistics tracking and reporting
 - ✅ All 90 tests passing
-- ✅ Type safety validated (mypy clean)
+- ✅ Type safety validated (pyright clean)
 
 ---
 
@@ -629,7 +629,7 @@ Task output should dominate the terminal. Users run `cascade run test` to see te
 - ✅ User-friendly error messages
 - ✅ Configuration schema updates
 - ✅ All 101 tests passing
-- ✅ Type safety validated (mypy clean)
+- ✅ Type safety validated (pyright clean)
 - ✅ Documentation updated with retry behavior
 
 **Implementation Notes:**
@@ -707,12 +707,12 @@ Task output should dominate the terminal. Users run `cascade run test` to see te
   - Test error scenarios (UNAVAILABLE, UNAUTHENTICATED, etc.)
   - Test fallback logic
   - 11 retry-specific tests in test_cas_retry.py
-- [x] Container-based integration tests with real pycas
-  - Docker Compose setup with pycas server + cascade client
-  - Uses `uv run --from git+...` to run pycas without installation
+- [x] Container-based integration tests with real cascache
+  - Docker Compose setup with cascache server + cascade client
+  - Uses `uv run --from git+...` to run cascache without installation
   - 8 comprehensive integration tests
   - Tests upload/download, cache sharing, multi-file artifacts, large files
-  - Optional dependency group: `uv sync --group pycas`
+  - Optional dependency group: `uv sync --group cascache`
 - [x] Network failure scenarios
   - Connection retry with exponential backoff
   - Graceful fallback to local cache
@@ -720,19 +720,19 @@ Task output should dominate the terminal. Users run `cascade run test` to see te
 - [x] Documentation updates
   - CAS configuration in examples/remote-cache/
   - Retry logic documentation in spec/design.md
-  - Integration test guide in tests/integration-pycas/README.md
+  - Integration test guide in tests/integration-cascache/README.md
 
 **Deliverables:**
 - ✅ All 101 tests passing (unit + integration + component)
-- ✅ pycas integration tests (Docker-based, optional)
-- ✅ CI workflow for pycas integration tests  
+- ✅ cascache integration tests (Docker-based, optional)
+- ✅ CI workflow for cascache integration tests  
 - ✅ Complete documentation for team deployment
 
 **Implementation Notes:**
-- pycas integration tests are optional (require Docker)
-- Use `./tests/integration-pycas/run-tests.sh` or `just test-pycas` to run
+- cascache integration tests are optional (require Docker)
+- Use `./tests/integration-cascache/run-tests.sh` or `just test-cascache` to run
 - Tests simulate multi-machine cache sharing
-- No need to install pycas locally (runs in container)
+- No need to install cascache locally (runs in container)
 
 ---
 
@@ -783,7 +783,7 @@ Task output should dominate the terminal. Users run `cascade run test` to see te
 - [ ] Implement ActionCache client (cache entire command results)
 - [ ] Action result serialization
 - [ ] Command fingerprinting for cache keys
-- [ ] Update pycas to match on action cache
+- [ ] Update cascache to match on action cache
 
 ### Performance Optimizations
 - [ ] Parallel upload/download of artifacts
@@ -1080,14 +1080,14 @@ Task output should dominate the terminal. Users run `cascade run test` to see te
 
 **Architecture:**
 - Configure remote machines with pre-installed tools
-- Exchange artifacts via pycas (content-addressable storage)
+- Exchange artifacts via cascache (content-addressable storage)
 - Remote machine runs task runner instance
 - Simple SSH-based communication
 
 **Tasks:**
-- [ ] Remote machine configuration (hostname, credentials, pycas URL)
+- [ ] Remote machine configuration (hostname, credentials, cascache URL)
 - [ ] Remote task executor implementation
-- [ ] Artifact upload/download via pycas
+- [ ] Artifact upload/download via cascache
 - [ ] Remote execution status tracking
 - [ ] Error handling and fallback to local
 - [ ] SSH connection management
@@ -1423,13 +1423,13 @@ tasks:
 
 ## Dependencies & Coordination
 
-### Dependency on pycas
-- **Required:** pycas server for Phase 2
-- **Status:** pycas Week 5 complete, production-ready
+### Dependency on cascache
+- **Required:** cascache server for Phase 2
+- **Status:** cascache Week 5 complete, production-ready
 - **Coordination:** 
-  - Reuse proto definitions from pycas
-  - Test against real pycas server
-  - Document pycas deployment for teams
+  - Reuse proto definitions from cascache
+  - Test against real cascache server
+  - Document cascache deployment for teams
 
 ### External Dependencies
 - Python 3.13+ (released October 2024)

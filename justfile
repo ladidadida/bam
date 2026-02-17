@@ -22,18 +22,18 @@ test-unit:
 test-component:
   uv run pytest -q -m component tests/component
 
-# Run pycas integration tests with Docker Compose
-test-pycas:
-  @echo "🚀 Starting pycas integration tests with Docker Compose..."
-  ./tests/integration-pycas/run-tests.sh
+# Run cascache integration tests with Docker Compose
+test-cascache:
+  @echo "🚀 Starting cascache integration tests with Docker Compose..."
+  ./tests/integration-cascache/run-tests.sh
 
-# Run pycas integration tests (just build and up)
-test-pycas-up:
-  docker compose -f tests/integration-pycas/docker-compose.yml up --abort-on-container-exit --exit-code-from cascade-client
+# Run cascache integration tests (just build and up)
+test-cascache-up:
+  docker compose -f tests/integration-cascache/docker-compose.yml up --abort-on-container-exit --exit-code-from cascade-client
 
-# Clean up pycas test containers
-test-pycas-clean:
-  docker compose -f tests/integration-pycas/docker-compose.yml down -v
+# Clean up cascache test containers
+test-cascache-clean:
+  docker compose -f tests/integration-cascache/docker-compose.yml down -v
 
 # Lint with ruff
 lint:
@@ -47,9 +47,9 @@ lint-fix:
 format:
   uv run ruff format src tests
 
-# Type-check with mypy
+# Type-check with pyright
 typecheck:
-  uv run mypy src/cascade
+  uv run pyright
 
 # Build distribution (wheel + sdist)
 build:

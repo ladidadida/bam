@@ -32,10 +32,10 @@ lint:ruff:
   allow_failure: false
 
 # Type checking with pyright
-typecheck:mypy:
+typecheck:pyright:
   stage: typecheck
   script:
-    - uv run mypy src/cascade
+    - uv run pyright
   allow_failure: false
 
 # Unit tests

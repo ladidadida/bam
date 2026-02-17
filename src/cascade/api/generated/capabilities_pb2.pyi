@@ -1,9 +1,11 @@
-from google.protobuf.internal import containers as _containers
-from google.protobuf.internal import enum_type_wrapper as _enum_type_wrapper
+from collections.abc import Iterable as _Iterable
+from collections.abc import Mapping as _Mapping
+from typing import ClassVar as _ClassVar
+
 from google.protobuf import descriptor as _descriptor
 from google.protobuf import message as _message
-from collections.abc import Iterable as _Iterable, Mapping as _Mapping
-from typing import ClassVar as _ClassVar, Optional as _Optional, Union as _Union
+from google.protobuf.internal import containers as _containers
+from google.protobuf.internal import enum_type_wrapper as _enum_type_wrapper
 
 DESCRIPTOR: _descriptor.FileDescriptor
 
@@ -17,7 +19,7 @@ class ServerCapabilities(_message.Message):
     execution_capabilities: ExecutionCapabilities
     low_api_version: ApiVersion
     high_api_version: ApiVersion
-    def __init__(self, cache_capabilities: _Optional[_Union[CacheCapabilities, _Mapping]] = ..., execution_capabilities: _Optional[_Union[ExecutionCapabilities, _Mapping]] = ..., low_api_version: _Optional[_Union[ApiVersion, _Mapping]] = ..., high_api_version: _Optional[_Union[ApiVersion, _Mapping]] = ...) -> None: ...
+    def __init__(self, cache_capabilities: CacheCapabilities | _Mapping | None = ..., execution_capabilities: ExecutionCapabilities | _Mapping | None = ..., low_api_version: ApiVersion | _Mapping | None = ..., high_api_version: ApiVersion | _Mapping | None = ...) -> None: ...
 
 class CacheCapabilities(_message.Message):
     __slots__ = ("digest_function", "action_cache_update_capabilities", "max_batch_total_size_bytes", "compression_supported")
@@ -29,7 +31,7 @@ class CacheCapabilities(_message.Message):
     action_cache_update_capabilities: ActionCacheUpdateCapabilities
     max_batch_total_size_bytes: int
     compression_supported: bool
-    def __init__(self, digest_function: _Optional[_Iterable[_Union[DigestFunction.Value, str]]] = ..., action_cache_update_capabilities: _Optional[_Union[ActionCacheUpdateCapabilities, _Mapping]] = ..., max_batch_total_size_bytes: _Optional[int] = ..., compression_supported: bool = ...) -> None: ...
+    def __init__(self, digest_function: _Iterable[DigestFunction.Value | str] | None = ..., action_cache_update_capabilities: ActionCacheUpdateCapabilities | _Mapping | None = ..., max_batch_total_size_bytes: int | None = ..., compression_supported: bool = ...) -> None: ...
 
 class ActionCacheUpdateCapabilities(_message.Message):
     __slots__ = ("update_enabled",)
@@ -43,7 +45,7 @@ class ExecutionCapabilities(_message.Message):
     EXEC_ENABLED_FIELD_NUMBER: _ClassVar[int]
     digest_function: DigestFunction.Value
     exec_enabled: bool
-    def __init__(self, digest_function: _Optional[_Union[DigestFunction.Value, str]] = ..., exec_enabled: bool = ...) -> None: ...
+    def __init__(self, digest_function: DigestFunction.Value | str | None = ..., exec_enabled: bool = ...) -> None: ...
 
 class DigestFunction(_message.Message):
     __slots__ = ()
@@ -77,10 +79,10 @@ class ApiVersion(_message.Message):
     minor: int
     patch: int
     prerelease: str
-    def __init__(self, major: _Optional[int] = ..., minor: _Optional[int] = ..., patch: _Optional[int] = ..., prerelease: _Optional[str] = ...) -> None: ...
+    def __init__(self, major: int | None = ..., minor: int | None = ..., patch: int | None = ..., prerelease: str | None = ...) -> None: ...
 
 class GetCapabilitiesRequest(_message.Message):
     __slots__ = ("instance_name",)
     INSTANCE_NAME_FIELD_NUMBER: _ClassVar[int]
     instance_name: str
-    def __init__(self, instance_name: _Optional[str] = ...) -> None: ...
+    def __init__(self, instance_name: str | None = ...) -> None: ...

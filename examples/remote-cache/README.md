@@ -16,7 +16,7 @@ cache:
   remote:
     enabled: true
     type: cas
-    url: grpc://localhost:50051  # pycas server URL
+    url: grpc://localhost:50051  # cascache server URL
     token_file: ~/.cascade/cas-token  # Optional authentication token
     upload: true   # Automatically upload to remote
     download: true # Automatically download from remote
@@ -92,17 +92,17 @@ cache:
     initial_backoff: 0.1   # Initial delay (default: 0.1s)
 ```
 
-## pycas Server Setup
+## cascache Server Setup
 
-To run a local pycas server:
+To run a local cascache server:
 
 ```bash
-# Start pycas server
-pycas serve --host 0.0.0.0 --port 50051
+# Start cascache server
+cascache serve --host 0.0.0.0 --port 50051
 
 # With authentication
-pycas token create > ~/.cascade/cas-token
-pycas serve --token-file ~/.cascade/cas-token
+cascache token create > ~/.cascade/cas-token
+cascache serve --token-file ~/.cascade/cas-token
 ```
 
 ## Local-Only Mode

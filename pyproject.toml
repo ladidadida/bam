@@ -45,17 +45,16 @@ dev = [
   "types-networkx>=3.5.0",
   "types-pyyaml>=6.0.12",
   "ruff>=0.3.0",
-  "mypy>=1.8.0",
   "pyright>=1.1.0",
   "build>=1.0",
   "twine>=4.0",
   "python-semantic-release>=8.0",
   "grpcio-tools>=1.64.0",
 ]
-# Optional: pycas integration tests (requires Docker or local cascache)
-# Install with: uv sync --group pycas
-pycas = [
-  "pycas @ git+https://gitlab.com/cascascade/cascache@main",
+# Optional: cascache integration tests (requires Docker or local cascache)
+# Install with: uv sync --group cascache
+cascache = [
+  "cascache @ git+https://gitlab.com/cascascade/cascache@main",
 ]
 
 [project.scripts]
@@ -71,17 +70,26 @@ include = [
   "tests",
   "README.md",
   "LICENSE",
-  "pytest.ini",
-  "pyrightconfig.json",
 ]
 
 [tool.pytest.ini_options]
 addopts = "--strict-markers"
 markers = [
   "component: marks tests as component-level (integration, CLI, fixtures)",
-  "pycas: marks tests requiring real pycas server (integration-pycas)",
+  "cascache: marks tests requiring real cascache server (integration-cascache)",
 ]
 testpaths = ["tests"]
+
+[tool.pyright]
+typeCheckingMode = "basic"
+pythonVersion = "3.13"
+include = ["src", "tests"]
+exclude = [
+  "**/node_modules",
+  "**/__pycache__",
+  ".venv",
+  "**/generated",
+]
 
 [tool.ruff]
 line-length = 100

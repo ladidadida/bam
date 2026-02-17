@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Run pycas integration tests with Docker Compose
+# Run cascache integration tests with Docker Compose
 
 set -e
 
@@ -8,8 +8,8 @@ PROJECT_ROOT="$( cd "$SCRIPT_DIR/../.." && pwd )"
 
 cd "$PROJECT_ROOT"
 
-echo "🚀 Starting pycas integration tests..."
-echo "   Using Docker Compose to orchestrate pycas server + cascade client"
+echo "🚀 Starting cascache integration tests..."
+echo "   Using Docker Compose to orchestrate cascache server + cascade client"
 echo ""
 
 # Check if Docker Compose is available
@@ -26,7 +26,7 @@ fi
 
 # Run tests
 echo "📦 Building and starting containers..."
-docker compose -f tests/integration-pycas/docker-compose.yml up \
+docker compose -f tests/integration-cascache/docker-compose.yml up \
     --abort-on-container-exit \
     --exit-code-from cascade-client
 
@@ -34,11 +34,11 @@ EXIT_CODE=$?
 
 echo ""
 echo "🧹 Cleaning up containers..."
-docker compose -f tests/integration-pycas/docker-compose.yml down -v
+docker compose -f tests/integration-cascache/docker-compose.yml down -v
 
 if [ $EXIT_CODE -eq 0 ]; then
     echo ""
-    echo "✅ All pycas integration tests passed!"
+    echo "✅ All cascache integration tests passed!"
 else
     echo ""
     echo "❌ Some tests failed (exit code: $EXIT_CODE)"

@@ -384,7 +384,7 @@ cascade/
 | Validation | Pydantic | 2.0+ | Schema validation |
 | Graph Library | NetworkX | 3.0+ | Dependency graphs |
 | Testing | pytest | 9.0+ | Test framework |
-| Type Checking | mypy | 1.8+ | Static type checking |
+| Type Checking | pyright | 1.1+ | Static type checking |
 | Linting | ruff | 0.3+ | Fast linting |
 
 ### Phase 2+ (Planned)
@@ -410,7 +410,7 @@ cascade/
 ### 3. Type Safety
 - Full type hints everywhere
 - Pydantic for runtime validation
-- mypy for static checking
+- pyright for static checking
 
 ### 4. Performance
 - Lazy loading of config
@@ -557,7 +557,7 @@ $ cascade run test
 
 **Remote Execution:**
 - Execute tasks on remote machines
-- Artifact exchange via pycas
+- Artifact exchange via cascache
 - SSH-based coordination
 - Pre-configured remote environments
 - Automatic input/output transfer

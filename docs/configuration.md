@@ -315,7 +315,7 @@ tasks:
       - "pyproject.toml"
   
   typecheck:
-    command: mypy src/
+    command: pyright
     inputs:
       - "src/**/*.py"
       - "pyproject.toml"

@@ -1,8 +1,10 @@
-from google.protobuf.internal import containers as _containers
+from collections.abc import Iterable as _Iterable
+from collections.abc import Mapping as _Mapping
+from typing import ClassVar as _ClassVar
+
 from google.protobuf import descriptor as _descriptor
 from google.protobuf import message as _message
-from collections.abc import Iterable as _Iterable, Mapping as _Mapping
-from typing import ClassVar as _ClassVar, Optional as _Optional, Union as _Union
+from google.protobuf.internal import containers as _containers
 
 DESCRIPTOR: _descriptor.FileDescriptor
 
@@ -12,7 +14,7 @@ class Digest(_message.Message):
     SIZE_BYTES_FIELD_NUMBER: _ClassVar[int]
     hash: str
     size_bytes: int
-    def __init__(self, hash: _Optional[str] = ..., size_bytes: _Optional[int] = ...) -> None: ...
+    def __init__(self, hash: str | None = ..., size_bytes: int | None = ...) -> None: ...
 
 class ActionResult(_message.Message):
     __slots__ = ("output_files", "output_directories", "exit_code", "stdout_raw", "stderr_raw", "stdout_digest", "stderr_digest")
@@ -30,7 +32,7 @@ class ActionResult(_message.Message):
     stderr_raw: bytes
     stdout_digest: Digest
     stderr_digest: Digest
-    def __init__(self, output_files: _Optional[_Iterable[_Union[OutputFile, _Mapping]]] = ..., output_directories: _Optional[_Iterable[_Union[OutputDirectory, _Mapping]]] = ..., exit_code: _Optional[int] = ..., stdout_raw: _Optional[bytes] = ..., stderr_raw: _Optional[bytes] = ..., stdout_digest: _Optional[_Union[Digest, _Mapping]] = ..., stderr_digest: _Optional[_Union[Digest, _Mapping]] = ...) -> None: ...
+    def __init__(self, output_files: _Iterable[OutputFile | _Mapping] | None = ..., output_directories: _Iterable[OutputDirectory | _Mapping] | None = ..., exit_code: int | None = ..., stdout_raw: bytes | None = ..., stderr_raw: bytes | None = ..., stdout_digest: Digest | _Mapping | None = ..., stderr_digest: Digest | _Mapping | None = ...) -> None: ...
 
 class OutputFile(_message.Message):
     __slots__ = ("path", "digest", "is_executable", "contents")
@@ -42,7 +44,7 @@ class OutputFile(_message.Message):
     digest: Digest
     is_executable: bool
     contents: bytes
-    def __init__(self, path: _Optional[str] = ..., digest: _Optional[_Union[Digest, _Mapping]] = ..., is_executable: bool = ..., contents: _Optional[bytes] = ...) -> None: ...
+    def __init__(self, path: str | None = ..., digest: Digest | _Mapping | None = ..., is_executable: bool = ..., contents: bytes | None = ...) -> None: ...
 
 class OutputDirectory(_message.Message):
     __slots__ = ("path", "tree_digest")
@@ -50,7 +52,7 @@ class OutputDirectory(_message.Message):
     TREE_DIGEST_FIELD_NUMBER: _ClassVar[int]
     path: str
     tree_digest: Digest
-    def __init__(self, path: _Optional[str] = ..., tree_digest: _Optional[_Union[Digest, _Mapping]] = ...) -> None: ...
+    def __init__(self, path: str | None = ..., tree_digest: Digest | _Mapping | None = ...) -> None: ...
 
 class GetActionResultRequest(_message.Message):
     __slots__ = ("instance_name", "action_digest", "inline_stdout", "inline_stderr", "inline_output_files")
@@ -64,7 +66,7 @@ class GetActionResultRequest(_message.Message):
     inline_stdout: bool
     inline_stderr: bool
     inline_output_files: _containers.RepeatedScalarFieldContainer[str]
-    def __init__(self, instance_name: _Optional[str] = ..., action_digest: _Optional[_Union[Digest, _Mapping]] = ..., inline_stdout: bool = ..., inline_stderr: bool = ..., inline_output_files: _Optional[_Iterable[str]] = ...) -> None: ...
+    def __init__(self, instance_name: str | None = ..., action_digest: Digest | _Mapping | None = ..., inline_stdout: bool = ..., inline_stderr: bool = ..., inline_output_files: _Iterable[str] | None = ...) -> None: ...
 
 class UpdateActionResultRequest(_message.Message):
     __slots__ = ("instance_name", "action_digest", "action_result", "results_cache_policy_priority")
@@ -76,4 +78,4 @@ class UpdateActionResultRequest(_message.Message):
     action_digest: Digest
     action_result: ActionResult
     results_cache_policy_priority: int
-    def __init__(self, instance_name: _Optional[str] = ..., action_digest: _Optional[_Union[Digest, _Mapping]] = ..., action_result: _Optional[_Union[ActionResult, _Mapping]] = ..., results_cache_policy_priority: _Optional[int] = ...) -> None: ...
+    def __init__(self, instance_name: str | None = ..., action_digest: Digest | _Mapping | None = ..., action_result: ActionResult | _Mapping | None = ..., results_cache_policy_priority: int | None = ...) -> None: ...

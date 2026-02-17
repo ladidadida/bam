@@ -33,7 +33,7 @@ STREAMING_THRESHOLD = 1024 * 1024
 class CASCache(CacheBackend):
     """Remote cache implementation using Content-Addressable Storage (CAS).
 
-    Connects to a pycas server via gRPC to store and retrieve cached artifacts.
+    Connects to a cascache server via gRPC to store and retrieve cached artifacts.
     """
 
     def __init__(
@@ -341,7 +341,7 @@ class CASCache(CacheBackend):
         """Upload artifact to remote cache.
 
         Args:
-            cache_key: Cache key for storage
+            cache_key: Cache key for storage (must be 64-char SHA256 hex)
             output_paths: Output paths to cache
 
         Returns:
@@ -354,8 +354,17 @@ class CASCache(CacheBackend):
             tarball_data = await self._create_tarball(output_paths)
             size_mb = len(tarball_data) / (1024 * 1024)
 
-            # Compute digest
-            digest = self._compute_digest(tarball_data)
+            # Use cache_key as the digest hash (must be 64-char SHA256)
+            # If cache_key is a valid 64-char hex string, use it directly
+            # Otherwise, this is a programmer error - cache keys should be computed with compute_cache_key()
+            if len(cache_key) != 64 or not all(c in "0123456789abcdef" for c in cache_key.lower()):
+                logger.error(
+                    f"Invalid cache_key '{cache_key[:20]}...': must be 64-character SHA256 hex. "
+                    "Use cascade.cache.hash.compute_cache_key() to generate valid keys."
+                )
+                return False
+
+            digest = cas_simple_pb2.Digest(hash=cache_key, size_bytes=len(tarball_data))
 
             # Log upload info
             if len(tarball_data) > STREAMING_THRESHOLD:

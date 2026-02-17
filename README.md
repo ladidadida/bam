@@ -24,7 +24,7 @@ There exists a companion server app [cascache](https://gitlab.com/cascascade/cas
 - **📊 Dependency Graphs** - Automatic topological sorting and cycle detection
 - **🔍 Rich CLI** - Beautiful tree views, error context, and progress tracking
 - **⚙️ Simple Config** - Clean YAML syntax with glob patterns and env vars
-- **🛡️ Type Safe** - Full type hints with mypy validation
+- **🛡️ Type Safe** - Full type hints with pyright validation
 - **🧪 Well Tested** - 85% coverage with 101 passing tests
 - **📚 Documented** - Complete CLI and configuration references
 
@@ -149,7 +149,7 @@ tasks:
     inputs: ["src/**/*.py", "pyproject.toml"]
   
   typecheck:
-    command: mypy src/
+    command: pyright
     inputs: ["src/**/*.py"]
   
   test:
@@ -334,25 +334,25 @@ uv run pytest
 # With coverage report
 uv run pytest --cov=cascade --cov-report=html
 
-# pycas integration tests (requires Docker)
-./tests/integration-pycas/run-tests.sh
+# cascache integration tests (requires Docker)
+./tests/integration-cascache/run-tests.sh
 # Or with just:
-just test-pycas
+just test-cascache
 ```
 
 **Current Status:**
 - 101 tests (51 unit + 47 integration + 3 component)
 - 85% code coverage
 - All quality checks passing
-- Optional: pycas integration tests with Docker Compose
+- Optional: cascache integration tests with Docker Compose
 
 **Test Levels:**
 - **Unit tests** (`tests/unit/`) - Fast, mocked dependencies
 - **Integration tests** (`tests/integration/`) - Component interaction, local only
 - **Component tests** (`tests/component/`) - CLI end-to-end tests
-- **pycas integration** (`tests/integration-pycas/`) - Real pycas server (Docker-based)
+- **cascache integration** (`tests/integration-cascache/`) - Real cascache server (Docker-based)
 
-For detailed testing strategy, see [spec/testing.md](spec/testing.md) and [tests/integration-pycas/README.md](tests/integration-pycas/README.md).
+For detailed testing strategy, see [spec/testing.md](spec/testing.md) and [tests/integration-cascache/README.md](tests/integration-cascache/README.md).
 
 ## 🛠️ Development
 
@@ -369,9 +369,9 @@ uv sync
 
 ```bash
 just lint        # Run linter (ruff)
-just typecheck   # Type checking (mypy)
+just typecheck   # Type checking (pyright)
 just test        # Run tests (pytest)
-just test-pycas  # pycas integration tests (Docker)
+just test-cascache  # cascache integration tests (Docker)
 just ci-gitlab   # Full CI pipeline
 ```
 
@@ -400,13 +400,13 @@ For detailed development setup and project structure, see [spec/architecture.md]
 - ✅ TTY detection for CI/CD compatibility
 
 **Coming Soon:**
-- 🔄 Phase 3: CAS Integration (remote caching with pycas)
+- 🔄 Phase 3: CAS Integration (remote caching with cascache)
 - 🎨 Phase 4: Enhanced developer experience
 - 🤖 Phase 5: CI/CD optimizations
 
 **Future Features:**
 - 🐳 Docker Integration - Run tasks in isolated containers
-- 🌐 Remote Execution - Execute tasks on remote machines via pycas
+- 🌐 Remote Execution - Execute tasks on remote machines via cascache
 - 🔌 Plugin System - Extensible architecture for custom integrations
 - 📊 Web Dashboard - Real-time monitoring and analytics
 - 🎨 VSCode Integration - Tasks generator or full extension

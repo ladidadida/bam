@@ -1,4 +1,4 @@
-name: pycas Integration Tests
+name: cascache Integration Tests
 
 on:
   push:
@@ -8,8 +8,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  pycas-integration:
-    name: Test with real pycas server
+  cascache-integration:
+    name: Test with real cascache server
     runs-on: ubuntu-latest
     
     steps:
@@ -19,21 +19,21 @@ jobs:
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
       
-    - name: Run pycas integration tests
+    - name: Run cascache integration tests
       run: |
-        cd tests/integration-pycas
+        cd tests/integration-cascache
         docker compose up --abort-on-container-exit --exit-code-from cascade-client
       
     - name: Clean up
       if: always()
       run: |
-        cd tests/integration-pycas
+        cd tests/integration-cascache
         docker compose down -v
       
     - name: Upload test results
       if: always()
       uses: actions/upload-artifact@v4
       with:
-        name: pycas-integration-test-results
-        path: tests/integration-pycas/*.xml
+        name: cascache-integration-test-results
+        path: tests/integration-cascache/*.xml
         retention-days: 7
