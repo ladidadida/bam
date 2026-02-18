@@ -5,7 +5,7 @@
 **Status:** Design Phase  
 **Date:** 2026-02-12  
 **Integration:** Python CAS Server for artifact caching  
-**Repository:** https://gitlab.com/cascascade/cascade
+**Repository:** https://gitlab.com/cascascade/cscd
 
 ## 1. Vision & Goals
 
@@ -391,7 +391,7 @@ Configuration:
 cache:
   local:
     enabled: true
-    path: .cascade/cache
+    path: .cscd/cache
   remote:
     enabled: true
     type: cas
@@ -752,7 +752,7 @@ flow graph ci
 
 **Recommended: Separate Repository**
 
-Create new repo: `gitlab.com/cascascade/cascade`
+Create new repo: `gitlab.com/cascascade/cscd`
 
 **Reasons:**
 - Different audiences (developers vs ops)
@@ -810,18 +810,18 @@ Week 7+:  Advanced        ━━━━━━━━━━━━━━━━━━
 - [ ] README with vision statement
 
 **Day 3-4: Configuration Parsing**
-- [ ] Implement YAML parser for `cascade.yaml`
+- [ ] Implement YAML parser for `cscd.yaml`
 - [ ] Task model: inputs, outputs, command, dependencies
 - [ ] Config validation
 - [ ] Schema definition
 - [ ] Example configurations
-- [ ] Config file discovery (cascade.yaml, .cascade.yaml)
+- [ ] Config file discovery (cscd.yaml, .cscd.yaml)
 
 **Day 5-6: Task Graph**
 - [ ] Dependency graph builder (networkx)
 - [ ] Topological sort for execution order
 - [ ] Cycle detection
-- [ ] `cascade graph` command (visualize dependencies)
+- [ ] `cscd graph` command (visualize dependencies)
 - [ ] Dry-run mode
 
 **Day 7-9: Task Execution**
@@ -835,10 +835,10 @@ Week 7+:  Advanced        ━━━━━━━━━━━━━━━━━━
 **Day 10-12: Local Caching**
 - [ ] Content hashing (SHA256)
 - [ ] Input fingerprinting (files + command + env)
-- [ ] Local cache directory structure (.cascade/cache/)
+- [ ] Local cache directory structure (.cscd/cache/)
 - [ ] Cache lookup and restore
 - [ ] Cache storage format (tar.gz)
-- [ ] `cascade clean` command
+- [ ] `cscd clean` command
 
 **Day 13-14: Testing & Documentation**
 - [ ] Unit tests for all components
@@ -851,11 +851,11 @@ Week 7+:  Advanced        ━━━━━━━━━━━━━━━━━━
 
 ```bash
 # Example usage after Phase 1
-cascade init
-cascade list
-cascade run build
-cascade run build --force
-cascade clean
+cscd init
+cscd list
+cscd run build
+cscd run build --force
+cscd clean
 ```
 
 ---
@@ -892,8 +892,8 @@ cascade clean
 
 ```bash
 # Example parallel execution
-cascade run --jobs 4 build  # Run up to 4 tasks in parallel
-cascade run --jobs auto build  # Auto-detect CPU count
+cscd run --jobs 4 build  # Run up to 4 tasks in parallel
+cscd run --jobs auto build  # Auto-detect CPU count
 ```
 
 ---
@@ -951,7 +951,7 @@ cache:
 - [ ] Auto-run tasks on file changes
 - [ ] Debouncing (avoid rapid re-runs)
 - [ ] Filtered patterns
-- [ ] `cascade watch` command
+- [ ] `cscd watch` command
 
 **Day 4-5: Rich CLI**
 - [ ] Colored output
@@ -966,7 +966,7 @@ cache:
 - [ ] Output formatting options (json, table, minimal)
 
 **Day 7: Developer Tooling**
-- [ ] `cascade init` wizard (interactive)
+- [ ] `cscd init` wizard (interactive)
 - [ ] Configuration validation with helpful errors
 - [ ] Task templates
 - [ ] Example project scaffolding
@@ -975,12 +975,12 @@ cache:
 
 ```bash
 # Watch mode examples
-cascade watch test          # Re-run tests on changes
-cascade watch --pattern 'src/**/*.py' -- lint test
+cscd watch test          # Re-run tests on changes
+cscd watch --pattern 'src/**/*.py' -- lint test
 
 # Better output
-cascade run build --format json
-cascade run build --quiet
+cscd run build --format json
+cscd run build --quiet
 ```
 
 ---
@@ -1142,10 +1142,10 @@ tasks:
 - [ ] Optional: Full VSCode extension with task explorer
 - [ ] Task graph visualization in IDE
 - [ ] Integrated execution and output
-- [ ] Language server for cascade.yaml validation
+- [ ] Language server for cscd.yaml validation
 
 **CI Pipeline Generation:**
-- [ ] Auto-generate CI configs from cascade.yaml
+- [ ] Auto-generate CI configs from cscd.yaml
 - [ ] Support for GitHub Actions, GitLab CI, Jenkins, CircleCI
 - [ ] Automatic parallelization detection
 - [ ] Smart caching strategy generation
@@ -1280,7 +1280,7 @@ Decision needed: Week 3
 **4. Workflow Composition**
 ```
 Q: How to reuse workflows across projects?
-   - Import other cascade.yaml files?
+   - Import other cscd.yaml files?
    - Package and distribute workflows?
    - Workflow registry?
 ```
@@ -1290,7 +1290,7 @@ Q: How to reuse workflows across projects?
 Q: How to handle secrets securely?
    - Environment variables only?
    - Integrate with vault services?
-   - Encrypted cascade.yaml sections?
+   - Encrypted cscd.yaml sections?
 ```
 
 **6. Multi-Repository Projects**
@@ -1334,7 +1334,7 @@ Q: How to orchestrate across multiple repos?
 
 ### User Documentation
 - [ ] Getting Started Guide
-- [ ] Configuration Reference (cascade.yaml)
+- [ ] Configuration Reference (cscd.yaml)
 - [ ] CLI Command Reference
 - [ ] Caching Guide
 - [ ] CI Integration Guide

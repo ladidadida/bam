@@ -3,9 +3,9 @@ build-backend = "hatchling.build"
 requires = ["hatchling", "hatch-vcs"]
 
 [project]
-name = "cascade"
+name = "cscd"
 dynamic = ["version"]
-description = "**Cascade** is a content-addressed workflow orchestration tool that brings the power of content-addressable storage (CAS) to everyday development workflows"
+description = "**cscd** (pronounced cascade) is a content-addressed workflow orchestration tool that brings the power of content-addressable storage (CAS) to everyday development workflows. Companion to cascache."
 readme = "README.md"
 license = { text = "MIT" }
 authors = [
@@ -32,10 +32,10 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://gitlab.com/cascascade/cascade"
-Repository = "https://gitlab.com/cascascade/cascade"
-Issues = "https://gitlab.com/cascascade/cascade/-/issues"
-Documentation = "https://gitlab.com/cascascade/cascade/-/blob/main/README.md"
+Homepage = "https://gitlab.com/cascascade/cscd"
+Repository = "https://gitlab.com/cascascade/cscd"
+Issues = "https://gitlab.com/cascascade/cscd/-/issues"
+Documentation = "https://gitlab.com/cascascade/cscd/-/blob/main/README.md"
 
 [dependency-groups]
 dev = [
@@ -57,7 +57,7 @@ cascache = [
 ]
 
 [project.scripts]
-cascade = "cascade.cli:main"
+cscd = "cscd.cli:main"
 
 [tool.hatch.version]
 source = "vcs"

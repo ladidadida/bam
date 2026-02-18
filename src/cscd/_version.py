@@ -1,4 +1,4 @@
-"""Version information for cascache.
+"""Version information for cscd.
 
 This file uses importlib.metadata to get the version dynamically:
 - When installed: Uses version from package metadata (set by hatch-vcs)
@@ -15,7 +15,7 @@ def _get_version() -> str:
     try:
         from importlib.metadata import version
 
-        return version("cascade")
+        return version("cscd")
     except Exception:
         # Fallback for development (not installed)
         return "0.0.0.dev0"

@@ -10,7 +10,12 @@ from google.protobuf.internal import enum_type_wrapper as _enum_type_wrapper
 DESCRIPTOR: _descriptor.FileDescriptor
 
 class ServerCapabilities(_message.Message):
-    __slots__ = ("cache_capabilities", "execution_capabilities", "low_api_version", "high_api_version")
+    __slots__ = (
+        "cache_capabilities",
+        "execution_capabilities",
+        "low_api_version",
+        "high_api_version",
+    )
     CACHE_CAPABILITIES_FIELD_NUMBER: _ClassVar[int]
     EXECUTION_CAPABILITIES_FIELD_NUMBER: _ClassVar[int]
     LOW_API_VERSION_FIELD_NUMBER: _ClassVar[int]
@@ -19,10 +24,21 @@ class ServerCapabilities(_message.Message):
     execution_capabilities: ExecutionCapabilities
     low_api_version: ApiVersion
     high_api_version: ApiVersion
-    def __init__(self, cache_capabilities: CacheCapabilities | _Mapping | None = ..., execution_capabilities: ExecutionCapabilities | _Mapping | None = ..., low_api_version: ApiVersion | _Mapping | None = ..., high_api_version: ApiVersion | _Mapping | None = ...) -> None: ...
+    def __init__(
+        self,
+        cache_capabilities: CacheCapabilities | _Mapping | None = ...,
+        execution_capabilities: ExecutionCapabilities | _Mapping | None = ...,
+        low_api_version: ApiVersion | _Mapping | None = ...,
+        high_api_version: ApiVersion | _Mapping | None = ...,
+    ) -> None: ...
 
 class CacheCapabilities(_message.Message):
-    __slots__ = ("digest_function", "action_cache_update_capabilities", "max_batch_total_size_bytes", "compression_supported")
+    __slots__ = (
+        "digest_function",
+        "action_cache_update_capabilities",
+        "max_batch_total_size_bytes",
+        "compression_supported",
+    )
     DIGEST_FUNCTION_FIELD_NUMBER: _ClassVar[int]
     ACTION_CACHE_UPDATE_CAPABILITIES_FIELD_NUMBER: _ClassVar[int]
     MAX_BATCH_TOTAL_SIZE_BYTES_FIELD_NUMBER: _ClassVar[int]
@@ -31,7 +47,13 @@ class CacheCapabilities(_message.Message):
     action_cache_update_capabilities: ActionCacheUpdateCapabilities
     max_batch_total_size_bytes: int
     compression_supported: bool
-    def __init__(self, digest_function: _Iterable[DigestFunction.Value | str] | None = ..., action_cache_update_capabilities: ActionCacheUpdateCapabilities | _Mapping | None = ..., max_batch_total_size_bytes: int | None = ..., compression_supported: bool = ...) -> None: ...
+    def __init__(
+        self,
+        digest_function: _Iterable[DigestFunction.Value | str] | None = ...,
+        action_cache_update_capabilities: ActionCacheUpdateCapabilities | _Mapping | None = ...,
+        max_batch_total_size_bytes: int | None = ...,
+        compression_supported: bool = ...,
+    ) -> None: ...
 
 class ActionCacheUpdateCapabilities(_message.Message):
     __slots__ = ("update_enabled",)
@@ -45,7 +67,9 @@ class ExecutionCapabilities(_message.Message):
     EXEC_ENABLED_FIELD_NUMBER: _ClassVar[int]
     digest_function: DigestFunction.Value
     exec_enabled: bool
-    def __init__(self, digest_function: DigestFunction.Value | str | None = ..., exec_enabled: bool = ...) -> None: ...
+    def __init__(
+        self, digest_function: DigestFunction.Value | str | None = ..., exec_enabled: bool = ...
+    ) -> None: ...
 
 class DigestFunction(_message.Message):
     __slots__ = ()
@@ -59,6 +83,7 @@ class DigestFunction(_message.Message):
         SHA384: _ClassVar[DigestFunction.Value]
         SHA512: _ClassVar[DigestFunction.Value]
         MURMUR3: _ClassVar[DigestFunction.Value]
+
     UNKNOWN: DigestFunction.Value
     SHA256: DigestFunction.Value
     SHA1: DigestFunction.Value
@@ -79,7 +104,13 @@ class ApiVersion(_message.Message):
     minor: int
     patch: int
     prerelease: str
-    def __init__(self, major: int | None = ..., minor: int | None = ..., patch: int | None = ..., prerelease: str | None = ...) -> None: ...
+    def __init__(
+        self,
+        major: int | None = ...,
+        minor: int | None = ...,
+        patch: int | None = ...,
+        prerelease: str | None = ...,
+    ) -> None: ...
 
 class GetCapabilitiesRequest(_message.Message):
     __slots__ = ("instance_name",)

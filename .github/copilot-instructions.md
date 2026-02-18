@@ -37,7 +37,7 @@
 ```
 ┌─────────────────────────────────────┐
 │     CLI Layer (click/typer)         │  - User commands
-│  cascade run/watch/clean/graph      │  - Argument parsing
+│  cscd run/watch/clean/graph      │  - Argument parsing
 └─────────────────────────────────────┘
            ↓
 ┌─────────────────────────────────────┐
@@ -125,7 +125,7 @@
 
 **Preferred YAML structure:**
 ```yaml
-# cascade.yaml
+# cscd.yaml
 version: 1
 
 cache:
@@ -242,19 +242,19 @@ tasks:
 ## Configuration
 
 **Environment Variables:**
-- `CASCADE_CONFIG` - Path to cascade.yaml (default: ./cascade.yaml)
-- `CASCADE_CACHE_DIR` - Local cache directory (default: ./.cascade/cache)
-- `CASCADE_CACHE_TYPE` - Cache backend: local, cas (default: local)
-- `CASCADE_CAS_URL` - CAS server URL (default: grpc://localhost:50051)
-- `CASCADE_CAS_TOKEN_FILE` - CAS auth token file
-- `CASCADE_LOG_LEVEL` - Logging level (DEBUG, INFO, WARNING)
-- `CASCADE_MAX_PARALLEL` - Max parallel tasks (default: CPU count)
+- `CSCD_CONFIG` - Path to cscd.yaml (default: ./cscd.yaml)
+- `CSCD_CACHE_DIR` - Local cache directory (default: ./.cscd/cache)
+- `CSCD_CACHE_TYPE` - Cache backend: local, cas (default: local)
+- `CSCD_CAS_URL` - CAS server URL (default: grpc://localhost:50051)
+- `CSCD_CAS_TOKEN_FILE` - CAS auth token file
+- `CSCD_LOG_LEVEL` - Logging level (DEBUG, INFO, WARNING)
+- `CSCD_MAX_PARALLEL` - Max parallel tasks (default: CPU count)
 
 **Configuration File Discovery:**
 1. `--config` CLI argument
-2. `CASCADE_CONFIG` environment variable
-3. `./cascade.yaml` in current directory
-4. `./.cascade.yaml` (hidden file)
+2. `CSCD_CONFIG` environment variable
+3. `./cscd.yaml` in current directory
+4. `./.cscd.yaml` (hidden file)
 5. Walk up directory tree to find config
 
 ## Testing Strategy
@@ -408,7 +408,7 @@ uv run ruff check src/cascade
 
 # Run cascade CLI
 uv run cascade --help
-uv run cascade run build
+uv run cscd run build
 ```
 
 ## Key Design Patterns
@@ -604,28 +604,28 @@ class TaskExecutionError(Exception):
 
 ```bash
 # Initialize new project
-cascade init
+cscd init
 
 # List available tasks
-cascade list
+cscd list
 
 # Run specific task
-cascade run build
+cscd run build
 
 # Run with all dependencies
-cascade run --with-deps test
+cscd run --with-deps test
 
 # Watch mode (re-run on changes)
-cascade watch test
+cscd watch test
 
 # Visualize task graph
-cascade graph --output graph.png
+cscd graph --output graph.png
 
 # Clean cache
-cascade clean
+cscd clean
 
 # Check configuration
-cascade validate
+cscd validate
 ```
 
 ## Success Criteria

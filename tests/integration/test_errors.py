@@ -5,16 +5,16 @@ from textwrap import dedent
 
 import pytest
 
-from cascade.config import ConfigurationError, load_config
-from cascade.graph import CyclicDependencyError, MissingTaskError, build_task_graph
+from cscd.config import ConfigurationError, load_config
+from cscd.graph import CyclicDependencyError, MissingTaskError, build_task_graph
 
 
 def test_invalid_yaml_syntax(tmp_path: Path):
     """Test error on malformed YAML."""
-    (tmp_path / "cascade.yaml").write_text("invalid: yaml: syntax: [")
+    (tmp_path / "cscd.yaml").write_text("invalid: yaml: syntax: [")
 
     with pytest.raises(ConfigurationError):
-        load_config(tmp_path / "cascade.yaml")
+        load_config(tmp_path / "cscd.yaml")
 
 
 def test_missing_task_command(tmp_path: Path):
@@ -27,10 +27,10 @@ def test_missing_task_command(tmp_path: Path):
             inputs: []
             outputs: []
     """)
-    (tmp_path / "cascade.yaml").write_text(config)
+    (tmp_path / "cscd.yaml").write_text(config)
 
     with pytest.raises(ConfigurationError):
-        load_config(tmp_path / "cascade.yaml")
+        load_config(tmp_path / "cscd.yaml")
 
 
 def test_cyclic_dependency_simple(tmp_path: Path):
@@ -49,9 +49,9 @@ def test_cyclic_dependency_simple(tmp_path: Path):
             depends_on:
               - a
     """)
-    (tmp_path / "cascade.yaml").write_text(config)
+    (tmp_path / "cscd.yaml").write_text(config)
 
-    _, loaded_config = load_config(tmp_path / "cascade.yaml")
+    _, loaded_config = load_config(tmp_path / "cscd.yaml")
 
     with pytest.raises(CyclicDependencyError):
         build_task_graph(loaded_config.tasks)
@@ -78,9 +78,9 @@ def test_cyclic_dependency_complex(tmp_path: Path):
             depends_on:
               - a
     """)
-    (tmp_path / "cascade.yaml").write_text(config)
+    (tmp_path / "cscd.yaml").write_text(config)
 
-    _, loaded_config = load_config(tmp_path / "cascade.yaml")
+    _, loaded_config = load_config(tmp_path / "cscd.yaml")
 
     with pytest.raises(CyclicDependencyError):
         build_task_graph(loaded_config.tasks)
@@ -97,9 +97,9 @@ def test_missing_dependency_task(tmp_path: Path):
             depends_on:
               - nonexistent
     """)
-    (tmp_path / "cascade.yaml").write_text(config)
+    (tmp_path / "cscd.yaml").write_text(config)
 
-    _, loaded_config = load_config(tmp_path / "cascade.yaml")
+    _, loaded_config = load_config(tmp_path / "cscd.yaml")
 
     with pytest.raises(MissingTaskError, match="nonexistent"):
         build_task_graph(loaded_config.tasks)
@@ -112,15 +112,15 @@ def test_empty_tasks_dict(tmp_path: Path):
 
         tasks: {}
     """)
-    (tmp_path / "cascade.yaml").write_text(config)
+    (tmp_path / "cscd.yaml").write_text(config)
 
-    _, loaded_config = load_config(tmp_path / "cascade.yaml")
+    _, loaded_config = load_config(tmp_path / "cscd.yaml")
     assert loaded_config.tasks == {}
 
 
 def test_glob_with_no_matches(tmp_path: Path):
     """Test glob pattern that matches no files."""
-    from cascade.cache import expand_globs
+    from cscd.cache import expand_globs
 
     expanded = expand_globs(["*.nonexistent"], tmp_path)
 
@@ -133,7 +133,7 @@ def test_glob_expansion(tmp_path: Path):
     (tmp_path / "file1.txt").write_text("1")
     (tmp_path / "file2.txt").write_text("2")
 
-    from cascade.cache import expand_globs
+    from cscd.cache import expand_globs
 
     expanded = expand_globs(["*.txt"], tmp_path)
     assert len(expanded) == 2
@@ -152,9 +152,9 @@ def test_env_var_expansion(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
             env:
               MY_VAR: "${TEST_VALUE}"
     """)
-    (tmp_path / "cascade.yaml").write_text(config)
+    (tmp_path / "cscd.yaml").write_text(config)
 
-    _, loaded_config = load_config(tmp_path / "cascade.yaml")
+    _, loaded_config = load_config(tmp_path / "cscd.yaml")
     task_config = loaded_config.tasks["test"]
 
     assert "expanded_value" in task_config.command
@@ -164,9 +164,9 @@ def test_env_var_expansion(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
 @pytest.mark.asyncio
 async def test_cache_backend_interface(tmp_path: Path):
     """Test cache backend interface contract."""
-    from cascade.cache import LocalCache
+    from cscd.cache import LocalCache
 
-    cache = LocalCache(tmp_path / ".cascade/cache")
+    cache = LocalCache(tmp_path / ".cscd/cache")
 
     # Non-existent key
     assert not await cache.exists("nonexistent_key")
@@ -192,9 +192,9 @@ def test_config_defaults(tmp_path: Path):
           simple:
             command: echo "test"
     """)
-    (tmp_path / "cascade.yaml").write_text(config)
+    (tmp_path / "cscd.yaml").write_text(config)
 
-    _, loaded_config = load_config(tmp_path / "cascade.yaml")
+    _, loaded_config = load_config(tmp_path / "cscd.yaml")
     task = loaded_config.tasks["simple"]
 
     # Defaults should be applied
@@ -218,12 +218,12 @@ def test_task_ordering_deterministic(tmp_path: Path):
             command: echo "m"
             depends_on: [a, z]
     """)
-    (tmp_path / "cascade.yaml").write_text(config)
+    (tmp_path / "cscd.yaml").write_text(config)
 
-    _, loaded_config = load_config(tmp_path / "cascade.yaml")
+    _, loaded_config = load_config(tmp_path / "cscd.yaml")
     graph = build_task_graph(loaded_config.tasks)
 
-    from cascade.graph import execution_order_for_targets
+    from cscd.graph import execution_order_for_targets
 
     # Run multiple times - should always get same order
     orders = [execution_order_for_targets(graph, ["m"]) for _ in range(5)]

@@ -70,13 +70,13 @@ Week 7+:  Advanced        ━━━━━━━━━━━━━━━━━━
 **Status:** ✅ COMPLETE (2026-02-12)
 
 **Objectives:**
-- Load and parse cascade.yaml files
+- Load and parse cscd.yaml files
 - Validate configuration structure
 - Define task model
 
 **Tasks:**
 - [x] YAML parser implementation
-  - Load cascade.yaml files
+  - Load cscd.yaml files
   - Environment variable expansion
   - Config file discovery (walk up directory tree)
 - [x] Task model (dataclasses)
@@ -95,20 +95,20 @@ Week 7+:  Advanced        ━━━━━━━━━━━━━━━━━━
   - Required field validation
   - Type checking
   - Helpful error messages
-- [x] Example cascade.yaml files
+- [x] Example cscd.yaml files
   - Hello world example
   - Python project example
   - Multi-task example with dependencies
 - [x] Config file discovery logic
   - `--config` CLI flag
-  - `CASCADE_CONFIG` environment variable
+  - `CSCD_CONFIG` environment variable
   - Search current and parent directories
 
 **Deliverables:**
 - Configuration parser module
 - Task model with validation
 - Example configurations
-- `cascade validate` command
+- `cscd validate` command
 
 **Tests:** 
 - Valid/invalid YAML parsing
@@ -140,19 +140,19 @@ Week 7+:  Advanced        ━━━━━━━━━━━━━━━━━━
   - Report cycle path to user
   - Clear error messages
 - [x] Graph visualization
-  - `cascade graph` command
+  - `cscd graph` command
   - ASCII art output for terminal
   - DOT format for graphviz
   - HTML visualization (optional)
 - [x] Dry-run mode
   - Show execution plan without running
-  - `cascade run --dry-run` flag
+  - `cscd run --dry-run` flag
 
 **Deliverables:**
 - Graph builder module
 - Task ordering algorithm
 - Cycle detection with error reporting
-- `cascade graph` visualization command
+- `cscd graph` visualization command
 
 **Tests:**
 - Simple dependency chains
@@ -204,7 +204,7 @@ Week 7+:  Advanced        ━━━━━━━━━━━━━━━━━━
 - Task executor module
 - Output formatting with rich
 - Error handling and reporting
-- `cascade run <task>` working end-to-end
+- `cscd run <task>` working end-to-end
 
 **Tests:**
 - Simple command execution
@@ -237,7 +237,7 @@ Week 7+:  Advanced        ━━━━━━━━━━━━━━━━━━
   - Recursive directory hashing
   - Sort inputs for determinism
 - [x] Local cache directory structure
-  - `.cascade/cache/` directory
+  - `.cscd/cache/` directory
   - Blob storage: `{hash}/output.tar.gz`
   - Metadata: `{hash}/metadata.json`
   - Lock files for concurrent access
@@ -253,7 +253,7 @@ Week 7+:  Advanced        ━━━━━━━━━━━━━━━━━━
   - Tar/compress task outputs
   - Store with metadata
   - Atomic writes (temp + rename)
-- [x] `cascade clean` command
+- [x] `cscd clean` command
   - Delete cache directory
   - Selective cleaning (by task, by age)
   - Show cache size before cleaning
@@ -308,7 +308,7 @@ Week 7+:  Advanced        ━━━━━━━━━━━━━━━━━━
   - Tips & tricks section
   - Environment variables
 - [x] Configuration reference
-  - Complete cascade.yaml guide (docs/configuration.md)
+  - Complete cscd.yaml guide (docs/configuration.md)
   - All fields documented
   - Best practices section
   - Common patterns
@@ -370,7 +370,7 @@ Week 7+:  Advanced        ━━━━━━━━━━━━━━━━━━
   - Semaphore for max workers
 - [ ] Max workers configuration
   - `--jobs` CLI flag
-  - `CASCADE_MAX_PARALLEL` env var
+  - `CSCD_MAX_PARALLEL` env var
   - Auto-detect CPU count
 - [ ] Task scheduling algorithm
   - Execute ready tasks immediately
@@ -432,7 +432,7 @@ Week 7+:  Advanced        ━━━━━━━━━━━━━━━━━━
   - Parallelism achieved
 
 **Design Principle:**
-Task output should dominate the terminal. Users run `cascade run test` to see test results, not Cascade orchestration details. Keep Cascade messages minimal, clearly prefixed, and never interleaved with task output.
+Task output should dominate the terminal. Users run `cscd run test` to see test results, not Cascade orchestration details. Keep Cascade messages minimal, clearly prefixed, and never interleaved with task output.
 
 **Deliverables:**
 - Beautiful progress reporting
@@ -777,7 +777,7 @@ Task output should dominate the terminal. Users run `cascade run test` to see te
     remote:
       upload_policy: always | on-success | manual
   ```
-- [ ] CLI flag: `cascade run --no-remote-upload` to disable temporarily
+- [ ] CLI flag: `cscd run --no-remote-upload` to disable temporarily
 
 ### ActionCache Support
 - [ ] Implement ActionCache client (cache entire command results)
@@ -829,9 +829,9 @@ Task output should dominate the terminal. Users run `cascade run test` to see te
 - [ ] Filtered patterns
   - `--pattern` flag for watch
   - Ignore patterns (.git, __pycache__)
-- [ ] `cascade watch` command
-  - `cascade watch test` - watch and re-run
-  - `cascade watch --pattern 'src/**/*.py' -- lint test`
+- [ ] `cscd watch` command
+  - `cscd watch test` - watch and re-run
+  - `cscd watch --pattern 'src/**/*.py' -- lint test`
 
 **Deliverables:**
 - Watch mode implementation
@@ -894,13 +894,13 @@ Task output should dominate the terminal. Users run `cascade run test` to see te
 ### Day 7: Developer Tooling
 
 **Tasks:**
-- [ ] `cascade init` wizard
+- [ ] `cscd init` wizard
   - Interactive project setup
   - Choose project type (Python, Go, etc.)
-  - Generate starter cascade.yaml
+  - Generate starter cscd.yaml
   - Install shell completions
 - [ ] Configuration validation
-  - `cascade validate --strict`
+  - `cscd validate --strict`
   - Warn about best practice violations
   - Suggest optimizations
 - [ ] Task templates
@@ -908,7 +908,7 @@ Task output should dominate the terminal. Users run `cascade run test` to see te
   - Template variables
   - Built-in templates (test, build, deploy)
 - [ ] Example project scaffolding
-  - `cascade init --example python`
+  - `cscd init --example python`
   - Pre-configured example projects
 
 **Deliverables:**
@@ -923,7 +923,7 @@ Task output should dominate the terminal. Users run `cascade run test` to see te
 - [ ] Watch mode working and responsive
 - [ ] Beautiful terminal output
 - [ ] Shell completions installed
-- [ ] `cascade init` wizard functional
+- [ ] `cscd init` wizard functional
 
 **Developer Experience:**
 - Time from install to first success: <5 minutes
@@ -950,7 +950,7 @@ Task output should dominate the terminal. Users run `cascade run test` to see te
   - Never log secret values
   - Mask in output
 - [ ] Multiple environment configs
-  - `cascade.yaml` + `cascade.dev.yaml`
+  - `cscd.yaml` + `cascade.dev.yaml`
   - Environment-specific overrides
   - `--env` flag for selection
 - [ ] `.env` file support
@@ -985,8 +985,8 @@ Task output should dominate the terminal. Users run `cascade run test` to see te
   - Report all failures at end
 - [ ] Task tagging and filtering
   - Tags: `[build, test, deploy]`
-  - `cascade run --tag test`
-  - `cascade run --exclude deploy`
+  - `cscd run --tag test`
+  - `cscd run --exclude deploy`
 
 **Deliverables:**
 - Advanced task control
@@ -1124,9 +1124,9 @@ tasks:
 
 **Options:**
 1. **VSCode Tasks Generator** (simpler)
-   - Convert `cascade.yaml` to `.vscode/tasks.json`
+   - Convert `cscd.yaml` to `.vscode/tasks.json`
    - `cascade vscode-tasks` command
-   - Keep cascade.yaml as source of truth
+   - Keep cscd.yaml as source of truth
    - VSCode tasks call cascade commands
 
 2. **VSCode Extension** (richer)
@@ -1138,14 +1138,14 @@ tasks:
 
 **Tasks:**
 - [ ] VSCode tasks.json generator
-  - Parse cascade.yaml
+  - Parse cscd.yaml
   - Generate VSCode task definitions
   - Map dependencies correctly
   - Problem matchers for error highlighting
 - [ ] VSCode extension (optional)
   - Task tree view provider
   - Commands integration
-  - Language server for cascade.yaml
+  - Language server for cscd.yaml
   - Syntax highlighting and validation
   - Graph visualization panel
 - [ ] Keyboard shortcuts and snippets
@@ -1159,7 +1159,7 @@ tasks:
     {
       "label": "cascade: build",
       "type": "shell",
-      "command": "cascade run build",
+      "command": "cscd run build",
       "group": "build",
       "problemMatcher": ["$eslint-stylish"],
       "dependsOn": ["cascade: lint", "cascade: test"]
@@ -1176,10 +1176,10 @@ tasks:
 
 ### CI Pipeline Generation
 
-**Goal:** Automatically generate CI pipeline configurations from cascade.yaml
+**Goal:** Automatically generate CI pipeline configurations from cscd.yaml
 
 **Architecture:**
-- Read cascade.yaml task definitions
+- Read cscd.yaml task definitions
 - Generate platform-specific CI config
 - Optimize for caching and artifacts
 - Support multiple CI platforms
@@ -1241,11 +1241,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Setup environment
-        run: cascade run setup
+        run: cscd run setup
       - uses: actions/cache@v3
         with:
-          path: .cascade/cache
-          key: cascade-${{ hashFiles('**/cascade.yaml') }}
+          path: .cscd/cache
+          key: cascade-${{ hashFiles('**/cscd.yaml') }}
   
   parallel-checks:
     needs: setup
@@ -1255,14 +1255,14 @@ jobs:
         task: [lint, typecheck, test]
     steps:
       - name: Run ${{ matrix.task }}
-        run: cascade run ${{ matrix.task }}
+        run: cscd run ${{ matrix.task }}
   
   build:
     needs: parallel-checks
     runs-on: ubuntu-latest
     steps:
       - name: Build
-        run: cascade run build
+        run: cscd run build
       - uses: actions/upload-artifact@v3
         with:
           name: dist
@@ -1270,7 +1270,7 @@ jobs:
 ```
 
 **Benefits:**
-- Quick CI setup from existing cascade.yaml
+- Quick CI setup from existing cscd.yaml
 - Best practices baked in (caching, artifacts)
 - Automatic parallelization detection
 - Platform-specific optimizations
@@ -1408,7 +1408,7 @@ tasks:
 ### Adoption Risks
 
 **Risk:** Learning curve too steep
-- **Mitigation:** `cascade init` wizard, excellent documentation
+- **Mitigation:** `cscd init` wizard, excellent documentation
 - **Fallback:** Start with hello-world, progressive complexity
 
 **Risk:** Configuration too complex

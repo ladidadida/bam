@@ -11,7 +11,7 @@ from pydantic import ValidationError
 
 from .schema import CascadeConfig
 
-CONFIG_FILENAMES = ("cascade.yaml", ".cascade.yaml")
+CONFIG_FILENAMES = ("cscd.yaml", ".cscd.yaml")
 
 
 class ConfigurationError(Exception):
@@ -48,12 +48,12 @@ def discover_config_path(
             return resolved
         raise ConfigurationError(f"Config file not found: {resolved}")
 
-    env_config = os.getenv("CASCADE_CONFIG")
+    env_config = os.getenv("CSCD_CONFIG")
     if env_config:
         resolved = _resolve_candidate(Path(env_config), search_root)
         if resolved.is_file():
             return resolved
-        raise ConfigurationError(f"Config file from CASCADE_CONFIG not found: {resolved}")
+        raise ConfigurationError(f"Config file from CSCD_CONFIG not found: {resolved}")
 
     for directory in (search_root, *search_root.parents):
         for filename in CONFIG_FILENAMES:
@@ -62,7 +62,7 @@ def discover_config_path(
                 return candidate
 
     raise ConfigurationError(
-        "No cascade configuration found. Searched for 'cascade.yaml' and '.cascade.yaml' "
+        "No cscd configuration found. Searched for 'cscd.yaml' and '.cscd.yaml' "
         f"from {search_root} upwards."
     )
 

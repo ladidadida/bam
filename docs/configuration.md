@@ -1,6 +1,6 @@
 # Cascade Configuration Reference
 
-Complete guide to `cascade.yaml` configuration syntax and options.
+Complete guide to `cscd.yaml` configuration syntax and options.
 
 ## File Structure
 

@@ -15,10 +15,10 @@ from pathlib import Path
 
 import pytest
 
-from cascade.cache.cas import CASCache
-from cascade.cache.hash import compute_cache_key
-from cascade.cache.local import LocalCache
-from cascade.cache.manager import CacheManager
+from cscd.cache.cas import CASCache
+from cscd.cache.hash import compute_cache_key
+from cscd.cache.local import LocalCache
+from cscd.cache.manager import CacheManager
 
 
 def compute_test_cache_key(name: str, files: list[Path]) -> str:
@@ -37,7 +37,7 @@ def compute_test_cache_key(name: str, files: list[Path]) -> str:
 def is_cascache_available() -> bool:
     """Check if cascache server is available."""
     try:
-        url = os.getenv("CASCADE_CAS_URL", "grpc://localhost:50051")
+        url = os.getenv("CSCD_CAS_URL", "grpc://localhost:50051")
         host = "localhost"
         port = 50051
 
@@ -56,14 +56,14 @@ def is_cascache_available() -> bool:
 
 pytestmark = pytest.mark.skipif(
     not is_cascache_available(),
-    reason="cascache server not available (run with Docker Compose or start server manually)"
+    reason="cascache server not available (run with Docker Compose or start server manually)",
 )
 
 
 @pytest.fixture
 def cascache_url() -> str:
     """Get cascache URL from environment."""
-    return os.getenv("CASCADE_CAS_URL", "grpc://localhost:50051")
+    return os.getenv("CSCD_CAS_URL", "grpc://localhost:50051")
 
 
 @pytest.fixture

@@ -51,11 +51,11 @@ Cascade follows a layered architecture with clear separation of concerns. Each l
 - Click (via Typer) - Command structure
 
 **Commands:**
-- `cascade run [TASKS...]` - Execute tasks
-- `cascade list` - Show available tasks
-- `cascade graph` - Visualize dependencies
-- `cascade validate` - Check configuration
-- `cascade clean` - Manage cache
+- `cscd run [TASKS...]` - Execute tasks
+- `cscd list` - Show available tasks
+- `cscd graph` - Visualize dependencies
+- `cscd validate` - Check configuration
+- `cscd clean` - Manage cache
 
 **Design Decisions:**
 - Rich output for better UX
@@ -74,7 +74,7 @@ Cascade follows a layered architecture with clear separation of concerns. Each l
 - `loader.py` - File discovery
 
 **Responsibilities:**
-- Load and parse cascade.yaml
+- Load and parse cscd.yaml
 - Validate configuration schema
 - Expand environment variables
 - Resolve glob patterns
@@ -86,7 +86,7 @@ version: 1  # Schema version
 
 cache:  # Optional
   type: local  # local (Phase 1), cas (Phase 2+)
-  cache_dir: .cascade/cache
+  cache_dir: .cscd/cache
 
 tasks:  # Required
   task_name:
@@ -217,7 +217,7 @@ cache_key = SHA256(
 ```
 
 **Storage Format (Local):**
-- Directory: `.cascade/cache/`
+- Directory: `.cscd/cache/`
 - Format: `tar.gz` archives
 - Naming: `{cache_key[:8]}.tar.gz`
 - Index: `index.json` with metadata
@@ -256,7 +256,7 @@ cache_key = SHA256(
 
 ```
 1. Discover config file
-   (CLI arg → env var → ./cascade.yaml → walk up)
+   (CLI arg → env var → ./cscd.yaml → walk up)
    ↓
 2. Read YAML file
    ↓
@@ -452,7 +452,7 @@ cascade/
 
 **Good (minimal):**
 ```
-$ cascade run test
+$ cscd run test
 ============================= test session starts ==============================
 platform linux -- Python 3.13.0, pytest-9.0.0
 collected 60 items
@@ -465,8 +465,8 @@ tests/unit/test_executor.py .........                                    [ 28%]
 
 **Bad (too much Cascade noise):**
 ```
-$ cascade run test
-[cascade] Loading configuration from cascade.yaml
+$ cscd run test
+[cascade] Loading configuration from cscd.yaml
 [cascade] Validating task graph
 [cascade] Computing cache keys
 [cascade] Cache miss for task: test
@@ -564,7 +564,7 @@ $ cascade run test
 - Support for specialized hardware (GPU, large RAM)
 
 **VSCode Integration:**
-- Generate VSCode tasks.json from cascade.yaml
+- Generate VSCode tasks.json from cscd.yaml
 - Optional full VSCode extension
 - Task explorer in IDE sidebar
 - Graph visualization panel
@@ -572,7 +572,7 @@ $ cascade run test
 
 **CI Pipeline Generation:**
 - Auto-generate CI configs (GitHub Actions, GitLab CI, Jenkins)
-- Parse cascade.yaml to create optimized pipelines
+- Parse cscd.yaml to create optimized pipelines
 - Automatic parallelization and caching strategies
 - Platform-specific best practices
 - Multi-platform support

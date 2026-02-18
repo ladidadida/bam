@@ -7,7 +7,7 @@ from typing import cast
 
 import networkx as nx
 
-from cascade.config.schema import TaskConfig
+from cscd.config.schema import TaskConfig
 
 
 class MissingTaskError(Exception):

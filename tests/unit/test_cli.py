@@ -1,4 +1,4 @@
-"""Unit tests for cascade.cli."""
+"""Unit tests for cscd.cli."""
 
 from __future__ import annotations
 
@@ -7,7 +7,7 @@ import os
 import pytest
 from typer.testing import CliRunner
 
-from cascade.cli import _parse_jobs_value, app
+from cscd.cli import _parse_jobs_value, app
 
 runner = CliRunner(mix_stderr=False)
 
@@ -45,7 +45,7 @@ def test_main_version() -> None:
 def test_run_command() -> None:
     """Test run command executes tasks."""
     with runner.isolated_filesystem():
-        with open("cascade.yaml", "w", encoding="utf-8") as file:
+        with open("cscd.yaml", "w", encoding="utf-8") as file:
             file.write("version: 1\n\ntasks:\n  build:\n    command: echo 'Building project'\n")
 
         result = runner.invoke(app, ["run", "build"])
@@ -57,7 +57,7 @@ def test_run_command() -> None:
 def test_run_command_with_failing_task() -> None:
     """Test run command stops on task failure."""
     with runner.isolated_filesystem():
-        with open("cascade.yaml", "w", encoding="utf-8") as file:
+        with open("cscd.yaml", "w", encoding="utf-8") as file:
             file.write("version: 1\n\ntasks:\n  fail:\n    command: exit 1\n")
 
         result = runner.invoke(app, ["run", "fail"])
@@ -69,7 +69,7 @@ def test_run_command_with_failing_task() -> None:
 def test_run_dry_run_shows_execution_plan() -> None:
     """Test --dry-run prints dependency-respecting plan."""
     with runner.isolated_filesystem():
-        with open("cascade.yaml", "w", encoding="utf-8") as file:
+        with open("cscd.yaml", "w", encoding="utf-8") as file:
             file.write(
                 "version: 1\n\n"
                 "tasks:\n"
@@ -92,7 +92,7 @@ def test_run_dry_run_shows_execution_plan() -> None:
 def test_graph_command_ascii_output() -> None:
     """Test graph command default ASCII output."""
     with runner.isolated_filesystem():
-        with open("cascade.yaml", "w", encoding="utf-8") as file:
+        with open("cscd.yaml", "w", encoding="utf-8") as file:
             file.write(
                 "version: 1\n\n"
                 "tasks:\n"
@@ -114,7 +114,7 @@ def test_graph_command_ascii_output() -> None:
 def test_graph_command_dot_output() -> None:
     """Test graph command DOT output."""
     with runner.isolated_filesystem():
-        with open("cascade.yaml", "w", encoding="utf-8") as file:
+        with open("cscd.yaml", "w", encoding="utf-8") as file:
             file.write(
                 "version: 1\n\n"
                 "tasks:\n"
@@ -136,7 +136,7 @@ def test_graph_command_dot_output() -> None:
 def test_validate_command_with_valid_config() -> None:
     """Test validate command with a valid local config file."""
     with runner.isolated_filesystem():
-        with open("cascade.yaml", "w", encoding="utf-8") as file:
+        with open("cscd.yaml", "w", encoding="utf-8") as file:
             file.write("version: 1\n\ntasks:\n  build:\n    command: echo build\n")
 
         result = runner.invoke(app, ["validate"])
@@ -149,7 +149,7 @@ def test_validate_command_with_valid_config() -> None:
 def test_validate_command_with_invalid_config() -> None:
     """Test validate command fails with invalid config."""
     with runner.isolated_filesystem():
-        with open("cascade.yaml", "w", encoding="utf-8") as file:
+        with open("cscd.yaml", "w", encoding="utf-8") as file:
             file.write("tasks: []\n")
 
         result = runner.invoke(app, ["validate"])
@@ -211,7 +211,7 @@ def test_parse_jobs_value_zero() -> None:
 def test_run_with_jobs_flag() -> None:
     """Test run command accepts --jobs flag."""
     with runner.isolated_filesystem():
-        with open("cascade.yaml", "w", encoding="utf-8") as file:
+        with open("cscd.yaml", "w", encoding="utf-8") as file:
             file.write("version: 1\n\ntasks:\n  build:\n    command: echo build\n")
 
         result = runner.invoke(app, ["run", "build", "--jobs", "2"])
@@ -222,7 +222,7 @@ def test_run_with_jobs_flag() -> None:
 def test_run_with_jobs_auto() -> None:
     """Test run command accepts --jobs=auto."""
     with runner.isolated_filesystem():
-        with open("cascade.yaml", "w", encoding="utf-8") as file:
+        with open("cscd.yaml", "w", encoding="utf-8") as file:
             file.write("version: 1\n\ntasks:\n  build:\n    command: echo build\n")
 
         result = runner.invoke(app, ["run", "build", "--jobs", "auto"])
@@ -233,7 +233,7 @@ def test_run_with_jobs_auto() -> None:
 def test_run_with_jobs_short_flag() -> None:
     """Test run command accepts -j short flag."""
     with runner.isolated_filesystem():
-        with open("cascade.yaml", "w", encoding="utf-8") as file:
+        with open("cscd.yaml", "w", encoding="utf-8") as file:
             file.write("version: 1\n\ntasks:\n  build:\n    command: echo build\n")
 
         result = runner.invoke(app, ["run", "build", "-j", "4"])
@@ -244,7 +244,7 @@ def test_run_with_jobs_short_flag() -> None:
 def test_dry_run_with_jobs_shows_parallel_info() -> None:
     """Test --dry-run with --jobs shows parallel execution info."""
     with runner.isolated_filesystem():
-        with open("cascade.yaml", "w", encoding="utf-8") as file:
+        with open("cscd.yaml", "w", encoding="utf-8") as file:
             file.write("version: 1\n\ntasks:\n  build:\n    command: echo build\n")
 
         result = runner.invoke(app, ["run", "build", "--dry-run", "--jobs", "4"])

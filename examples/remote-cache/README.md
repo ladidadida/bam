@@ -11,13 +11,13 @@ version: 1
 cache:
   local:
     enabled: true
-    path: .cascade/cache  # Local cache directory
+    path: .cscd/cache  # Local cache directory
   
   remote:
     enabled: true
     type: cas
     url: grpc://localhost:50051  # cascache server URL
-    token_file: ~/.cascade/cas-token  # Optional authentication token
+    token_file: ~/.cscd/cas-token  # Optional authentication token
     upload: true   # Automatically upload to remote
     download: true # Automatically download from remote
     timeout: 30.0  # Request timeout in seconds
@@ -43,7 +43,7 @@ tasks:
 
 **On cache miss (first run):**
 1. Task executes normally
-2. Outputs stored in local cache (`.cascade/cache`)
+2. Outputs stored in local cache (`.cscd/cache`)
 3. Outputs automatically uploaded to remote CAS server
 
 **On cache hit (subsequent runs):**
@@ -101,8 +101,8 @@ To run a local cascache server:
 cascache serve --host 0.0.0.0 --port 50051
 
 # With authentication
-cascache token create > ~/.cascade/cas-token
-cascache serve --token-file ~/.cascade/cas-token
+cascache token create > ~/.cscd/cas-token
+cascache serve --token-file ~/.cscd/cas-token
 ```
 
 ## Local-Only Mode
@@ -113,7 +113,7 @@ To disable remote caching:
 cache:
   local:
     enabled: true
-    path: .cascade/cache
+    path: .cscd/cache
   
   remote:
     enabled: false  # Disable remote cache

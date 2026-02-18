@@ -5,9 +5,9 @@ from __future__ import annotations
 import logging
 from pathlib import Path
 
-from cascade.cache.backend import CacheBackend
-from cascade.cache.cas import CASCache
-from cascade.cache.local import LocalCache
+from cscd.cache.backend import CacheBackend
+from cscd.cache.cas import CASCache
+from cscd.cache.local import LocalCache
 
 logger = logging.getLogger(__name__)
 

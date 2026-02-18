@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import pytest
 
-from cascade.config.schema import TaskConfig
-from cascade.graph import (
+from cscd.config.schema import TaskConfig
+from cscd.graph import (
     CyclicDependencyError,
     MissingTaskError,
     build_task_graph,

@@ -5,7 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.1.1]
+### Changed
+
+- **Renamed package from `cascade` to `cscd`**
+  - Package name: `cascade` → `cscd` (pronounced "cascade")
+  - CLI command: `cascade` → `cscd`
+  - Config file: `cscd.yaml` / `.cscd.yaml` (was `cascade.yaml`)
+  - Environment variables: `CSCD_*` (was `CASCADE_*`)
+  - Cache directory: `.cscd/cache` (was `.cascade/cache`)
+  - URLs: `cascascade/cscd` (was `cascascade/cascade`)
+  - Reason: Original "cascade" name already taken on PyPI
 
 ## [0.1.0] - 2026-02-18
 
@@ -93,5 +103,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 🔄 Phase 3: CAS Integration - Planned
 - 📅 Phase 4+: See roadmap
 
-[unreleased]: https://gitlab.com/cascascade/cascade/-/compare/v0.1.0...main
-[0.1.0]: https://gitlab.com/cascascade/cascade/-/releases/v0.1.0
+[unreleased]: https://gitlab.com/cascascade/cscd/-/compare/v0.1.1...main
+[0.1.1]: https://gitlab.com/cascascade/cscd/-/releases/v0.1.1
+[0.1.0]: https://gitlab.com/cascascade/cscd/-/releases/v0.1.0

@@ -12,8 +12,8 @@ from typing import TYPE_CHECKING
 
 import grpc
 
-from cascade.api.generated import cas_simple_pb2, cas_simple_pb2_grpc
-from cascade.cache.backend import CacheBackend
+from cscd.api.generated import cas_simple_pb2, cas_simple_pb2_grpc
+from cscd.cache.backend import CacheBackend
 
 if TYPE_CHECKING:
     pass
@@ -312,9 +312,7 @@ class CASCache(CacheBackend):
 
                 blob_response = response.responses[0]
                 if blob_response.status_code != 0:
-                    logger.warning(
-                        f"Failed to download blob: {blob_response.status_message}"
-                    )
+                    logger.warning(f"Failed to download blob: {blob_response.status_message}")
                     return None
 
                 return blob_response.data

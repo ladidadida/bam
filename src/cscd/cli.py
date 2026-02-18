@@ -1,4 +1,4 @@
-"""CLI entry point for cascade."""
+"""CLI entry point for cscd."""
 
 from __future__ import annotations
 
@@ -28,11 +28,11 @@ from .graph import (
 )
 
 app = typer.Typer(
-    name="cascade",
+    name="cscd",
     help=(
         "Flow naturally through your build pipeline 🌊\n\n"
-        "Cascade is a content-addressed workflow orchestration tool that brings "
-        "CAS-style caching to existing development workflows."
+        "cscd (pronounced 'cascade') is a content-addressed workflow orchestration tool that brings "
+        "CAS-style caching to existing development workflows. Companion to cascache."
     ),
     no_args_is_help=True,
 )
@@ -41,7 +41,7 @@ app = typer.Typer(
 def version_callback(value: bool) -> None:
     """Print version and exit when requested."""
     if value:
-        typer.echo(f"cascade {__version__}")
+        typer.echo(f"cscd {__version__}")
         raise typer.Exit()
 
 
@@ -501,7 +501,7 @@ def run_command(
         ),
     ] = None,
 ) -> None:
-    """Run a task from cascade.yaml."""
+    """Run a task from cscd.yaml."""
     max_workers = _parse_jobs_value(jobs)
 
     # Auto-detect plain mode if not explicitly set

@@ -1,4 +1,4 @@
-"""Pydantic schema definitions for ``cascade.yaml``."""
+"""Pydantic schema definitions for ``cscd.yaml``."""
 
 from __future__ import annotations
 

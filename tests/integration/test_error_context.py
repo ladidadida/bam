@@ -8,7 +8,7 @@ from pathlib import Path
 
 def test_shows_dependency_chain_on_failure(tmp_path: Path) -> None:
     """Test that failing task shows its dependency chain."""
-    config = tmp_path / "cascade.yaml"
+    config = tmp_path / "cscd.yaml"
     config.write_text("""
 version: 1
 tasks:
@@ -26,7 +26,7 @@ tasks:
 """)
 
     result = subprocess.run(
-        ["uv", "run", "cascade", "run", "--config", str(config), "final"],
+        ["uv", "run", "cscd", "run", "--config", str(config), "final"],
         capture_output=True,
         text=True,
         timeout=30,
@@ -43,7 +43,7 @@ tasks:
 
 def test_shows_skipped_tasks_on_failure(tmp_path: Path) -> None:
     """Test that execution failure lists skipped tasks."""
-    config = tmp_path / "cascade.yaml"
+    config = tmp_path / "cscd.yaml"
     config.write_text("""
 version: 1
 tasks:
@@ -58,7 +58,7 @@ tasks:
 """)
 
     result = subprocess.run(
-        ["uv", "run", "cascade", "run", "--config", str(config), "task3"],
+        ["uv", "run", "cscd", "run", "--config", str(config), "task3"],
         capture_output=True,
         text=True,
         timeout=30,
@@ -73,7 +73,7 @@ tasks:
 
 def test_no_skipped_tasks_when_all_complete(tmp_path: Path) -> None:
     """Test that successful execution doesn't show skipped tasks."""
-    config = tmp_path / "cascade.yaml"
+    config = tmp_path / "cscd.yaml"
     config.write_text("""
 version: 1
 tasks:
@@ -85,7 +85,7 @@ tasks:
 """)
 
     result = subprocess.run(
-        ["uv", "run", "cascade", "run", "--config", str(config), "task2"],
+        ["uv", "run", "cscd", "run", "--config", str(config), "task2"],
         capture_output=True,
         text=True,
         timeout=30,
@@ -98,7 +98,7 @@ tasks:
 
 def test_dependency_chain_single_task(tmp_path: Path) -> None:
     """Test dependency chain for task with no dependencies."""
-    config = tmp_path / "cascade.yaml"
+    config = tmp_path / "cscd.yaml"
     config.write_text("""
 version: 1
 tasks:
@@ -107,7 +107,7 @@ tasks:
 """)
 
     result = subprocess.run(
-        ["uv", "run", "cascade", "run", "--config", str(config), "solo"],
+        ["uv", "run", "cscd", "run", "--config", str(config), "solo"],
         capture_output=True,
         text=True,
         timeout=30,

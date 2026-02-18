@@ -97,7 +97,7 @@ def compute_cache_key(task: Task) -> str:
 
 **Cache Lookup:**
 1. Compute cache key from current inputs
-2. Check local cache (`.cascade/cache/`)
+2. Check local cache (`.cscd/cache/`)
 3. Check remote CAS server (if configured)
 4. Cache hit → restore outputs, skip execution
 5. Cache miss → execute task, store outputs
@@ -260,13 +260,13 @@ Cascade uses a layered architecture with clear separation of concerns:
 ```
 ┌─────────────────────────────────────┐
 │     CLI Layer (typer)               │  - User commands
-│  cascade run/watch/clean/graph      │  - Argument parsing
+│  cscd run/watch/clean/graph      │  - Argument parsing
 │                                     │  - Output formatting (rich)
 └─────────────────────────────────────┘
            ↓
 ┌─────────────────────────────────────┐
 │    Configuration Layer              │  - YAML parsing
-│  cascade.yaml discovery & parsing   │  - Schema validation (pydantic)
+│  cscd.yaml discovery & parsing   │  - Schema validation (pydantic)
 │                                     │  - Environment expansion
 └─────────────────────────────────────┘
            ↓

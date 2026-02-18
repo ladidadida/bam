@@ -1,4 +1,6 @@
-# Cascade 🌊
+# cscd 🌊
+
+> **Pronounced "cascade" • Companion to cascache**
 
 > **⚠️ PROOF OF CONCEPT - NOT PRODUCTION READY**
 >
@@ -10,7 +12,7 @@
 
 **Flow naturally through your build pipeline**
 
-Cascade is a content-addressed workflow orchestration tool that brings the power of content-addressable storage to everyday development workflows. It bridges the gap between simple task runners (like Make/Just) and complex build systems (like Bazel), providing intelligent caching without forcing teams to restructure their projects.
+cscd (pronounced "cascade") is a content-addressed workflow orchestration tool that brings the power of content-addressable storage to everyday development workflows. It bridges the gap between simple task runners (like Make/Just) and complex build systems (like Bazel), providing intelligent caching without forcing teams to restructure their projects.
 There exists a companion server app [cascache](https://gitlab.com/cascascade/cascache) that is used for remote caching.
 
 **Warning**: Large parts of this tool were generated with the help of AI. Special thanks to Claude Sonnet for the excellent support!
@@ -34,20 +36,20 @@ There exists a companion server app [cascache](https://gitlab.com/cascascade/cas
 
 ```bash
 # Using uv (recommended)
-uv pip install cascade
+uv pip install cscd
 
 # Using pip
-pip install cascade
+pip install cscd
 
 # From source
-git clone https://gitlab.com/cascascade/cascade.git
+git clone https://gitlab.com/cascascade/cscd.git
 cd cascade
 uv sync
 ```
 
 ### Your First Workflow
 
-Create `cascade.yaml` in your project:
+Create `cscd.yaml` in your project:
 
 ```yaml
 version: 1
@@ -74,26 +76,26 @@ Run your tasks:
 
 ```bash
 # Execute tasks with dependencies
-cascade run test
+cscd run test
 
 # Parallel execution (auto-detect CPUs)
-cascade run test  # defaults to parallel
+cscd run test  # defaults to parallel
 
 # Control parallelism
-cascade run test --jobs 4     # use 4 workers
-cascade run test --jobs 1     # sequential
+cscd run test --jobs 4     # use 4 workers
+cscd run test --jobs 1     # sequential
 
 # Plain output for CI/CD
-cascade run test --plain
+cscd run test --plain
 
 # List available tasks
-cascade list
+cscd list
 
 # Visualize dependency graph
-cascade graph
+cscd graph
 
 # Validate configuration
-cascade validate
+cscd validate
 ```
 
 ### Distributed Caching
@@ -104,12 +106,12 @@ Share cache across your team with a remote CAS server:
 cache:
   local:
     enabled: true
-    path: .cascade/cache
+    path: .cscd/cache
   remote:
     enabled: true
     type: cas
     url: grpc://cas.example.com:50051
-    token_file: ~/.cascade/cas-token
+    token_file: ~/.cscd/cas-token
     timeout: 30.0
     max_retries: 3  # Automatic retry on transient errors
 ```
@@ -128,7 +130,7 @@ See [examples/remote-cache/](examples/remote-cache/) for complete setup guide.
 **User Guides:**
 - [Concept Document](docs/concept.md) - What is Cascade? Core concepts and technology stack
 - [CLI Reference](docs/cli.md) - Complete command documentation
-- [Configuration Guide](docs/configuration.md) - Full cascade.yaml reference
+- [Configuration Guide](docs/configuration.md) - Full cscd.yaml reference
 
 **Technical Specifications:**
 - [Architecture](spec/architecture.md) - System design and components
@@ -195,33 +197,33 @@ tasks:
 
 ## 🎨 CLI Commands
 
-### `cascade run`
+### `cscd run`
 
 Execute tasks with automatic dependency resolution and parallel execution:
 
 ```bash
 # Run single task (parallel by default)
-cascade run build
+cscd run build
 
 # Control parallelism
-cascade run build --jobs 8      # use 8 workers
-cascade run build --jobs auto   # auto-detect CPUs
-cascade run build --jobs 1      # sequential
+cscd run build --jobs 8      # use 8 workers
+cscd run build --jobs auto   # auto-detect CPUs
+cscd run build --jobs 1      # sequential
 
 # Plain output for CI/CD
-cascade run build --plain
+cscd run build --plain
 
 # Run multiple tasks
-cascade run lint test build
+cscd run lint test build
 
 # Dry run (show execution plan)
-cascade run --dry-run deploy
+cscd run --dry-run deploy
 
 # Disable caching
-cascade run --no-cache build
+cscd run --no-cache build
 
 # Quiet mode
-cascade run -q test
+cscd run -q test
 ```
 
 **Interactive Tree View:**
@@ -256,16 +258,16 @@ When tasks fail, Cascade provides detailed context:
   • final
 ```
 
-### `cascade graph`
+### `cscd graph`
 
 Visualize task dependencies:
 
 ```bash
 # ASCII tree output
-cascade graph
+cscd graph
 
 # GraphViz DOT format
-cascade graph --format dot > graph.dot
+cscd graph --format dot > graph.dot
 ```
 
 **Example Output:**
@@ -287,12 +289,12 @@ cascade graph --format dot > graph.dot
    └─ deploy
 ```
 
-### `cascade validate`
+### `cscd validate`
 
 Validate configuration:
 
 ```bash
-cascade validate
+cscd validate
 ```
 
 Checks:
@@ -301,16 +303,16 @@ Checks:
 - ✅ All dependencies defined
 - ✅ Required fields present
 
-### `cascade clean`
+### `cscd clean`
 
 Manage cache:
 
 ```bash
 # Clean with confirmation
-cascade clean
+cscd clean
 
 # Force clean
-cascade clean --force
+cscd clean --force
 ```
 
 ## 🏗️ Architecture

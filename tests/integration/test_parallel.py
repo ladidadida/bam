@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 from typer.testing import CliRunner
 
-from cascade.cli import app
+from cscd.cli import app
 
 
 @pytest.fixture
@@ -50,7 +50,7 @@ tasks:
     depends_on:
       - task-c
 """
-    (workspace / "cascade.yaml").write_text(config)
+    (workspace / "cscd.yaml").write_text(config)
     return workspace
 
 
@@ -59,7 +59,7 @@ def test_parallel_execution_with_jobs_flag(parallel_workspace: Path) -> None:
     runner = CliRunner()
     result = runner.invoke(
         app,
-        ["run", "--config", str(parallel_workspace / "cascade.yaml"), "task-d", "--jobs", "3"],
+        ["run", "--config", str(parallel_workspace / "cscd.yaml"), "task-d", "--jobs", "3"],
     )
 
     assert result.exit_code == 0
@@ -71,7 +71,7 @@ def test_parallel_execution_completes_successfully(parallel_workspace: Path) -> 
     runner = CliRunner()
     result = runner.invoke(
         app,
-        ["run", "--config", str(parallel_workspace / "cascade.yaml"), "task-d", "--jobs", "2"],
+        ["run", "--config", str(parallel_workspace / "cscd.yaml"), "task-d", "--jobs", "2"],
     )
 
     assert result.exit_code == 0
@@ -110,12 +110,12 @@ tasks:
       - good-2
       - bad
 """
-    (tmp_path / "cascade.yaml").write_text(config)
+    (tmp_path / "cscd.yaml").write_text(config)
 
     runner = CliRunner()
     result = runner.invoke(
         app,
-        ["run", "--config", str(tmp_path / "cascade.yaml"), "dependent", "--jobs", "3"],
+        ["run", "--config", str(tmp_path / "cscd.yaml"), "dependent", "--jobs", "3"],
     )
 
     assert result.exit_code == 1
@@ -153,7 +153,7 @@ tasks:
       - sleep-b
       - sleep-c
 """
-    (parallel_workspace / "cascade.yaml").write_text(config)
+    (parallel_workspace / "cscd.yaml").write_text(config)
 
     runner = CliRunner()
 
@@ -161,7 +161,7 @@ tasks:
     start = time.time()
     result = runner.invoke(
         app,
-        ["run", "--config", str(parallel_workspace / "cascade.yaml"), "final", "--jobs", "1"],
+        ["run", "--config", str(parallel_workspace / "cscd.yaml"), "final", "--jobs", "1"],
     )
     sequential_time = time.time() - start
 
@@ -171,7 +171,7 @@ tasks:
     start = time.time()
     result = runner.invoke(
         app,
-        ["run", "--config", str(parallel_workspace / "cascade.yaml"), "final", "--jobs", "3"],
+        ["run", "--config", str(parallel_workspace / "cscd.yaml"), "final", "--jobs", "3"],
     )
     parallel_time = time.time() - start
 
@@ -210,12 +210,12 @@ tasks:
     depends_on:
       - second
 """
-    (tmp_path / "cascade.yaml").write_text(config)
+    (tmp_path / "cscd.yaml").write_text(config)
 
     runner = CliRunner()
     result = runner.invoke(
         app,
-        ["run", "--config", str(tmp_path / "cascade.yaml"), "third", "--jobs", "3"],
+        ["run", "--config", str(tmp_path / "cscd.yaml"), "third", "--jobs", "3"],
     )
 
     assert result.exit_code == 0

@@ -53,7 +53,7 @@ pip install cascache
 python -m cascache
 
 # Terminal 2: Run tests
-CASCADE_CAS_URL=grpc://localhost:50051 uv run pytest tests/integration-cascache/test_cascache_integration.py -v
+CSCD_CAS_URL=grpc://localhost:50051 uv run pytest tests/integration-cascache/test_cascache_integration.py -v
 ```
 
 ## Test Coverage

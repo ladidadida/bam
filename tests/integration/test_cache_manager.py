@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from cascade.cache import CacheManager, CASCache, LocalCache
+from cscd.cache import CacheManager, CASCache, LocalCache
 
 
 @pytest.mark.asyncio
@@ -42,9 +42,7 @@ async def test_cache_manager_fallback_to_local(tmp_path: Path):
     # Create remote cache with invalid URL (will fail)
     remote_cache = CASCache("grpc://invalid-host:99999", timeout=0.1)
 
-    manager = CacheManager(
-        local_cache=local_cache, remote_cache=remote_cache, auto_upload=True
-    )
+    manager = CacheManager(local_cache=local_cache, remote_cache=remote_cache, auto_upload=True)
 
     # Create test file
     output_file = tmp_path / "output.txt"

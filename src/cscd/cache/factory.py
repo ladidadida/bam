@@ -6,13 +6,13 @@ import logging
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from cascade.cache.backend import CacheBackend
-from cascade.cache.cas import CASCache
-from cascade.cache.local import LocalCache
-from cascade.cache.manager import CacheManager
+from cscd.cache.backend import CacheBackend
+from cscd.cache.cas import CASCache
+from cscd.cache.local import LocalCache
+from cscd.cache.manager import CacheManager
 
 if TYPE_CHECKING:
-    from cascade.config.schema import CacheConfig
+    from cscd.config.schema import CacheConfig
 
 logger = logging.getLogger(__name__)
 

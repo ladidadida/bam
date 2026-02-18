@@ -73,7 +73,7 @@ deploy:pypi:
     - uv publish --token $PYPI_API_TOKEN
   environment:
     name: production
-    url: https://pypi.org/project/cascade/
+    url: https://pypi.org/project/cscd/
   only:
     - tags
   except:
@@ -88,7 +88,7 @@ deploy:testpypi:main:
     - uv publish --publish-url https://test.pypi.org/legacy/ --token $PYPI_TEST_API_TOKEN
   environment:
     name: test
-    url: https://test.pypi.org/project/cascade/
+    url: https://test.pypi.org/project/cscd/
   when: manual
   only:
     - main
@@ -104,7 +104,7 @@ deploy:testpypi:mr:
     - uv publish --publish-url https://test.pypi.org/legacy/ --token $PYPI_TEST_API_TOKEN
   environment:
     name: test
-    url: https://test.pypi.org/project/cascade/
+    url: https://test.pypi.org/project/cscd/
   when: manual
   only:
     - merge_requests

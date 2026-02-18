@@ -6,12 +6,12 @@ from pathlib import Path
 
 import pytest
 
-from cascade.config import ConfigurationError, discover_config_path, load_config
+from cscd.config import ConfigurationError, discover_config_path, load_config
 
 
 def test_discover_config_in_parent_directory(sample_workspace: Path) -> None:
-    """Find cascade.yaml when invoked from nested directory."""
-    config_path = sample_workspace / "cascade.yaml"
+    """Find cscd.yaml when invoked from nested directory."""
+    config_path = sample_workspace / "cscd.yaml"
     config_path.write_text("version: 1\n", encoding="utf-8")
 
     nested = sample_workspace / "apps" / "api"
@@ -27,11 +27,11 @@ def test_load_config_expands_environment_variables(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Expand ${VAR} placeholders in loaded YAML values."""
-    monkeypatch.setenv("CASCADE_GREETING", "hello")
+    monkeypatch.setenv("CSCD_GREETING", "hello")
 
-    config_path = sample_workspace / "cascade.yaml"
+    config_path = sample_workspace / "cscd.yaml"
     config_path.write_text(
-        "version: 1\n\ntasks:\n  greet:\n    command: echo ${CASCADE_GREETING}\n",
+        "version: 1\n\ntasks:\n  greet:\n    command: echo ${CSCD_GREETING}\n",
         encoding="utf-8",
     )
 
@@ -40,12 +40,12 @@ def test_load_config_expands_environment_variables(
     assert config.tasks["greet"].command == "echo hello"
 
 
-def test_cascade_config_env_var_has_priority(
+def test_cscd_config_env_var_has_priority(
     sample_workspace: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Use CASCADE_CONFIG path before directory discovery."""
-    default_config = sample_workspace / "cascade.yaml"
+    """Use CSCD_CONFIG path before directory discovery."""
+    default_config = sample_workspace / "cscd.yaml"
     default_config.write_text("version: 1\n", encoding="utf-8")
 
     explicit_config = sample_workspace / "custom.yaml"
@@ -54,7 +54,7 @@ def test_cascade_config_env_var_has_priority(
         encoding="utf-8",
     )
 
-    monkeypatch.setenv("CASCADE_CONFIG", "custom.yaml")
+    monkeypatch.setenv("CSCD_CONFIG", "custom.yaml")
     discovered = discover_config_path(start_dir=sample_workspace)
 
     assert discovered == explicit_config
@@ -62,7 +62,7 @@ def test_cascade_config_env_var_has_priority(
 
 def test_load_config_raises_for_invalid_yaml(sample_workspace: Path) -> None:
     """Raise ConfigurationError for malformed YAML."""
-    config_path = sample_workspace / "cascade.yaml"
+    config_path = sample_workspace / "cscd.yaml"
     config_path.write_text("tasks: [\n", encoding="utf-8")
 
     with pytest.raises(ConfigurationError):
@@ -71,7 +71,7 @@ def test_load_config_raises_for_invalid_yaml(sample_workspace: Path) -> None:
 
 def test_load_config_raises_for_schema_error(sample_workspace: Path) -> None:
     """Raise ConfigurationError for structurally invalid config."""
-    config_path = sample_workspace / "cascade.yaml"
+    config_path = sample_workspace / "cscd.yaml"
     config_path.write_text("tasks: []\n", encoding="utf-8")
 
     with pytest.raises(ConfigurationError):

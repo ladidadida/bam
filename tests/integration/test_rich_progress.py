@@ -8,7 +8,7 @@ from pathlib import Path
 
 def test_rich_progress_disabled_with_plain_flag(tmp_path: Path) -> None:
     """Test that --plain flag disables rich progress and uses buffered output."""
-    config = tmp_path / "cascade.yaml"
+    config = tmp_path / "cscd.yaml"
     config.write_text("""
 version: 1
 tasks:
@@ -22,7 +22,7 @@ tasks:
 """)
 
     result = subprocess.run(
-        ["uv", "run", "cascade", "run", "--config", str(config), "task3", "--jobs", "4", "--plain"],
+        ["uv", "run", "cscd", "run", "--config", str(config), "task3", "--jobs", "4", "--plain"],
         capture_output=True,
         text=True,
         cwd=Path(__file__).parent.parent.parent,
@@ -41,10 +41,10 @@ def test_rich_progress_in_interactive_mode_completes() -> None:
     Note: This test verifies execution completes but cannot verify
     the visual display since we can't capture rich output in tests.
     """
-    config_path = Path(__file__).parent.parent.parent / "examples" / "parallel" / "cascade.yaml"
+    config_path = Path(__file__).parent.parent.parent / "examples" / "parallel" / "cscd.yaml"
 
     result = subprocess.run(
-        ["uv", "run", "cascade", "run", "--config", str(config_path), "package", "--jobs", "4"],
+        ["uv", "run", "cscd", "run", "--config", str(config_path), "package", "--jobs", "4"],
         capture_output=True,
         text=True,
         timeout=30,
@@ -61,10 +61,10 @@ def test_rich_progress_disabled_in_non_tty() -> None:
     When output is piped (non-TTY), rich progress should be disabled
     and buffered plain output should be used instead.
     """
-    config_path = Path(__file__).parent.parent.parent / "examples" / "parallel" / "cascade.yaml"
+    config_path = Path(__file__).parent.parent.parent / "examples" / "parallel" / "cscd.yaml"
 
     result = subprocess.run(
-        ["uv", "run", "cascade", "run", "--config", str(config_path), "package", "--jobs", "4"],
+        ["uv", "run", "cscd", "run", "--config", str(config_path), "package", "--jobs", "4"],
         capture_output=True,  # Piping output makes it non-TTY
         text=True,
         timeout=30,
@@ -77,7 +77,7 @@ def test_rich_progress_disabled_in_non_tty() -> None:
 
 def test_sequential_execution_uses_streaming_output(tmp_path: Path) -> None:
     """Test that sequential execution (--jobs 1) uses streaming output."""
-    config = tmp_path / "cascade.yaml"
+    config = tmp_path / "cscd.yaml"
     config.write_text("""
 version: 1
 tasks:
@@ -89,7 +89,7 @@ tasks:
 """)
 
     result = subprocess.run(
-        ["uv", "run", "cascade", "run", "--config", str(config), "task2", "--jobs", "1"],
+        ["uv", "run", "cscd", "run", "--config", str(config), "task2", "--jobs", "1"],
         capture_output=True,
         text=True,
         cwd=Path(__file__).parent.parent.parent,

@@ -141,7 +141,7 @@ def test_full_workflow_with_cache(tmp_path):
 
 **Example:**
 ```python
-def test_cascade_run_command(tmp_path):
+def test_cscd_run_command(tmp_path):
     """CLI should execute tasks and show output."""
     create_test_project(tmp_path)
     
@@ -290,11 +290,11 @@ def test_command_failure_message()
 **Files:** `tests/component/test_cli_e2e.py`
 
 **Test Cases:**
-- `cascade run <task>`
-- `cascade list`
-- `cascade graph`
-- `cascade validate`
-- `cascade clean`
+- `cscd run <task>`
+- `cscd list`
+- `cscd graph`
+- `cscd validate`
+- `cscd clean`
 - Help output
 - Version display
 - Error exit codes
@@ -355,8 +355,8 @@ def create_test_file(path: Path, content: str = "test"):
     path.write_text(content)
 
 def create_test_config(workspace: Path, config: dict):
-    """Write cascade.yaml to workspace."""
-    config_path = workspace / "cascade.yaml"
+    """Write cscd.yaml to workspace."""
+    config_path = workspace / "cscd.yaml"
     config_path.write_text(yaml.dump(config))
     return config_path
 

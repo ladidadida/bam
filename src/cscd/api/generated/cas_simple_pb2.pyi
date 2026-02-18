@@ -46,10 +46,19 @@ class BatchReadBlobsResponse(_message.Message):
         data: bytes
         status_code: int
         status_message: str
-        def __init__(self, digest: Digest | _Mapping | None = ..., data: bytes | None = ..., status_code: int | None = ..., status_message: str | None = ...) -> None: ...
+        def __init__(
+            self,
+            digest: Digest | _Mapping | None = ...,
+            data: bytes | None = ...,
+            status_code: int | None = ...,
+            status_message: str | None = ...,
+        ) -> None: ...
+
     RESPONSES_FIELD_NUMBER: _ClassVar[int]
     responses: _containers.RepeatedCompositeFieldContainer[BatchReadBlobsResponse.Response]
-    def __init__(self, responses: _Iterable[BatchReadBlobsResponse.Response | _Mapping] | None = ...) -> None: ...
+    def __init__(
+        self, responses: _Iterable[BatchReadBlobsResponse.Response | _Mapping] | None = ...
+    ) -> None: ...
 
 class BatchUpdateBlobsRequest(_message.Message):
     __slots__ = ("requests",)
@@ -59,10 +68,15 @@ class BatchUpdateBlobsRequest(_message.Message):
         DATA_FIELD_NUMBER: _ClassVar[int]
         digest: Digest
         data: bytes
-        def __init__(self, digest: Digest | _Mapping | None = ..., data: bytes | None = ...) -> None: ...
+        def __init__(
+            self, digest: Digest | _Mapping | None = ..., data: bytes | None = ...
+        ) -> None: ...
+
     REQUESTS_FIELD_NUMBER: _ClassVar[int]
     requests: _containers.RepeatedCompositeFieldContainer[BatchUpdateBlobsRequest.Request]
-    def __init__(self, requests: _Iterable[BatchUpdateBlobsRequest.Request | _Mapping] | None = ...) -> None: ...
+    def __init__(
+        self, requests: _Iterable[BatchUpdateBlobsRequest.Request | _Mapping] | None = ...
+    ) -> None: ...
 
 class BatchUpdateBlobsResponse(_message.Message):
     __slots__ = ("responses",)
@@ -74,7 +88,15 @@ class BatchUpdateBlobsResponse(_message.Message):
         digest: Digest
         status_code: int
         status_message: str
-        def __init__(self, digest: Digest | _Mapping | None = ..., status_code: int | None = ..., status_message: str | None = ...) -> None: ...
+        def __init__(
+            self,
+            digest: Digest | _Mapping | None = ...,
+            status_code: int | None = ...,
+            status_message: str | None = ...,
+        ) -> None: ...
+
     RESPONSES_FIELD_NUMBER: _ClassVar[int]
     responses: _containers.RepeatedCompositeFieldContainer[BatchUpdateBlobsResponse.Response]
-    def __init__(self, responses: _Iterable[BatchUpdateBlobsResponse.Response | _Mapping] | None = ...) -> None: ...
+    def __init__(
+        self, responses: _Iterable[BatchUpdateBlobsResponse.Response | _Mapping] | None = ...
+    ) -> None: ...

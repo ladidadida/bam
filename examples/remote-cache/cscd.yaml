@@ -4,13 +4,13 @@ version: 1
 cache:
   local:
     enabled: true
-    path: .cascade/cache
+    path: .cscd/cache
   
   remote:
     enabled: true
     type: cas
     url: grpc://localhost:50051
-    token_file: ~/.cascade/cas-token
+    token_file: ~/.cscd/cas-token
     upload: true
     download: true
     timeout: 30.0

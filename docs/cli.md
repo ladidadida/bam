@@ -6,10 +6,10 @@ Complete command-line interface documentation for Cascade.
 
 ```bash
 # Using uv (recommended)
-uv pip install cascade
+uv pip install cscd
 
 # Using pip
-pip install cascade
+pip install cscd
 ```
 
 ## Global Options
@@ -21,21 +21,21 @@ All commands support these global options:
 
 ## Commands
 
-### `cascade run`
+### `cscd run`
 
 Execute one or more tasks with their dependencies.
 
 **Usage:**
 ```bash
-cascade run [OPTIONS] TASK [TASK...]
+cscd run [OPTIONS] TASK [TASK...]
 ```
 
 **Arguments:**
 - `TASK` - One or more task names to execute (required)
 
 **Options:**
-- `--config PATH` - Path to cascade.yaml configuration file
-  - Default: Searches for `cascade.yaml` or `.cascade.yaml` in current directory and parents
+- `--config PATH` - Path to cscd.yaml configuration file
+  - Default: Searches for `cscd.yaml` or `.cscd.yaml` in current directory and parents
 - `--dry-run` - Show what would be executed without running anything
 - `--quiet, -q` - Suppress command output (only show results)
 - `--no-cache` - Disable cache reads and writes for this run
@@ -44,22 +44,22 @@ cascade run [OPTIONS] TASK [TASK...]
 
 ```bash
 # Run single task
-cascade run build
+cscd run build
 
 # Run multiple tasks
-cascade run lint test build
+cscd run lint test build
 
 # Dry run to see execution plan
-cascade run --dry-run deploy
+cscd run --dry-run deploy
 
 # Run with specific config
-cascade run --config path/to/config.yaml test
+cscd run --config path/to/config.yaml test
 
 # Run without caching
-cascade run --no-cache build
+cscd run --no-cache build
 
 # Quiet mode (minimal output)
-cascade run -q test
+cscd run -q test
 ```
 
 **Behavior:**
@@ -70,26 +70,26 @@ cascade run -q test
 
 ---
 
-### `cascade list`
+### `cscd list`
 
 Display all configured tasks and their dependencies.
 
 **Usage:**
 ```bash
-cascade list [OPTIONS]
+cscd list [OPTIONS]
 ```
 
 **Options:**
-- `--config PATH` - Path to cascade.yaml configuration file
+- `--config PATH` - Path to cscd.yaml configuration file
 
 **Examples:**
 
 ```bash
 # List all tasks
-cascade list
+cscd list
 
 # List with specific config
-cascade list --config examples/hello-world/cascade.yaml
+cscd list --config examples/hello-world/cscd.yaml
 ```
 
 **Output Format:**
@@ -103,17 +103,17 @@ Available tasks:
 
 ---
 
-### `cascade graph`
+### `cscd graph`
 
 Visualize the task dependency graph.
 
 **Usage:**
 ```bash
-cascade graph [OPTIONS]
+cscd graph [OPTIONS]
 ```
 
 **Options:**
-- `--config PATH` - Path to cascade.yaml configuration file
+- `--config PATH` - Path to cscd.yaml configuration file
 - `--format FORMAT` - Output format: `ascii` or `dot`
   - Default: `ascii`
   - `ascii` - Tree-style Unicode box drawing
@@ -123,14 +123,14 @@ cascade graph [OPTIONS]
 
 ```bash
 # Show ASCII graph
-cascade graph
+cscd graph
 
 # Generate DOT format for GraphViz
-cascade graph --format dot > graph.dot
+cscd graph --format dot > graph.dot
 dot -Tpng graph.dot -o graph.png
 
 # With specific config
-cascade graph --config path/to/config.yaml
+cscd graph --config path/to/config.yaml
 ```
 
 **ASCII Output Example:**
@@ -163,26 +163,26 @@ digraph TaskGraph {
 
 ---
 
-### `cascade validate`
+### `cscd validate`
 
 Validate configuration file syntax and dependency graph.
 
 **Usage:**
 ```bash
-cascade validate [OPTIONS]
+cscd validate [OPTIONS]
 ```
 
 **Options:**
-- `--config PATH` - Path to cascade.yaml configuration file
+- `--config PATH` - Path to cscd.yaml configuration file
 
 **Examples:**
 
 ```bash
 # Validate default config
-cascade validate
+cscd validate
 
 # Validate specific config
-cascade validate --config path/to/config.yaml
+cscd validate --config path/to/config.yaml
 ```
 
 **Checks:**
@@ -194,7 +194,7 @@ cascade validate --config path/to/config.yaml
 
 **Output:**
 ```
-Configuration is valid: /path/to/cascade.yaml
+Configuration is valid: /path/to/cscd.yaml
 Discovered 12 task(s).
 ```
 
@@ -206,36 +206,36 @@ Error: Cyclic dependency detected in task graph:
 
 ---
 
-### `cascade clean`
+### `cscd clean`
 
 Clean local cache artifacts.
 
 **Usage:**
 ```bash
-cascade clean [OPTIONS]
+cscd clean [OPTIONS]
 ```
 
 **Options:**
 - `--cache-dir PATH` - Cache directory to clean
-  - Default: `.cascade/cache`
+  - Default: `.cscd/cache`
 - `--force, -f` - Skip confirmation prompt
 
 **Examples:**
 
 ```bash
 # Clean default cache (with confirmation)
-cascade clean
+cscd clean
 
 # Force clean without confirmation
-cascade clean --force
+cscd clean --force
 
 # Clean custom cache directory
-cascade clean --cache-dir /path/to/cache
+cscd clean --cache-dir /path/to/cache
 ```
 
 **Interactive Mode:**
 ```
-Cache directory: .cascade/cache
+Cache directory: .cscd/cache
 Cache size: 142.35 MB
 Delete all cached artifacts? [y/N]: 
 ```
@@ -253,25 +253,25 @@ Configure Cascade behavior via environment variables:
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `CASCADE_CONFIG` | Path to configuration file | `./cascade.yaml` |
-| `CASCADE_CACHE_DIR` | Local cache directory | `./.cascade/cache` |
-| `CASCADE_CACHE_TYPE` | Cache backend type | `local` |
-| `CASCADE_LOG_LEVEL` | Logging verbosity | `INFO` |
+| `CSCD_CONFIG` | Path to configuration file | `./cscd.yaml` |
+| `CSCD_CACHE_DIR` | Local cache directory | `./.cscd/cache` |
+| `CSCD_CACHE_TYPE` | Cache backend type | `local` |
+| `CSCD_LOG_LEVEL` | Logging verbosity | `INFO` |
 
 **Examples:**
 
 ```bash
 # Use custom config location
-export CASCADE_CONFIG=~/.config/cascade.yaml
-cascade run build
+export CSCD_CONFIG=~/.config/cscd.yaml
+cscd run build
 
 # Use different cache directory
-export CASCADE_CACHE_DIR=/tmp/cascade-cache
-cascade run test
+export CSCD_CACHE_DIR=/tmp/cascade-cache
+cscd run test
 
 # Debug mode
-export CASCADE_LOG_LEVEL=DEBUG
-cascade run --dry-run deploy
+export CSCD_LOG_LEVEL=DEBUG
+cscd run --dry-run deploy
 ```
 
 ---
@@ -281,9 +281,9 @@ cascade run --dry-run deploy
 Cascade searches for configuration files in this order:
 
 1. `--config` CLI argument
-2. `CASCADE_CONFIG` environment variable
-3. `./cascade.yaml` in current directory
-4. `./.cascade.yaml` (hidden file) in current directory
+2. `CSCD_CONFIG` environment variable
+3. `./cscd.yaml` in current directory
+4. `./.cscd.yaml` (hidden file) in current directory
 5. Walk up directory tree looking for either file
 
 **Example:**
@@ -292,7 +292,7 @@ Cascade searches for configuration files in this order:
 /home/user/project/src/
   └─ No config here, searches parent...
 /home/user/project/
-  └─ cascade.yaml ✓ Found!
+  └─ cscd.yaml ✓ Found!
 ```
 
 ---
@@ -313,41 +313,41 @@ Cascade searches for configuration files in this order:
 
 ```bash
 # See what will run
-cascade run --dry-run build | grep "Would execute"
+cscd run --dry-run build | grep "Would execute"
 ```
 
 ### 2. Cache Debugging
 
 ```bash
 # Run without cache to force rebuild
-cascade run --no-cache build
+cscd run --no-cache build
 
 # Check cache status
-cascade clean  # Shows size before confirming
+cscd clean  # Shows size before confirming
 ```
 
 ### 3. Configuration Validation
 
 ```bash
 # Always validate after config changes
-cascade validate && echo "Config OK" || echo "Config ERROR"
+cscd validate && echo "Config OK" || echo "Config ERROR"
 ```
 
 ### 4. Complex Workflows
 
 ```bash
 # Run multiple independent targets
-cascade run test-frontend test-backend
+cscd run test-frontend test-backend
 
 # Combine with shell scripts
-cascade run build && docker build -t myapp .
+cscd run build && docker build -t myapp .
 ```
 
 ### 5. Visual Debugging
 
 ```bash
 # Generate dependency graph
-cascade graph --format dot | dot -Tsvg > graph.svg
+cscd graph --format dot | dot -Tsvg > graph.svg
 ```
 
 ### 6. Integration with CI/CD
@@ -355,14 +355,14 @@ cascade graph --format dot | dot -Tsvg > graph.svg
 ```bash
 # GitLab CI example
 script:
-  - cascade validate
-  - cascade run test
-  - cascade run build
-  - cascade run deploy
+  - cscd validate
+  - cscd run test
+  - cscd run build
+  - cscd run deploy
 
 # GitHub Actions example
 - name: Run tests
-  run: cascade run test
+  run: cscd run test
 ```
 
 ---
@@ -372,9 +372,9 @@ script:
 For more information:
 
 - **Quick help:** `cascade --help`
-- **Command help:** `cascade run --help`
-- **Documentation:** https://gitlab.com/cascascade/cascade
-- **Issues:** https://gitlab.com/cascascade/cascade/-/issues
+- **Command help:** `cscd run --help`
+- **Documentation:** https://gitlab.com/cascascade/cscd
+- **Issues:** https://gitlab.com/cascascade/cscd/-/issues
 - **Examples:** See `examples/` directory
 
 ---

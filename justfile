@@ -1,4 +1,4 @@
-# Development tasks for cascade
+# Development tasks for cscd
 
 set shell := ["bash", "-cu"]
 set dotenv-load := true
@@ -29,7 +29,7 @@ test-cascache:
 
 # Run cascache integration tests (just build and up)
 test-cascache-up:
-  docker compose -f tests/integration-cascache/docker-compose.yml up --abort-on-container-exit --exit-code-from cascade-client
+  docker compose -f tests/integration-cascache/docker-compose.yml up --abort-on-container-exit --exit-code-from cscd-client
 
 # Clean up cascache test containers
 test-cascache-clean:

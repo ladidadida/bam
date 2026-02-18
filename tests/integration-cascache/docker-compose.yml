@@ -1,7 +1,7 @@
 services:
   cascache:
     image: python:3.13-slim
-    container_name: cascade-test-cascache
+    container_name: cscd-test-cascache
     command: >
       bash -c '
         pip install cascache &&
@@ -23,18 +23,18 @@ services:
       retries: 10
       start_period: 5s
 
-  cascade-client:
+  cscd-client:
     image: python:3.13-slim
-    container_name: cascade-test-client
+    container_name: cscd-test-client
     depends_on:
       cascache:
         condition: service_healthy
     working_dir: /workspace
     volumes:
       - ../..:/workspace
-      - cascade-cache:/workspace/.cascade/cache
+      - cscd-cache:/workspace/.cscd/cache
     environment:
-      - CASCADE_CAS_URL=grpc://cascache:50051
+      - CSCD_CAS_URL=grpc://cascache:50051
       - UV_PROJECT_ENVIRONMENT=/tmp/.venv  # Use container-specific venv location
     command: >
       bash -c '
@@ -45,4 +45,4 @@ services:
 
 volumes:
   cascache-storage:
-  cascade-cache:
+  cscd-cache:

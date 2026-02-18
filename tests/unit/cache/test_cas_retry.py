@@ -7,7 +7,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import grpc
 import pytest
 
-from cascade.cache.cas import CASCache
+from cscd.cache.cas import CASCache
 
 # Valid 64-character SHA256 hex for testing
 TEST_DIGEST = "a" * 64
@@ -126,8 +126,9 @@ async def test_exponential_backoff(cas_cache):
 
     mock_stub.FindMissingBlobs = mock_find_missing
 
-    with patch.object(cas_cache, "_ensure_connected"), patch(
-        "cascade.cache.cas.asyncio.sleep", mock_sleep
+    with (
+        patch.object(cas_cache, "_ensure_connected"),
+        patch("cscd.cache.cas.asyncio.sleep", mock_sleep),
     ):
         cas_cache._stub = mock_stub
         await cas_cache.exists(TEST_CACHE_KEY)
@@ -141,7 +142,7 @@ async def test_exponential_backoff(cas_cache):
 @pytest.mark.asyncio
 async def test_connection_pooling_options(cas_cache):
     """Test that connection pooling options are set."""
-    with patch("cascade.cache.cas.grpc.aio.insecure_channel") as mock_channel:
+    with patch("cscd.cache.cas.grpc.aio.insecure_channel") as mock_channel:
         mock_channel.return_value = AsyncMock()
         await cas_cache._ensure_connected()
 
@@ -220,8 +221,9 @@ async def test_download_with_retry(cas_cache, tmp_path):
 
     mock_stub.BatchReadBlobs = mock_batch_read
 
-    with patch.object(cas_cache, "_ensure_connected"), patch.object(
-        cas_cache, "_extract_tarball", AsyncMock()
+    with (
+        patch.object(cas_cache, "_ensure_connected"),
+        patch.object(cas_cache, "_extract_tarball", AsyncMock()),
     ):
         cas_cache._stub = mock_stub
         result = await cas_cache.get(TEST_CACHE_KEY, [output_path])
