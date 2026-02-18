@@ -68,7 +68,4 @@ ci: lint typecheck test
 ci-gitlab: lint typecheck test-unit test-component
   @echo "✓ GitLab CI-equivalent checks passed!"
 
-# Create a release (bumps version, creates git tag, builds dist)
-release:
-  uv run semantic-release publish --no-vcs-release
 

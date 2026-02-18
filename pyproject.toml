@@ -1,6 +1,6 @@
 [build-system]
 build-backend = "hatchling.build"
-requires = ["hatchling"]
+requires = ["hatchling", "hatch-vcs"]
 
 [project]
 name = "cascade"
@@ -48,7 +48,6 @@ dev = [
   "pyright>=1.1.0",
   "build>=1.0",
   "twine>=4.0",
-  "python-semantic-release>=8.0",
   "grpcio-tools>=1.64.0",
 ]
 # Optional: cascache integration tests (requires Docker or local cascache)
@@ -61,8 +60,7 @@ cascache = [
 cascade = "cascade.cli:main"
 
 [tool.hatch.version]
-path = "src/cascade/_version.py"
-pattern = '__version__ = "(?P<version>[^\"]+)"'
+source = "vcs"
 
 [tool.hatch.build.targets.sdist]
 include = [
@@ -107,19 +105,6 @@ select = [
 extend-ignore = [
   "E501",  # line too long (handled by formatter)
 ]
-
-[tool.semantic_release]
-version_pattern = '__version__ = "{version}"'
-version_variable = "src/cascade/_version.py:__version__"
-build_command = "uv run python -m build"
-upload_to_pypi = false
-upload_to_release_tag = true
-commit_message = "chore: bump version to {version}"
-tag_format = "v{version}"
-
-[tool.semantic_release.branches.main]
-match = "main|master"
-prerelease = false
 
 [tool.ruff.format]
 quote-style = "double"

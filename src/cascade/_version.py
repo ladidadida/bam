@@ -1,5 +1,24 @@
-"""Version information for cascade."""
+"""Version information for cascache.
+
+This file uses importlib.metadata to get the version dynamically:
+- When installed: Uses version from package metadata (set by hatch-vcs)
+- When running from source: Falls back to development version
+"""
 
 from __future__ import annotations
 
-__version__ = "0.1.0"
+__all__ = ["__version__"]
+
+
+def _get_version() -> str:
+    """Get version from package metadata or fallback."""
+    try:
+        from importlib.metadata import version
+
+        return version("cascade")
+    except Exception:
+        # Fallback for development (not installed)
+        return "0.0.0.dev0"
+
+
+__version__ = _get_version()

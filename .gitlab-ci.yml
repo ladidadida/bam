@@ -55,7 +55,8 @@ test:component:
 build:wheel:
   stage: build
   script:
-    - uv run python -m build
+    - rm -rf dist/
+    - uv build
   artifacts:
     paths:
       - dist/
@@ -65,13 +66,47 @@ build:wheel:
     - main
     - merge_requests
 
-# Publish to PyPI (manual, requires CI/CD variables)
-publish:pypi:
-  stage: publish
+# Deploy to PyPI (automatic on tags)
+deploy:pypi:
+  stage: deploy
   script:
-    - uv run twine upload dist/* -u __token__ -p $PYPI_TOKEN
+    - uv publish --token $PYPI_API_TOKEN
+  environment:
+    name: production
+    url: https://pypi.org/project/cascade/
   only:
     - tags
+  except:
+    - branches
+  dependencies:
+    - build:wheel
+
+# Deploy to Test PyPI (manual on main branch)
+deploy:testpypi:main:
+  stage: deploy
+  script:
+    - uv publish --publish-url https://test.pypi.org/legacy/ --token $PYPI_TEST_API_TOKEN
+  environment:
+    name: test
+    url: https://test.pypi.org/project/cascade/
   when: manual
+  only:
+    - main
+  except:
+    - tags
+  dependencies:
+    - build:wheel
+
+# Deploy to Test PyPI (manual on merge requests)
+deploy:testpypi:mr:
+  stage: deploy
+  script:
+    - uv publish --publish-url https://test.pypi.org/legacy/ --token $PYPI_TEST_API_TOKEN
+  environment:
+    name: test
+    url: https://test.pypi.org/project/cascade/
+  when: manual
+  only:
+    - merge_requests
   dependencies:
     - build:wheel
