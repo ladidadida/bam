@@ -5,7 +5,7 @@ stages:
   - typecheck
   - test
   - build
-  - publish
+  - deploy
 
 variables:
   UV_CACHE_DIR: .cache/uv
