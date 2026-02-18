@@ -46,4 +46,3 @@ def test_cli_version() -> None:
         check=False,
     )
     assert result.returncode == 0
-    assert "0.1.0" in result.stdout

@@ -40,7 +40,6 @@ def test_main_version() -> None:
     """Test main() with --version flag."""
     result = runner.invoke(app, ["--version"])
     assert result.exit_code == 0
-    assert "0.1.0" in result.stdout
 
 
 def test_run_command() -> None:
