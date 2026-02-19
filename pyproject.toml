@@ -32,10 +32,10 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://gitlab.com/cascascade/cscd"
-Repository = "https://gitlab.com/cascascade/cscd"
-Issues = "https://gitlab.com/cascascade/cscd/-/issues"
-Documentation = "https://gitlab.com/cascascade/cscd/-/blob/main/README.md"
+Homepage = "https://gitlab.com/cascascade/cascade"
+Repository = "https://gitlab.com/cascascade/cascade"
+Issues = "https://gitlab.com/cascascade/cascade/-/issues"
+Documentation = "https://gitlab.com/cascascade/cascade/-/blob/main/README.md"
 
 [dependency-groups]
 dev = [
