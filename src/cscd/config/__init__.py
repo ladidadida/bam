@@ -1,13 +1,13 @@
 """Configuration loading, discovery, and validation."""
 
-from .parser import ConfigurationError, discover_config_path, load_config
-from .schema import (
+from cascache_lib.config import (
     CacheConfig,
-    CascadeConfig,
     LocalCacheConfig,
     RemoteCacheConfig,
-    TaskConfig,
 )
+
+from .parser import ConfigurationError, discover_config_path, load_config
+from .schema import CascadeConfig, TaskConfig
 
 __all__ = [
     "CacheConfig",

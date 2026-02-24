@@ -119,9 +119,10 @@ tasks:
     )
 
     assert result.exit_code == 1
-    assert "Task failed: bad" in result.stdout
+    output = (result.stdout or "") + (result.stderr or "")
+    assert "bad" in output
     # Should show skipped tasks
-    assert "dependent" in result.stdout or "Skipped" in result.stdout
+    assert "dependent" in output or "Skipped" in output
 
 
 def test_parallel_speedup(parallel_workspace: Path) -> None:

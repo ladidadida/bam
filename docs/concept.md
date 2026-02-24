@@ -208,7 +208,7 @@ Cascade is built with modern Python technologies, prioritizing developer experie
   - Status codes for error handling
 
 #### cascache (CAS Server)
-- **GitLab:** https://gitlab.com/cascascade/cascache
+- **GitLab:** https://gitlab.com/cascascade/cascache_server
 - **Why:** Simple, standalone CAS server compatible with Bazel/Buck2 protocols
 - **Features Used:**
   - Content-addressable blob storage

@@ -115,6 +115,7 @@ To add new integration tests:
 
 ## References
 
-- cascache GitLab: https://gitlab.com/cascascade/cascache
+- cascache_server GitLab: https://gitlab.com/cascascade/cascache_server
+- cascache_lib: https://gitlab.com/cascascade/cascache_lib
 - Remote Execution API: https://github.com/bazelbuild/remote-apis
 - Cascade remote cache docs: ../../examples/remote-cache/README.md

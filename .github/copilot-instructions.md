@@ -594,7 +594,7 @@ class TaskExecutionError(Exception):
 
 - **Progress Tracking:** spec/roadmap.md (use this for tracking all implementation progress)
 - **Design Doc:** spec/design.md (comprehensive design document)
-- **cascache:** https://gitlab.com/cascascade/cascache (CAS server implementation)
+- **cascache:** https://gitlab.com/cascascade/cascache_server (CAS server implementation)
 - **Examples:** examples/ directory
 - **networkx docs:** https://networkx.org/documentation/stable/
 - **Rich CLI:** https://rich.readthedocs.io/

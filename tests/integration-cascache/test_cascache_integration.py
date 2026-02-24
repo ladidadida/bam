@@ -14,11 +14,9 @@ import socket
 from pathlib import Path
 
 import pytest
-
-from cscd.cache.cas import CASCache
-from cscd.cache.hash import compute_cache_key
-from cscd.cache.local import LocalCache
-from cscd.cache.manager import CacheManager
+from cascache_lib import LocalCache, compute_cache_key
+from cascache_lib.cache import HybridCache as CacheManager
+from cascache_lib.cache import RemoteCache as CASCache
 
 
 def compute_test_cache_key(name: str, files: list[Path]) -> str:

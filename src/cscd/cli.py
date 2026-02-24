@@ -45,8 +45,9 @@ def version_callback(value: bool) -> None:
         raise typer.Exit()
 
 
-@app.callback()
+@app.callback(invoke_without_command=True)
 def common_options(
+    ctx: typer.Context,
     _: Annotated[
         bool | None,
         typer.Option(
@@ -58,6 +59,9 @@ def common_options(
     ] = None,
 ) -> None:
     """Cascade command group."""
+    if ctx.invoked_subcommand is None:
+        typer.echo(ctx.get_help())
+        raise typer.Exit(code=0)
 
 
 def _parse_jobs_value(jobs: str | None) -> int:

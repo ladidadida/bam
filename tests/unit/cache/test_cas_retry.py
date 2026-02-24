@@ -6,8 +6,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import grpc
 import pytest
-
-from cscd.cache.cas import CASCache
+from cascache_lib.cache import RemoteCache as CASCache
 
 # Valid 64-character SHA256 hex for testing
 TEST_DIGEST = "a" * 64
@@ -128,7 +127,7 @@ async def test_exponential_backoff(cas_cache):
 
     with (
         patch.object(cas_cache, "_ensure_connected"),
-        patch("cscd.cache.cas.asyncio.sleep", mock_sleep),
+        patch("cascache_lib.cache.remote.asyncio.sleep", mock_sleep),
     ):
         cas_cache._stub = mock_stub
         await cas_cache.exists(TEST_CACHE_KEY)
@@ -142,7 +141,7 @@ async def test_exponential_backoff(cas_cache):
 @pytest.mark.asyncio
 async def test_connection_pooling_options(cas_cache):
     """Test that connection pooling options are set."""
-    with patch("cscd.cache.cas.grpc.aio.insecure_channel") as mock_channel:
+    with patch("cascache_lib.cache.remote.grpc.aio.insecure_channel") as mock_channel:
         mock_channel.return_value = AsyncMock()
         await cas_cache._ensure_connected()
 
@@ -154,6 +153,7 @@ async def test_connection_pooling_options(cas_cache):
         option_keys = [opt[0] for opt in options]
         assert "grpc.keepalive_time_ms" in option_keys
         assert "grpc.keepalive_timeout_ms" in option_keys
+        assert "grpc.keepalive_permit_without_calls" in option_keys
 
 
 @pytest.mark.asyncio

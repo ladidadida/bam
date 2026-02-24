@@ -25,10 +25,7 @@ dependencies = [
   "pydantic>=2.0.0",
   "networkx>=3.0",
   "rich>=13.0.0",
-  "aiofiles>=23.0.0",
-  "anyio>=4.0.0",
-  "grpcio>=1.64.0",
-  "protobuf>=5.26.0",
+  "cascache-lib @ git+https://gitlab.com/cascascade/cascache_lib.git@main",
 ]
 
 [project.urls]
@@ -52,8 +49,8 @@ dev = [
 ]
 # Optional: cascache integration tests (requires Docker or local cascache)
 # Install with: uv sync --group cascache
-cascache = [
-  "cascache @ git+https://gitlab.com/cascascade/cascache@main",
+cascache_server = [
+  "cascache_server @ git+https://gitlab.com/cascascade/cascache_server@main",
 ]
 
 [project.scripts]
@@ -61,6 +58,9 @@ cscd = "cscd.cli:main"
 
 [tool.hatch.version]
 source = "vcs"
+
+[tool.hatch.metadata]
+allow-direct-references = true
 
 [tool.hatch.build.targets.sdist]
 include = [
