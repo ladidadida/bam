@@ -1,4 +1,4 @@
-# Development tasks for cscd
+# Development tasks for bam
 
 set shell := ["bash", "-cu"]
 set dotenv-load := true
@@ -22,16 +22,16 @@ test-unit:
 test-component:
   uv run pytest -q -m component tests/component
 
-# Run cascache integration tests with Docker Compose
+# Run cascache_server integration tests with Docker Compose
 test-cascache:
-  @echo "🚀 Starting cascache integration tests with Docker Compose..."
+  @echo "🚀 Starting cascache_server integration tests with Docker Compose..."
   ./tests/integration-cascache/run-tests.sh
 
-# Run cascache integration tests (just build and up)
+# Run cascache_server integration tests (just build and up)
 test-cascache-up:
-  docker compose -f tests/integration-cascache/docker-compose.yml up --abort-on-container-exit --exit-code-from cscd-client
+  docker compose -f tests/integration-cascache/docker-compose.yml up --abort-on-container-exit --exit-code-from bam-client
 
-# Clean up cascache test containers
+# Clean up cascache_server test containers
 test-cascache-clean:
   docker compose -f tests/integration-cascache/docker-compose.yml down -v
 

@@ -7,8 +7,8 @@ from pathlib import Path
 import pytest
 from rich.console import Console
 
-from cscd.cache import LocalCache
-from cscd.executor import TaskExecutionError, TaskExecutor, TaskState
+from bam.cache import LocalCache
+from bam.executor import TaskExecutionError, TaskExecutor, TaskState
 
 
 @pytest.mark.asyncio
@@ -48,8 +48,8 @@ async def test_execute_with_environment_variables() -> None:
 
     result = await executor.execute_task(
         task_name="env-test",
-        command="echo $CSCD_TEST_VAR",
-        env={"CSCD_TEST_VAR": "custom-value"},
+        command="echo $BAM_TEST_VAR",
+        env={"BAM_TEST_VAR": "custom-value"},
     )
 
     assert result.state == TaskState.COMPLETED

@@ -7,11 +7,11 @@ from cascache_lib.config import (
 )
 
 from .parser import ConfigurationError, discover_config_path, load_config
-from .schema import CascadeConfig, TaskConfig
+from .schema import BamConfig, TaskConfig
 
 __all__ = [
     "CacheConfig",
-    "CascadeConfig",
+    "BamConfig",
     "ConfigurationError",
     "LocalCacheConfig",
     "RemoteCacheConfig",

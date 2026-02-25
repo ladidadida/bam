@@ -7,7 +7,7 @@ from typing import cast
 
 import networkx as nx
 
-from cscd.config.schema import TaskConfig
+from bam.config.schema import TaskConfig
 
 
 class MissingTaskError(Exception):
@@ -105,7 +105,7 @@ def render_ascii_graph(graph: nx.DiGraph) -> str:
 
 def render_dot_graph(graph: nx.DiGraph) -> str:
     """Render the graph in DOT format."""
-    lines = ["digraph cascade {"]
+    lines = ["digraph bam {"]
 
     for task_name in sorted(graph.nodes):
         lines.append(f'  "{task_name}";')

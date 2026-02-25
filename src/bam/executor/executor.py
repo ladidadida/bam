@@ -10,7 +10,7 @@ from pathlib import Path
 
 from rich.console import Console
 
-from cscd.cache import CacheBackend, compute_cache_key
+from bam.cache import CacheBackend, compute_cache_key
 
 
 class TaskState(StrEnum):

@@ -1,15 +1,15 @@
-# Cascade CLI Reference
+# Bam CLI Reference
 
-Complete command-line interface documentation for Cascade.
+Complete command-line interface documentation for Bam.
 
 ## Installation
 
 ```bash
 # Using uv (recommended)
-uv pip install cscd
+uv pip install bam
 
 # Using pip
-pip install cscd
+pip install bam
 ```
 
 ## Global Options
@@ -21,21 +21,21 @@ All commands support these global options:
 
 ## Commands
 
-### `cscd run`
+### `bam run`
 
 Execute one or more tasks with their dependencies.
 
 **Usage:**
 ```bash
-cscd run [OPTIONS] TASK [TASK...]
+bam run [OPTIONS] TASK [TASK...]
 ```
 
 **Arguments:**
 - `TASK` - One or more task names to execute (required)
 
 **Options:**
-- `--config PATH` - Path to cscd.yaml configuration file
-  - Default: Searches for `cscd.yaml` or `.cscd.yaml` in current directory and parents
+- `--config PATH` - Path to bam.yaml configuration file
+  - Default: Searches for `bam.yaml` or `.bam.yaml` in current directory and parents
 - `--dry-run` - Show what would be executed without running anything
 - `--quiet, -q` - Suppress command output (only show results)
 - `--no-cache` - Disable cache reads and writes for this run
@@ -44,22 +44,22 @@ cscd run [OPTIONS] TASK [TASK...]
 
 ```bash
 # Run single task
-cscd run build
+bam run build
 
 # Run multiple tasks
-cscd run lint test build
+bam run lint test build
 
 # Dry run to see execution plan
-cscd run --dry-run deploy
+bam run --dry-run deploy
 
 # Run with specific config
-cscd run --config path/to/config.yaml test
+bam run --config path/to/config.yaml test
 
 # Run without caching
-cscd run --no-cache build
+bam run --no-cache build
 
 # Quiet mode (minimal output)
-cscd run -q test
+bam run -q test
 ```
 
 **Behavior:**
@@ -70,26 +70,26 @@ cscd run -q test
 
 ---
 
-### `cscd list`
+### `bam list`
 
 Display all configured tasks and their dependencies.
 
 **Usage:**
 ```bash
-cscd list [OPTIONS]
+bam list [OPTIONS]
 ```
 
 **Options:**
-- `--config PATH` - Path to cscd.yaml configuration file
+- `--config PATH` - Path to bam.yaml configuration file
 
 **Examples:**
 
 ```bash
 # List all tasks
-cscd list
+bam list
 
 # List with specific config
-cscd list --config examples/hello-world/cscd.yaml
+bam list --config examples/hello-world/bam.yaml
 ```
 
 **Output Format:**
@@ -103,17 +103,17 @@ Available tasks:
 
 ---
 
-### `cscd graph`
+### `bam graph`
 
 Visualize the task dependency graph.
 
 **Usage:**
 ```bash
-cscd graph [OPTIONS]
+bam graph [OPTIONS]
 ```
 
 **Options:**
-- `--config PATH` - Path to cscd.yaml configuration file
+- `--config PATH` - Path to bam.yaml configuration file
 - `--format FORMAT` - Output format: `ascii` or `dot`
   - Default: `ascii`
   - `ascii` - Tree-style Unicode box drawing
@@ -123,14 +123,14 @@ cscd graph [OPTIONS]
 
 ```bash
 # Show ASCII graph
-cscd graph
+bam graph
 
 # Generate DOT format for GraphViz
-cscd graph --format dot > graph.dot
+bam graph --format dot > graph.dot
 dot -Tpng graph.dot -o graph.png
 
 # With specific config
-cscd graph --config path/to/config.yaml
+bam graph --config path/to/config.yaml
 ```
 
 **ASCII Output Example:**
@@ -163,26 +163,26 @@ digraph TaskGraph {
 
 ---
 
-### `cscd validate`
+### `bam validate`
 
 Validate configuration file syntax and dependency graph.
 
 **Usage:**
 ```bash
-cscd validate [OPTIONS]
+bam validate [OPTIONS]
 ```
 
 **Options:**
-- `--config PATH` - Path to cscd.yaml configuration file
+- `--config PATH` - Path to bam.yaml configuration file
 
 **Examples:**
 
 ```bash
 # Validate default config
-cscd validate
+bam validate
 
 # Validate specific config
-cscd validate --config path/to/config.yaml
+bam validate --config path/to/config.yaml
 ```
 
 **Checks:**
@@ -194,7 +194,7 @@ cscd validate --config path/to/config.yaml
 
 **Output:**
 ```
-Configuration is valid: /path/to/cscd.yaml
+Configuration is valid: /path/to/bam.yaml
 Discovered 12 task(s).
 ```
 
@@ -206,36 +206,36 @@ Error: Cyclic dependency detected in task graph:
 
 ---
 
-### `cscd clean`
+### `bam clean`
 
 Clean local cache artifacts.
 
 **Usage:**
 ```bash
-cscd clean [OPTIONS]
+bam clean [OPTIONS]
 ```
 
 **Options:**
 - `--cache-dir PATH` - Cache directory to clean
-  - Default: `.cscd/cache`
+  - Default: `.bam/cache`
 - `--force, -f` - Skip confirmation prompt
 
 **Examples:**
 
 ```bash
 # Clean default cache (with confirmation)
-cscd clean
+bam clean
 
 # Force clean without confirmation
-cscd clean --force
+bam clean --force
 
 # Clean custom cache directory
-cscd clean --cache-dir /path/to/cache
+bam clean --cache-dir /path/to/cache
 ```
 
 **Interactive Mode:**
 ```
-Cache directory: .cscd/cache
+Cache directory: .bam/cache
 Cache size: 142.35 MB
 Delete all cached artifacts? [y/N]: 
 ```
@@ -249,41 +249,41 @@ Delete all cached artifacts? [y/N]:
 
 ## Environment Variables
 
-Configure Cascade behavior via environment variables:
+Configure bam behavior via environment variables:
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `CSCD_CONFIG` | Path to configuration file | `./cscd.yaml` |
-| `CSCD_CACHE_DIR` | Local cache directory | `./.cscd/cache` |
-| `CSCD_CACHE_TYPE` | Cache backend type | `local` |
-| `CSCD_LOG_LEVEL` | Logging verbosity | `INFO` |
+| `BAM_CONFIG` | Path to configuration file | `./bam.yaml` |
+| `BAM_CACHE_DIR` | Local cache directory | `./.bam/cache` |
+| `BAM_CACHE_TYPE` | Cache backend type | `local` |
+| `BAM_LOG_LEVEL` | Logging verbosity | `INFO` |
 
 **Examples:**
 
 ```bash
 # Use custom config location
-export CSCD_CONFIG=~/.config/cscd.yaml
-cscd run build
+export BAM_CONFIG=~/.config/bam.yaml
+bam run build
 
 # Use different cache directory
-export CSCD_CACHE_DIR=/tmp/cascade-cache
-cscd run test
+export BAM_CACHE_DIR=/tmp/bam-cache
+bam run test
 
 # Debug mode
-export CSCD_LOG_LEVEL=DEBUG
-cscd run --dry-run deploy
+export BAM_LOG_LEVEL=DEBUG
+bam run --dry-run deploy
 ```
 
 ---
 
 ## Configuration File Discovery
 
-Cascade searches for configuration files in this order:
+Bam searches for configuration files in this order:
 
 1. `--config` CLI argument
-2. `CSCD_CONFIG` environment variable
-3. `./cscd.yaml` in current directory
-4. `./.cscd.yaml` (hidden file) in current directory
+2. `BAM_CONFIG` environment variable
+3. `./bam.yaml` in current directory
+4. `./.bam.yaml` (hidden file) in current directory
 5. Walk up directory tree looking for either file
 
 **Example:**
@@ -292,7 +292,7 @@ Cascade searches for configuration files in this order:
 /home/user/project/src/
   └─ No config here, searches parent...
 /home/user/project/
-  └─ cscd.yaml ✓ Found!
+  └─ bam.yaml ✓ Found!
 ```
 
 ---
@@ -313,41 +313,41 @@ Cascade searches for configuration files in this order:
 
 ```bash
 # See what will run
-cscd run --dry-run build | grep "Would execute"
+bam run --dry-run build | grep "Would execute"
 ```
 
 ### 2. Cache Debugging
 
 ```bash
 # Run without cache to force rebuild
-cscd run --no-cache build
+bam run --no-cache build
 
 # Check cache status
-cscd clean  # Shows size before confirming
+bam clean  # Shows size before confirming
 ```
 
 ### 3. Configuration Validation
 
 ```bash
 # Always validate after config changes
-cscd validate && echo "Config OK" || echo "Config ERROR"
+bam validate && echo "Config OK" || echo "Config ERROR"
 ```
 
 ### 4. Complex Workflows
 
 ```bash
 # Run multiple independent targets
-cscd run test-frontend test-backend
+bam run test-frontend test-backend
 
 # Combine with shell scripts
-cscd run build && docker build -t myapp .
+bam run build && docker build -t myapp .
 ```
 
 ### 5. Visual Debugging
 
 ```bash
 # Generate dependency graph
-cscd graph --format dot | dot -Tsvg > graph.svg
+bam graph --format dot | dot -Tsvg > graph.svg
 ```
 
 ### 6. Integration with CI/CD
@@ -355,14 +355,14 @@ cscd graph --format dot | dot -Tsvg > graph.svg
 ```bash
 # GitLab CI example
 script:
-  - cscd validate
-  - cscd run test
-  - cscd run build
-  - cscd run deploy
+  - bam validate
+  - bam run test
+  - bam run build
+  - bam run deploy
 
 # GitHub Actions example
 - name: Run tests
-  run: cscd run test
+  run: bam run test
 ```
 
 ---
@@ -371,10 +371,10 @@ script:
 
 For more information:
 
-- **Quick help:** `cascade --help`
-- **Command help:** `cscd run --help`
-- **Documentation:** https://gitlab.com/cascascade/cscd
-- **Issues:** https://gitlab.com/cascascade/cscd/-/issues
+- **Quick help:** `bam --help`
+- **Command help:** `bam run --help`
+- **Documentation:** https://gitlab.com/cascascade/bam
+- **Issues:** https://gitlab.com/cascascade/bam/-/issues
 - **Examples:** See `examples/` directory
 
 ---

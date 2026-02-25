@@ -1,12 +1,12 @@
-# Cascade + cascache Integration Tests
+# Bam + cascache Integration Tests
 
-This directory contains integration tests that verify Cascade works correctly with a real cascache server.
+This directory contains integration tests that verify bam works correctly with a real cascache server.
 
 ## Overview
 
 These tests use Docker Compose to:
 1. Start a cascache server in a container
-2. Run Cascade tests against the real server
+2. Run bam tests against the real server
 3. Verify upload, download, and cache sharing functionality
 
 ## Prerequisites
@@ -36,7 +36,7 @@ docker compose -f tests/integration-cascache/docker-compose.yml up -d cascache
 docker compose -f tests/integration-cascache/docker-compose.yml exec cascache python -c "import socket; s = socket.socket(); s.connect(('localhost', 50051)); s.close()"
 
 # Run specific test
-docker compose -f tests/integration-cascache/docker-compose.yml run --rm cascade-client \
+docker compose -f tests/integration-cascache/docker-compose.yml run --rm bam-client \
   sh -c "pip install uv && uv sync && uv run pytest tests/integration-cascache/test_cascache_integration.py::test_cascache_upload_download -v"
 
 # Clean up
@@ -53,7 +53,7 @@ pip install cascache
 python -m cascache
 
 # Terminal 2: Run tests
-CSCD_CAS_URL=grpc://localhost:50051 uv run pytest tests/integration-cascache/test_cascache_integration.py -v
+BAM_CAS_URL=grpc://localhost:50051 uv run pytest tests/integration-cascache/test_cascache_integration.py -v
 ```
 
 ## Test Coverage
@@ -118,4 +118,4 @@ To add new integration tests:
 - cascache_server GitLab: https://gitlab.com/cascascade/cascache_server
 - cascache_lib: https://gitlab.com/cascascade/cascache_lib
 - Remote Execution API: https://github.com/bazelbuild/remote-apis
-- Cascade remote cache docs: ../../examples/remote-cache/README.md
+- Bam remote cache docs: ../../examples/remote-cache/README.md

@@ -1,6 +1,6 @@
-# Contributing to Cascade
+# Contributing to bam
 
-Thanks for contributing to Cascade.
+Thanks for contributing to bam.
 
 ## Prerequisites
 

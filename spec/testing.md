@@ -1,12 +1,12 @@
-# Cascade Testing Specification
+# Bam Testing Specification
 
 **Version:** 1.0  
 **Last Updated:** 2026-02-12  
-**Status:** Phase 1 Complete
+**Status:** Phase 2 Complete
 
 ## Testing Philosophy
 
-Cascade maintains high code quality through comprehensive testing at multiple levels. Our testing strategy balances thoroughness with maintainability, ensuring both correctness and developer productivity.
+Bam maintains high code quality through comprehensive testing at multiple levels. Our testing strategy balances thoroughness with maintainability, ensuring both correctness and developer productivity.
 
 ## Testing Targets
 
@@ -16,45 +16,40 @@ Cascade maintains high code quality through comprehensive testing at multiple le
 - **UI/CLI:** 70%+ (harder to test, less critical)
 
 ### Test Distribution
-- **Unit tests:** 35+ tests (58%)
-- **Integration tests:** 22+ tests (37%)
-- **Component tests:** 3+ tests (5%)
-- **Total:** 60+ tests
+- **Unit tests:** 51 tests (47%)
+- **Integration tests:** 47 tests (44%)
+- **Component tests:** 3 tests (3%)
+- **Integration-cascache tests:** 7 tests (6%, optional)
+- **Total:** 108 tests
 
 ## Test Organization
 
 ```text
 tests/
 ├── unit/                     # Fast, isolated tests
-│   ├── config/
-│   │   ├── test_parser.py       # YAML parsing
-│   │   ├── test_schema.py       # Pydantic models
-│   │   └── test_validator.py    # Validation logic
-│   ├── tasks/
-│   │   ├── test_task.py         # Task dataclass
-│   │   └── test_registry.py     # Task storage
-│   ├── graph/
-│   │   ├── test_builder.py      # Graph construction
-│   │   ├── test_resolver.py     # Topological sort
-│   │   └── test_cycles.py       # Cycle detection
-│   ├── executor/
-│   │   ├── test_executor.py     # Task execution
-│   │   └── test_environment.py  # Env management
+│   ├── test_cache.py            # Core cache behavior
+│   ├── test_cli.py              # CLI unit behavior
+│   ├── test_config_parser.py    # Config parsing/discovery
+│   ├── test_executor.py         # Executor behavior
+│   ├── test_graph_builder.py    # Graph construction/sort
 │   └── cache/
-│       ├── test_hash.py         # Content hashing
-│       ├── test_local.py        # Local cache
-│       └── test_backend.py      # Interface tests
+│       └── test_cas_retry.py    # Remote cache retry logic
 │
 ├── integration/              # Multi-component tests
 │   ├── test_workflows.py        # End-to-end workflows
+│   ├── test_parallel.py         # Parallel execution behavior
+│   ├── test_rich_progress.py    # TTY/plain output behavior
+│   ├── test_cache_manager.py    # Cache integration behavior
+│   ├── test_error_context.py    # Error context and skipped tasks
 │   └── test_errors.py           # Error scenarios
 │
 ├── component/                # CLI end-to-end tests
 │   └── test_cli_e2e.py          # Full CLI testing
 │
-├── fixtures/                 # Test data
-│   ├── sample_configs/          # Test configurations
-│   └── mock_projects/           # Test projects
+├── integration-cascache/     # Optional real-server tests
+│   ├── test_cascache_integration.py
+│   ├── docker-compose.yml
+│   └── run-tests.sh
 │
 └── conftest.py               # Shared fixtures
 
@@ -141,12 +136,12 @@ def test_full_workflow_with_cache(tmp_path):
 
 **Example:**
 ```python
-def test_cscd_run_command(tmp_path):
+def test_bam_run_command(tmp_path):
     """CLI should execute tasks and show output."""
     create_test_project(tmp_path)
     
     result = subprocess.run(
-        ["cascade", "run", "build"],
+        ["bam", "run", "build"],
         cwd=tmp_path,
         capture_output=True,
         text=True,
@@ -290,11 +285,11 @@ def test_command_failure_message()
 **Files:** `tests/component/test_cli_e2e.py`
 
 **Test Cases:**
-- `cscd run <task>`
-- `cscd list`
-- `cscd graph`
-- `cscd validate`
-- `cscd clean`
+- `bam run <task>`
+- `bam list`
+- `bam graph`
+- `bam validate`
+- `bam clean`
 - Help output
 - Version display
 - Error exit codes
@@ -355,8 +350,8 @@ def create_test_file(path: Path, content: str = "test"):
     path.write_text(content)
 
 def create_test_config(workspace: Path, config: dict):
-    """Write cscd.yaml to workspace."""
-    config_path = workspace / "cscd.yaml"
+    """Write bam.yaml to workspace."""
+    config_path = workspace / "bam.yaml"
     config_path.write_text(yaml.dump(config))
     return config_path
 
@@ -375,7 +370,7 @@ def assert_cache_hit(result, task_name: str):
 uv run pytest
 
 # With coverage
-uv run pytest --cov=cascade --cov-report=html
+uv run pytest --cov=bam --cov-report=html
 
 # Specific category
 uv run pytest tests/unit/
@@ -405,14 +400,14 @@ uv run pytest -n auto
 
 ```bash
 # Terminal report
-uv run pytest --cov=cascade
+uv run pytest --cov=bam
 
 # HTML report
-uv run pytest --cov=cascade --cov-report=html
+uv run pytest --cov=bam --cov-report=html
 open htmlcov/index.html
 
 # XML report (for CI)
-uv run pytest --cov=cascade --cov-report=xml
+uv run pytest --cov=bam --cov-report=xml
 ```
 
 ### Quality Checks
@@ -478,7 +473,7 @@ test:
   stage: test
   script:
     - uv sync
-    - uv run pytest --cov=cascade --cov-report=xml
+    - uv run pytest --cov=bam --cov-report=xml
     - uv run mypy src/
     - uv run ruff check src/
   coverage: '/TOTAL.*\s+(\d+%)$/'
@@ -503,7 +498,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v1
       - run: uv sync
-      - run: uv run pytest --cov=cascade
+      - run: uv run pytest --cov=bam
       - run: uv run mypy src/
       - run: uv run ruff check src/
 ```

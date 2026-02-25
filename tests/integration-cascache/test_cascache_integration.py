@@ -35,7 +35,7 @@ def compute_test_cache_key(name: str, files: list[Path]) -> str:
 def is_cascache_available() -> bool:
     """Check if cascache server is available."""
     try:
-        url = os.getenv("CSCD_CAS_URL", "grpc://localhost:50051")
+        url = os.getenv("BAM_CAS_URL", "grpc://localhost:50051")
         host = "localhost"
         port = 50051
 
@@ -61,7 +61,7 @@ pytestmark = pytest.mark.skipif(
 @pytest.fixture
 def cascache_url() -> str:
     """Get cascache URL from environment."""
-    return os.getenv("CSCD_CAS_URL", "grpc://localhost:50051")
+    return os.getenv("BAM_CAS_URL", "grpc://localhost:50051")
 
 
 @pytest.fixture
@@ -78,7 +78,7 @@ async def test_cascache_upload_download(cascache_url: str, tmp_path: Path):
 
     # Create test file
     test_file = tmp_path / "test.txt"
-    test_file.write_text("Hello from Cascade!")
+    test_file.write_text("Hello from bam!")
 
     # Compute proper cache key
     cache_key = compute_test_cache_key("upload", [test_file])
@@ -98,7 +98,7 @@ async def test_cascache_upload_download(cascache_url: str, tmp_path: Path):
 
         # Verify content
         assert test_file.exists()
-        assert test_file.read_text() == "Hello from Cascade!"
+        assert test_file.read_text() == "Hello from bam!"
 
     finally:
         await cas_cache.close()

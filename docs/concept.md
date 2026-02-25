@@ -1,8 +1,8 @@
-# Cascade Concept Document
+# Bam Concept Document
 
 ## ⚠️ Project Status
 
-**Cascade is a proof-of-concept implementation exploring content-addressed workflow orchestration.**
+**Bam is a proof-of-concept implementation exploring content-addressed workflow orchestration.**
 
 - **Status:** Experimental / Research Project
 - **Production Readiness:** NOT production-ready
@@ -11,9 +11,9 @@
 
 **Warning:** This project is designed to explore feasibility and gather insights for potential future production development. Use at your own risk.
 
-## What is Cascade?
+## What is bam?
 
-Cascade is a content-addressed workflow orchestration tool that bridges the gap between simple task runners (like Make/Just) and complex build systems (like Bazel). It provides intelligent caching without forcing teams to restructure their projects.
+Bam is a content-addressed workflow orchestration tool that bridges the gap between simple task runners (like Make/Just) and complex build systems (like Bazel). It provides intelligent caching without forcing teams to restructure their projects.
 
 ### The Problem
 
@@ -27,7 +27,7 @@ Modern development workflows face several challenges:
 
 ### The Solution
 
-Cascade uses **content-addressable storage (CAS)** to cache task outputs based on their inputs' content hash, not timestamps. This enables:
+Bam uses **content-addressable storage (CAS)** to cache task outputs based on their inputs' content hash, not timestamps. This enables:
 
 - **Instant Cache Hits:** If inputs haven't changed, reuse cached outputs
 - **Distributed Caching:** Share artifacts across team members and CI servers
@@ -52,7 +52,7 @@ CAS: sha256:a3f8d9...7c2e/1024 (content-based)
 - Cryptographic verification of data integrity
 - Location-independent addressing
 
-**Cascade Implementation:**
+**Bam Implementation:**
 - Uses SHA256 for content hashing
 - Local cache fallback when remote unavailable
 - Integration with cascache server for distributed caching
@@ -75,7 +75,7 @@ tasks:
 ```
 
 **Dependency Graph:**
-- Cascade builds a directed acyclic graph (DAG) of tasks
+- Bam builds a directed acyclic graph (DAG) of tasks
 - Topological sort ensures correct execution order
 - Cycle detection prevents infinite loops
 - Parallel execution of independent tasks
@@ -97,14 +97,14 @@ def compute_cache_key(task: Task) -> str:
 
 **Cache Lookup:**
 1. Compute cache key from current inputs
-2. Check local cache (`.cscd/cache/`)
+2. Check local cache (`.bam/cache/`)
 3. Check remote CAS server (if configured)
 4. Cache hit → restore outputs, skip execution
 5. Cache miss → execute task, store outputs
 
 ### 4. Progressive Complexity
 
-Cascade starts simple and adds complexity only when needed:
+Bam starts simple and adds complexity only when needed:
 
 ```yaml
 # Simple: Just run a command
@@ -134,7 +134,7 @@ cache:
 
 ## Technology Stack
 
-Cascade is built with modern Python technologies, prioritizing developer experience and type safety.
+Bam is built with modern Python technologies, prioritizing developer experience and type safety.
 
 ### Core Technologies
 
@@ -255,18 +255,18 @@ Cascade is built with modern Python technologies, prioritizing developer experie
 
 ## Architecture Overview
 
-Cascade uses a layered architecture with clear separation of concerns:
+Bam uses a layered architecture with clear separation of concerns:
 
 ```
 ┌─────────────────────────────────────┐
 │     CLI Layer (typer)               │  - User commands
-│  cscd run/watch/clean/graph      │  - Argument parsing
+│  bam run/watch/clean/graph      │  - Argument parsing
 │                                     │  - Output formatting (rich)
 └─────────────────────────────────────┘
            ↓
 ┌─────────────────────────────────────┐
 │    Configuration Layer              │  - YAML parsing
-│  cscd.yaml discovery & parsing   │  - Schema validation (pydantic)
+│  bam.yaml discovery & parsing   │  - Schema validation (pydantic)
 │                                     │  - Environment expansion
 └─────────────────────────────────────┘
            ↓

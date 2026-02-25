@@ -2,6 +2,6 @@ version: 1
 
 tasks:
   hello:
-    command: echo "Hello from Cascade"
+    command: echo "Hello from bam"
     inputs: []
     outputs: []

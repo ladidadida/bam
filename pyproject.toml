@@ -3,9 +3,9 @@ build-backend = "hatchling.build"
 requires = ["hatchling", "hatch-vcs"]
 
 [project]
-name = "cscd"
+name = "bam"
 dynamic = ["version"]
-description = "**cscd** (pronounced cascade) is a content-addressed workflow orchestration tool that brings the power of content-addressable storage (CAS) to everyday development workflows. Companion to cascache."
+description = "**bam** is a content-addressed workflow orchestration tool that brings the power of content-addressable storage (CAS) to everyday development workflows. Based on side projects cascache_lib and cascache_server."
 readme = "README.md"
 license = { text = "MIT" }
 authors = [
@@ -29,10 +29,10 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://gitlab.com/cascascade/cascade"
-Repository = "https://gitlab.com/cascascade/cascade"
-Issues = "https://gitlab.com/cascascade/cascade/-/issues"
-Documentation = "https://gitlab.com/cascascade/cascade/-/blob/main/README.md"
+Homepage = "https://gitlab.com/cascascade/bam"
+Repository = "https://gitlab.com/cascascade/bam"
+Issues = "https://gitlab.com/cascascade/bam/-/issues"
+Documentation = "https://gitlab.com/cascascade/bam/-/blob/main/README.md"
 
 [dependency-groups]
 dev = [
@@ -54,7 +54,7 @@ cascache_server = [
 ]
 
 [project.scripts]
-cscd = "cscd.cli:main"
+bam = "bam.cli:main"
 
 [tool.hatch.version]
 source = "vcs"
@@ -69,6 +69,9 @@ include = [
   "README.md",
   "LICENSE",
 ]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/bam"]
 
 [tool.pytest.ini_options]
 addopts = "--strict-markers"

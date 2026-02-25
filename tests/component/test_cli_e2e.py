@@ -1,4 +1,4 @@
-"""Component/integration tests for cscd CLI."""
+"""Component/integration tests for bam CLI."""
 
 from __future__ import annotations
 
@@ -12,7 +12,7 @@ import pytest
 def test_cli_entrypoint() -> None:
     """Test CLI entry point via console script."""
     result = subprocess.run(
-        ["cscd", "--help"],
+        ["bam", "--help"],
         capture_output=True,
         text=True,
         check=False,
@@ -26,7 +26,7 @@ def test_cli_entrypoint() -> None:
 def test_cli_module_invocation() -> None:
     """Test CLI via python -m invocation."""
     result = subprocess.run(
-        [sys.executable, "-m", "cscd", "--help"],
+        [sys.executable, "-m", "bam", "--help"],
         capture_output=True,
         text=True,
         check=False,
@@ -40,7 +40,7 @@ def test_cli_module_invocation() -> None:
 def test_cli_version() -> None:
     """Test CLI --version flag."""
     result = subprocess.run(
-        ["cscd", "--version"],
+        ["bam", "--version"],
         capture_output=True,
         text=True,
         check=False,

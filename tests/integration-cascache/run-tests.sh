@@ -9,7 +9,7 @@ PROJECT_ROOT="$( cd "$SCRIPT_DIR/../.." && pwd )"
 cd "$PROJECT_ROOT"
 
 echo "🚀 Starting cascache integration tests..."
-echo "   Using Docker Compose to orchestrate cascache server + cascade client"
+echo "   Using Docker Compose to orchestrate cascache server + bam client"
 echo ""
 
 # Check if Docker Compose is available
@@ -28,7 +28,7 @@ fi
 echo "📦 Building and starting containers..."
 docker compose -f tests/integration-cascache/docker-compose.yml up \
     --abort-on-container-exit \
-    --exit-code-from cascade-client
+    --exit-code-from bam-client
 
 EXIT_CODE=$?
 

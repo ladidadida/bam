@@ -6,11 +6,11 @@ from textwrap import dedent
 import pytest
 from typer.testing import CliRunner
 
-from cscd.cache import LocalCache, compute_cache_key, expand_globs
-from cscd.cli import app
-from cscd.config import load_config
-from cscd.executor import TaskExecutor
-from cscd.graph import build_task_graph, execution_order_for_targets
+from bam.cache import LocalCache, compute_cache_key, expand_globs
+from bam.cli import app
+from bam.config import load_config
+from bam.executor import TaskExecutor
+from bam.graph import build_task_graph, execution_order_for_targets
 
 
 @pytest.fixture
@@ -61,7 +61,7 @@ def multi_stage_workspace(tmp_path: Path) -> Path:
             depends_on:
               - test
     """)
-    (tmp_path / "cscd.yaml").write_text(config)
+    (tmp_path / "bam.yaml").write_text(config)
 
     # Input files
     (tmp_path / "template.txt").write_text("This is PLACEHOLDER content\n")
@@ -100,7 +100,7 @@ def parallel_workspace(tmp_path: Path) -> Path:
               - lint-python
               - lint-js
     """)
-    (tmp_path / "cscd.yaml").write_text(config)
+    (tmp_path / "bam.yaml").write_text(config)
     (tmp_path / "main.py").write_text("# Python code\n")
     (tmp_path / "app.js").write_text("// JS code\n")
 
@@ -110,7 +110,7 @@ def parallel_workspace(tmp_path: Path) -> Path:
 @pytest.mark.asyncio
 async def test_multi_stage_pipeline_execution(multi_stage_workspace: Path):
     """Test complete multi-stage pipeline execution."""
-    _, config = load_config(multi_stage_workspace / "cscd.yaml")
+    _, config = load_config(multi_stage_workspace / "bam.yaml")
     graph = build_task_graph(config.tasks)
     task_names = execution_order_for_targets(graph, ["package"])
 
@@ -145,7 +145,7 @@ async def test_multi_stage_pipeline_execution(multi_stage_workspace: Path):
 
 def test_parallel_task_ordering(parallel_workspace: Path):
     """Test parallel task ordering."""
-    _, config = load_config(parallel_workspace / "cscd.yaml")
+    _, config = load_config(parallel_workspace / "bam.yaml")
     graph = build_task_graph(config.tasks)
     task_names = execution_order_for_targets(graph, ["compile"])
 
@@ -162,7 +162,7 @@ def test_parallel_task_ordering(parallel_workspace: Path):
 
 def test_partial_target_execution(multi_stage_workspace: Path):
     """Test running only specific target without full pipeline."""
-    _, config = load_config(multi_stage_workspace / "cscd.yaml")
+    _, config = load_config(multi_stage_workspace / "bam.yaml")
     graph = build_task_graph(config.tasks)
 
     # Run only 'build' - should also run 'generate' as dependency
@@ -178,7 +178,7 @@ def test_partial_target_execution(multi_stage_workspace: Path):
 
 def test_multiple_targets(multi_stage_workspace: Path):
     """Test running multiple targets simultaneously."""
-    _, config = load_config(multi_stage_workspace / "cscd.yaml")
+    _, config = load_config(multi_stage_workspace / "bam.yaml")
     graph = build_task_graph(config.tasks)
 
     # Run both 'build' and 'test'
@@ -193,7 +193,7 @@ def test_multiple_targets(multi_stage_workspace: Path):
 async def test_task_failure_stops_execution(multi_stage_workspace: Path):
     """Test that task failure prevents dependent tasks from running."""
     # Add a failing task
-    config_path = multi_stage_workspace / "cscd.yaml"
+    config_path = multi_stage_workspace / "bam.yaml"
     config_text = config_path.read_text()
     config_text = config_text.replace(
         "command: cat template.txt",
@@ -251,9 +251,9 @@ async def test_env_vars_in_command(tmp_path: Path):
             env:
               CUSTOM_VAR: "HelloFromEnv"
     """)
-    (tmp_path / "cscd.yaml").write_text(config)
+    (tmp_path / "bam.yaml").write_text(config)
 
-    _, loaded_config = load_config(tmp_path / "cscd.yaml")
+    _, loaded_config = load_config(tmp_path / "bam.yaml")
     graph = build_task_graph(loaded_config.tasks)
     task_names = execution_order_for_targets(graph, ["env-test"])
 
@@ -328,7 +328,7 @@ def test_cache_key_computation(tmp_path: Path):
 @pytest.mark.asyncio
 async def test_local_cache_workflow(tmp_path: Path):
     """Test complete cache put/get workflow."""
-    cache = LocalCache(tmp_path / ".cscd/cache")
+    cache = LocalCache(tmp_path / ".bam/cache")
 
     # Create output files
     (tmp_path / "output1.txt").write_text("output 1")
@@ -357,10 +357,10 @@ async def test_local_cache_workflow(tmp_path: Path):
 
 
 def test_cli_list_command(multi_stage_workspace: Path, runner: CliRunner):
-    """Test 'cscd list' command."""
+    """Test 'bam list' command."""
     result = runner.invoke(
         app,
-        ["list", "--config", str(multi_stage_workspace / "cscd.yaml")],
+        ["list", "--config", str(multi_stage_workspace / "bam.yaml")],
     )
 
     assert result.exit_code == 0
@@ -372,9 +372,9 @@ def test_cli_list_command(multi_stage_workspace: Path, runner: CliRunner):
 
 
 def test_cli_clean_command(tmp_path: Path, runner: CliRunner):
-    """Test 'cscd clean' command."""
+    """Test 'bam clean' command."""
     # Create cache directory with content
-    cache_dir = tmp_path / ".cscd/cache"
+    cache_dir = tmp_path / ".bam/cache"
     cache_dir.mkdir(parents=True)
     (cache_dir / "testfile.txt").write_text("cached data")
 
@@ -388,13 +388,13 @@ def test_cli_clean_command(tmp_path: Path, runner: CliRunner):
 
 
 def test_cli_graph_ascii(multi_stage_workspace: Path, runner: CliRunner):
-    """Test 'cscd graph' ASCII output."""
+    """Test 'bam graph' ASCII output."""
     result = runner.invoke(
         app,
         [
             "graph",
             "--config",
-            str(multi_stage_workspace / "cscd.yaml"),
+            str(multi_stage_workspace / "bam.yaml"),
             "--format",
             "ascii",
         ],
@@ -408,13 +408,13 @@ def test_cli_graph_ascii(multi_stage_workspace: Path, runner: CliRunner):
 
 
 def test_cli_graph_dot(multi_stage_workspace: Path, runner: CliRunner):
-    """Test 'cscd graph' DOT output."""
+    """Test 'bam graph' DOT output."""
     result = runner.invoke(
         app,
         [
             "graph",
             "--config",
-            str(multi_stage_workspace / "cscd.yaml"),
+            str(multi_stage_workspace / "bam.yaml"),
             "--format",
             "dot",
         ],

@@ -1,8 +1,8 @@
-# Cascade - Implementation Roadmap
+# Bam - Implementation Roadmap
 
-**Project:** Cascade - Content-Addressed Workflow Orchestration  
-**Timeline:** 6-7 weeks to production-ready  
-**Current Status:** Phase 1 COMPLETE ✅ (2026-02-12)
+**Project:** Bam - Content-Addressed Workflow Orchestration  
+**Timeline:** 6-7 weeks (experimental roadmap)  
+**Current Status:** Phase 2 COMPLETE ✅ (2026-02-12)
 
 ---
 
@@ -35,7 +35,7 @@ Week 7+:  Advanced        ━━━━━━━━━━━━━━━━━━
 - Basic CLI framework
 
 **Tasks:**
-- [x] Create GitLab repository `cascade`
+- [x] Create GitLab repository `bam`
 - [x] Initialize with uv package manager (`uv init`)
 - [x] Define project structure (src/, tests/, docs/, examples/)
 - [x] Configure pyproject.toml
@@ -47,7 +47,7 @@ Week 7+:  Advanced        ━━━━━━━━━━━━━━━━━━
   - Test directory structure
   - Fixtures and utilities
 - [x] Basic CLI framework
-  - Entry point: `cascade` command
+  - Entry point: `bam` command
   - Skeleton commands: run, list, clean, graph
   - Help text and version
 - [x] README with vision statement
@@ -57,7 +57,7 @@ Week 7+:  Advanced        ━━━━━━━━━━━━━━━━━━
 - [x] Initial commit and push
 
 **Deliverables:**
-- Working `cascade --help` command
+- Working `bam --help` command
 - README with quick start
 - CI pipeline (GitLab CI)
 
@@ -70,13 +70,13 @@ Week 7+:  Advanced        ━━━━━━━━━━━━━━━━━━
 **Status:** ✅ COMPLETE (2026-02-12)
 
 **Objectives:**
-- Load and parse cscd.yaml files
+- Load and parse bam.yaml files
 - Validate configuration structure
 - Define task model
 
 **Tasks:**
 - [x] YAML parser implementation
-  - Load cscd.yaml files
+  - Load bam.yaml files
   - Environment variable expansion
   - Config file discovery (walk up directory tree)
 - [x] Task model (dataclasses)
@@ -95,20 +95,20 @@ Week 7+:  Advanced        ━━━━━━━━━━━━━━━━━━
   - Required field validation
   - Type checking
   - Helpful error messages
-- [x] Example cscd.yaml files
+- [x] Example bam.yaml files
   - Hello world example
   - Python project example
   - Multi-task example with dependencies
 - [x] Config file discovery logic
   - `--config` CLI flag
-  - `CSCD_CONFIG` environment variable
+  - `BAM_CONFIG` environment variable
   - Search current and parent directories
 
 **Deliverables:**
 - Configuration parser module
 - Task model with validation
 - Example configurations
-- `cscd validate` command
+- `bam validate` command
 
 **Tests:** 
 - Valid/invalid YAML parsing
@@ -140,19 +140,19 @@ Week 7+:  Advanced        ━━━━━━━━━━━━━━━━━━
   - Report cycle path to user
   - Clear error messages
 - [x] Graph visualization
-  - `cscd graph` command
+  - `bam graph` command
   - ASCII art output for terminal
   - DOT format for graphviz
   - HTML visualization (optional)
 - [x] Dry-run mode
   - Show execution plan without running
-  - `cscd run --dry-run` flag
+  - `bam run --dry-run` flag
 
 **Deliverables:**
 - Graph builder module
 - Task ordering algorithm
 - Cycle detection with error reporting
-- `cscd graph` visualization command
+- `bam graph` visualization command
 
 **Tests:**
 - Simple dependency chains
@@ -204,7 +204,7 @@ Week 7+:  Advanced        ━━━━━━━━━━━━━━━━━━
 - Task executor module
 - Output formatting with rich
 - Error handling and reporting
-- `cscd run <task>` working end-to-end
+- `bam run <task>` working end-to-end
 
 **Tests:**
 - Simple command execution
@@ -237,7 +237,7 @@ Week 7+:  Advanced        ━━━━━━━━━━━━━━━━━━
   - Recursive directory hashing
   - Sort inputs for determinism
 - [x] Local cache directory structure
-  - `.cscd/cache/` directory
+  - `.bam/cache/` directory
   - Blob storage: `{hash}/output.tar.gz`
   - Metadata: `{hash}/metadata.json`
   - Lock files for concurrent access
@@ -253,7 +253,7 @@ Week 7+:  Advanced        ━━━━━━━━━━━━━━━━━━
   - Tar/compress task outputs
   - Store with metadata
   - Atomic writes (temp + rename)
-- [x] `cscd clean` command
+- [x] `bam clean` command
   - Delete cache directory
   - Selective cleaning (by task, by age)
   - Show cache size before cleaning
@@ -308,7 +308,7 @@ Week 7+:  Advanced        ━━━━━━━━━━━━━━━━━━
   - Tips & tricks section
   - Environment variables
 - [x] Configuration reference
-  - Complete cscd.yaml guide (docs/configuration.md)
+  - Complete bam.yaml guide (docs/configuration.md)
   - All fields documented
   - Best practices section
   - Common patterns
@@ -370,7 +370,7 @@ Week 7+:  Advanced        ━━━━━━━━━━━━━━━━━━
   - Semaphore for max workers
 - [ ] Max workers configuration
   - `--jobs` CLI flag
-  - `CSCD_MAX_PARALLEL` env var
+  - `BAM_MAX_PARALLEL` env var
   - Auto-detect CPU count
 - [ ] Task scheduling algorithm
   - Execute ready tasks immediately
@@ -417,13 +417,13 @@ Week 7+:  Advanced        ━━━━━━━━━━━━━━━━━━
   - Colored status indicators
   - Spinner for running tasks
 - [ ] Parallel output handling
-  - **Buffer task output** (don't interleave with Cascade messages)
+  - **Buffer task output** (don't interleave with bam messages)
   - Show complete task output on completion
   - Real-time streaming mode (`--stream` flag)
-  - **Principle: Task output is primary, Cascade messages minimal**
+  - **Principle: Task output is primary, bam messages minimal**
 - [ ] Output verbosity levels
   - `--quiet`: Only task output
-  - Default: Minimal Cascade messages + task output
+  - Default: Minimal bam messages + task output
   - `--verbose`: Include timing and diagnostics
   - `--format json`: Machine-readable for CI
 - [ ] Summary statistics
@@ -432,7 +432,7 @@ Week 7+:  Advanced        ━━━━━━━━━━━━━━━━━━
   - Parallelism achieved
 
 **Design Principle:**
-Task output should dominate the terminal. Users run `cscd run test` to see test results, not Cascade orchestration details. Keep Cascade messages minimal, clearly prefixed, and never interleaved with task output.
+Task output should dominate the terminal. Users run `bam run test` to see test results, not bam orchestration details. Keep bam messages minimal, clearly prefixed, and never interleaved with task output.
 
 **Deliverables:**
 - Beautiful progress reporting
@@ -685,7 +685,7 @@ Task output should dominate the terminal. Users run `cscd run test` to see test 
   - Upload/download counts
   - Bytes transferred
   - Time savings
-- [ ] `cascade cache stats` command
+- [ ] `bam cache stats` command
   - Show cache statistics
   - Breakdown by task
   - Local vs remote hits
@@ -708,7 +708,7 @@ Task output should dominate the terminal. Users run `cscd run test` to see test 
   - Test fallback logic
   - 11 retry-specific tests in test_cas_retry.py
 - [x] Container-based integration tests with real cascache
-  - Docker Compose setup with cascache server + cascade client
+  - Docker Compose setup with cascache server + bam client
   - Uses `uv run --from git+...` to run cascache without installation
   - 8 comprehensive integration tests
   - Tests upload/download, cache sharing, multi-file artifacts, large files
@@ -777,7 +777,7 @@ Task output should dominate the terminal. Users run `cscd run test` to see test 
     remote:
       upload_policy: always | on-success | manual
   ```
-- [ ] CLI flag: `cscd run --no-remote-upload` to disable temporarily
+- [ ] CLI flag: `bam run --no-remote-upload` to disable temporarily
 
 ### ActionCache Support
 - [ ] Implement ActionCache client (cache entire command results)
@@ -829,9 +829,9 @@ Task output should dominate the terminal. Users run `cscd run test` to see test 
 - [ ] Filtered patterns
   - `--pattern` flag for watch
   - Ignore patterns (.git, __pycache__)
-- [ ] `cscd watch` command
-  - `cscd watch test` - watch and re-run
-  - `cscd watch --pattern 'src/**/*.py' -- lint test`
+- [ ] `bam watch` command
+  - `bam watch test` - watch and re-run
+  - `bam watch --pattern 'src/**/*.py' -- lint test`
 
 **Deliverables:**
 - Watch mode implementation
@@ -894,13 +894,13 @@ Task output should dominate the terminal. Users run `cscd run test` to see test 
 ### Day 7: Developer Tooling
 
 **Tasks:**
-- [ ] `cscd init` wizard
+- [ ] `bam init` wizard
   - Interactive project setup
   - Choose project type (Python, Go, etc.)
-  - Generate starter cscd.yaml
+  - Generate starter bam.yaml
   - Install shell completions
 - [ ] Configuration validation
-  - `cscd validate --strict`
+  - `bam validate --strict`
   - Warn about best practice violations
   - Suggest optimizations
 - [ ] Task templates
@@ -908,7 +908,7 @@ Task output should dominate the terminal. Users run `cscd run test` to see test 
   - Template variables
   - Built-in templates (test, build, deploy)
 - [ ] Example project scaffolding
-  - `cscd init --example python`
+  - `bam init --example python`
   - Pre-configured example projects
 
 **Deliverables:**
@@ -923,7 +923,7 @@ Task output should dominate the terminal. Users run `cscd run test` to see test 
 - [ ] Watch mode working and responsive
 - [ ] Beautiful terminal output
 - [ ] Shell completions installed
-- [ ] `cscd init` wizard functional
+- [ ] `bam init` wizard functional
 
 **Developer Experience:**
 - Time from install to first success: <5 minutes
@@ -950,7 +950,7 @@ Task output should dominate the terminal. Users run `cscd run test` to see test 
   - Never log secret values
   - Mask in output
 - [ ] Multiple environment configs
-  - `cscd.yaml` + `cascade.dev.yaml`
+  - `bam.yaml` + `bam.dev.yaml`
   - Environment-specific overrides
   - `--env` flag for selection
 - [ ] `.env` file support
@@ -985,8 +985,8 @@ Task output should dominate the terminal. Users run `cscd run test` to see test 
   - Report all failures at end
 - [ ] Task tagging and filtering
   - Tags: `[build, test, deploy]`
-  - `cscd run --tag test`
-  - `cscd run --exclude deploy`
+  - `bam run --tag test`
+  - `bam run --exclude deploy`
 
 **Deliverables:**
 - Advanced task control
@@ -998,12 +998,12 @@ Task output should dominate the terminal. Users run `cscd run test` to see test 
 
 **Tasks:**
 - [ ] GitHub Actions example
-  - Workflow file with cascade
+  - Workflow file with bam
   - Cache restoration
   - Artifact uploads
 - [ ] GitLab CI example
-  - .gitlab-ci.yml with cascade
-  - Docker image with cascade
+  - .gitlab-ci.yml with bam
+  - Docker image with bam
   - Cache configuration
 - [ ] Jenkins integration guide
   - Jenkinsfile example
@@ -1044,7 +1044,7 @@ Task output should dominate the terminal. Users run `cscd run test` to see test 
   - Usage statistics
   - Error reporting (opt-in)
 - [ ] Health checks
-  - `cascade health` command
+  - `bam health` command
   - Check config validity
   - Check cache connectivity
   - Check CAS server reachability
@@ -1064,7 +1064,7 @@ Task output should dominate the terminal. Users run `cscd run test` to see test 
 - [ ] Health checks functional
 
 **Reliability:**
-- CI failure rate: <1% due to cascade
+- CI failure rate: <1% due to bam
 - Network resilience: Survives transient failures
 - Error reporting: Clear, actionable
 
@@ -1124,10 +1124,10 @@ tasks:
 
 **Options:**
 1. **VSCode Tasks Generator** (simpler)
-   - Convert `cscd.yaml` to `.vscode/tasks.json`
-   - `cascade vscode-tasks` command
-   - Keep cscd.yaml as source of truth
-   - VSCode tasks call cascade commands
+   - Convert `bam.yaml` to `.vscode/tasks.json`
+   - `bam vscode-tasks` command
+   - Keep bam.yaml as source of truth
+   - VSCode tasks call bam commands
 
 2. **VSCode Extension** (richer)
    - Task explorer in sidebar
@@ -1138,14 +1138,14 @@ tasks:
 
 **Tasks:**
 - [ ] VSCode tasks.json generator
-  - Parse cscd.yaml
+  - Parse bam.yaml
   - Generate VSCode task definitions
   - Map dependencies correctly
   - Problem matchers for error highlighting
 - [ ] VSCode extension (optional)
   - Task tree view provider
   - Commands integration
-  - Language server for cscd.yaml
+  - Language server for bam.yaml
   - Syntax highlighting and validation
   - Graph visualization panel
 - [ ] Keyboard shortcuts and snippets
@@ -1157,12 +1157,12 @@ tasks:
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "cascade: build",
+      "label": "bam: build",
       "type": "shell",
-      "command": "cscd run build",
+      "command": "bam run build",
       "group": "build",
       "problemMatcher": ["$eslint-stylish"],
-      "dependsOn": ["cascade: lint", "cascade: test"]
+      "dependsOn": ["bam: lint", "bam: test"]
     }
   ]
 }
@@ -1176,10 +1176,10 @@ tasks:
 
 ### CI Pipeline Generation
 
-**Goal:** Automatically generate CI pipeline configurations from cscd.yaml
+**Goal:** Automatically generate CI pipeline configurations from bam.yaml
 
 **Architecture:**
-- Read cscd.yaml task definitions
+- Read bam.yaml task definitions
 - Generate platform-specific CI config
 - Optimize for caching and artifacts
 - Support multiple CI platforms
@@ -1219,20 +1219,20 @@ tasks:
 **Commands:**
 ```bash
 # Generate CI config for specific platform
-cascade ci-gen github    # → .github/workflows/cascade.yml
-cascade ci-gen gitlab    # → .gitlab-ci.yml
-cascade ci-gen jenkins   # → Jenkinsfile
+bam ci-gen github    # → .github/workflows/bam.yml
+bam ci-gen gitlab    # → .gitlab-ci.yml
+bam ci-gen jenkins   # → Jenkinsfile
 
 # Interactive wizard
-cascade ci-gen --interactive
+bam ci-gen --interactive
 
 # With customization
-cascade ci-gen github --cache-strategy aggressive --parallel
+bam ci-gen github --cache-strategy aggressive --parallel
 ```
 
 **Generated GitHub Actions Example:**
 ```yaml
-name: Cascade CI
+name: Bam CI
 on: [push, pull_request]
 
 jobs:
@@ -1241,11 +1241,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Setup environment
-        run: cscd run setup
+        run: bam run setup
       - uses: actions/cache@v3
         with:
-          path: .cscd/cache
-          key: cascade-${{ hashFiles('**/cscd.yaml') }}
+          path: .bam/cache
+          key: bam-${{ hashFiles('**/bam.yaml') }}
   
   parallel-checks:
     needs: setup
@@ -1255,14 +1255,14 @@ jobs:
         task: [lint, typecheck, test]
     steps:
       - name: Run ${{ matrix.task }}
-        run: cscd run ${{ matrix.task }}
+        run: bam run ${{ matrix.task }}
   
   build:
     needs: parallel-checks
     runs-on: ubuntu-latest
     steps:
       - name: Build
-        run: cscd run build
+        run: bam run build
       - uses: actions/upload-artifact@v3
         with:
           name: dist
@@ -1270,7 +1270,7 @@ jobs:
 ```
 
 **Benefits:**
-- Quick CI setup from existing cscd.yaml
+- Quick CI setup from existing bam.yaml
 - Best practices baked in (caching, artifacts)
 - Automatic parallelization detection
 - Platform-specific optimizations
@@ -1408,7 +1408,7 @@ tasks:
 ### Adoption Risks
 
 **Risk:** Learning curve too steep
-- **Mitigation:** `cscd init` wizard, excellent documentation
+- **Mitigation:** `bam init` wizard, excellent documentation
 - **Fallback:** Start with hello-world, progressive complexity
 
 **Risk:** Configuration too complex
@@ -1498,7 +1498,7 @@ Decision needed: Week 3
 1. [x] Finalize design document
 2. [x] Create copilot instructions
 3. [x] Create this roadmap
-4. [x] Move docs to cascade repository
+4. [x] Move docs to bam repository
 5. [x] Initialize project with uv
 6. [x] Complete Phase 1 Day 1-2 (Project Setup)
 7. [x] Complete Phase 1 Day 3-4 (Configuration Parsing)

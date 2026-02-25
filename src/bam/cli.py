@@ -1,4 +1,4 @@
-"""CLI entry point for cscd."""
+"""CLI entry point for bam."""
 
 from __future__ import annotations
 
@@ -16,7 +16,7 @@ from rich.tree import Tree
 
 from ._version import __version__
 from .cache import LocalCache, create_cache, expand_globs
-from .config import CascadeConfig, ConfigurationError, load_config
+from .config import BamConfig, ConfigurationError, load_config
 from .executor import TaskExecutionError, TaskExecutor
 from .graph import (
     CyclicDependencyError,
@@ -28,10 +28,10 @@ from .graph import (
 )
 
 app = typer.Typer(
-    name="cscd",
+    name="bam",
     help=(
         "Flow naturally through your build pipeline 🌊\n\n"
-        "cscd (pronounced 'cascade') is a content-addressed workflow orchestration tool that brings "
+        "bam is a content-addressed workflow orchestration tool that brings "
         "CAS-style caching to existing development workflows. Companion to cascache."
     ),
     no_args_is_help=True,
@@ -41,7 +41,7 @@ app = typer.Typer(
 def version_callback(value: bool) -> None:
     """Print version and exit when requested."""
     if value:
-        typer.echo(f"cscd {__version__}")
+        typer.echo(f"bam {__version__}")
         raise typer.Exit()
 
 
@@ -58,7 +58,7 @@ def common_options(
         ),
     ] = None,
 ) -> None:
-    """Cascade command group."""
+    """Bam command group."""
     if ctx.invoked_subcommand is None:
         typer.echo(ctx.get_help())
         raise typer.Exit(code=0)
@@ -201,14 +201,14 @@ def _build_task_tree(
 
 async def _execute_single_task(
     task_name: str,
-    loaded_config: CascadeConfig,
+    loaded_config: BamConfig,
     executor: TaskExecutor,
 ) -> None:
     """Execute a single task with its configuration.
 
     Args:
         task_name: Name of the task to execute.
-        loaded_config: Loaded cascade configuration.
+        loaded_config: Loaded bam configuration.
         executor: Task executor instance.
 
     Raises:
@@ -232,7 +232,7 @@ async def _execute_single_task(
 async def _execute_tasks_parallel(  # noqa: C901
     graph: nx.DiGraph,
     execution_order: list[str],
-    loaded_config: CascadeConfig,
+    loaded_config: BamConfig,
     executor: TaskExecutor,
     max_workers: int,
     use_rich: bool = False,
@@ -242,7 +242,7 @@ async def _execute_tasks_parallel(  # noqa: C901
     Args:
         graph: Task dependency graph.
         execution_order: Topologically sorted task list.
-        loaded_config: Loaded cascade configuration.
+        loaded_config: Loaded bam configuration.
         executor: Task executor instance.
         max_workers: Maximum number of concurrent tasks.
         use_rich: Whether to use rich progress display.
@@ -501,11 +501,11 @@ def run_command(
             exists=False,
             file_okay=True,
             dir_okay=False,
-            help="Path to a cascade configuration file.",
+            help="Path to a bam configuration file.",
         ),
     ] = None,
 ) -> None:
-    """Run a task from cscd.yaml."""
+    """Run a task from bam.yaml."""
     max_workers = _parse_jobs_value(jobs)
 
     # Auto-detect plain mode if not explicitly set
@@ -523,7 +523,7 @@ def list_command(
             exists=False,
             file_okay=True,
             dir_okay=False,
-            help="Path to a cascade configuration file.",
+            help="Path to a bam configuration file.",
         ),
     ] = None,
 ) -> None:
@@ -550,7 +550,7 @@ def clean_command(
     cache_dir: Annotated[
         Path,
         typer.Option("--cache-dir", help="Cache directory to clean."),
-    ] = Path(".cascade/cache"),
+    ] = Path(".bam/cache"),
     force: Annotated[
         bool,
         typer.Option("--force", "-f", help="Skip confirmation prompt."),
@@ -589,7 +589,7 @@ def graph_command(
             exists=False,
             file_okay=True,
             dir_okay=False,
-            help="Path to a cascade configuration file.",
+            help="Path to a bam configuration file.",
         ),
     ] = None,
     output_format: Annotated[
@@ -631,7 +631,7 @@ def validate_command(
             exists=False,
             file_okay=True,
             dir_okay=False,
-            help="Path to a cascade configuration file.",
+            help="Path to a bam configuration file.",
         ),
     ] = None,
 ) -> None:

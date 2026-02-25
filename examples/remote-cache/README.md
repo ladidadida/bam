@@ -1,6 +1,6 @@
-# Cascade Example - Remote CAS Cache
+# Bam Example - Remote CAS Cache
 
-This example demonstrates how to configure Cascade with remote CAS caching.
+This example demonstrates how to configure bam with remote CAS caching.
 
 ## Configuration
 
@@ -11,13 +11,13 @@ version: 1
 cache:
   local:
     enabled: true
-    path: .cscd/cache  # Local cache directory
+    path: .bam/cache  # Local cache directory
   
   remote:
     enabled: true
     type: cas
     url: grpc://localhost:50051  # cascache server URL
-    token_file: ~/.cscd/cas-token  # Optional authentication token
+    token_file: ~/.bam/cas-token  # Optional authentication token
     upload: true   # Automatically upload to remote
     download: true # Automatically download from remote
     timeout: 30.0  # Request timeout in seconds
@@ -43,7 +43,7 @@ tasks:
 
 **On cache miss (first run):**
 1. Task executes normally
-2. Outputs stored in local cache (`.cscd/cache`)
+2. Outputs stored in local cache (`.bam/cache`)
 3. Outputs automatically uploaded to remote CAS server
 
 **On cache hit (subsequent runs):**
@@ -60,7 +60,7 @@ tasks:
 
 ## Retry Logic & Error Handling
 
-Cascade provides robust error handling for remote cache operations:
+Bam provides robust error handling for remote cache operations:
 
 **Automatic Retries:**
 - Transient errors (network issues, timeouts) are retried automatically
@@ -101,8 +101,8 @@ To run a local cascache server:
 cascache serve --host 0.0.0.0 --port 50051
 
 # With authentication
-cascache token create > ~/.cscd/cas-token
-cascache serve --token-file ~/.cscd/cas-token
+cascache token create > ~/.bam/cas-token
+cascache serve --token-file ~/.bam/cas-token
 ```
 
 ## Local-Only Mode
@@ -113,7 +113,7 @@ To disable remote caching:
 cache:
   local:
     enabled: true
-    path: .cscd/cache
+    path: .bam/cache
   
   remote:
     enabled: false  # Disable remote cache
@@ -122,7 +122,7 @@ cache:
 Or use `--no-cache` flag to disable all caching:
 
 ```bash
-cascade run build --no-cache
+bam run build --no-cache
 ```
 
 ## Cache Statistics
@@ -130,7 +130,7 @@ cascade run build --no-cache
 Future enhancement: View cache hit/miss statistics
 
 ```bash
-cascade cache stats
+bam cache stats
 ```
 
 Example output:

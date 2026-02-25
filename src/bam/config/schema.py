@@ -1,4 +1,4 @@
-"""Pydantic schema definitions for ``cscd.yaml``."""
+"""Pydantic schema definitions for ``bam.yaml``."""
 
 from __future__ import annotations
 
@@ -18,7 +18,7 @@ class TaskConfig(BaseModel):
     env: dict[str, str] = Field(default_factory=dict)
 
 
-class CascadeConfig(BaseModel):
+class BamConfig(BaseModel):
     """Root configuration model."""
 
     model_config = ConfigDict(extra="forbid")

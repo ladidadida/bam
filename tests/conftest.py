@@ -1,4 +1,4 @@
-"""Shared pytest fixtures for cscd tests."""
+"""Shared pytest fixtures for bam tests."""
 
 from __future__ import annotations
 

@@ -44,7 +44,7 @@ test:unit:
   script:
     - uv run pytest -v --tb=short -k "not component" tests/unit
 
-# Component/integration tests
+# Component tests
 test:component:
   stage: test
   script:
@@ -73,7 +73,7 @@ deploy:pypi:
     - uv publish --token $PYPI_API_TOKEN
   environment:
     name: production
-    url: https://pypi.org/project/cscd/
+    url: https://pypi.org/project/bam/
   only:
     - tags
   except:
@@ -88,7 +88,7 @@ deploy:testpypi:main:
     - uv publish --publish-url https://test.pypi.org/legacy/ --token $PYPI_TEST_API_TOKEN
   environment:
     name: test
-    url: https://test.pypi.org/project/cscd/
+    url: https://test.pypi.org/project/bam/
   when: manual
   only:
     - main
@@ -104,7 +104,7 @@ deploy:testpypi:mr:
     - uv publish --publish-url https://test.pypi.org/legacy/ --token $PYPI_TEST_API_TOKEN
   environment:
     name: test
-    url: https://test.pypi.org/project/cscd/
+    url: https://test.pypi.org/project/bam/
   when: manual
   only:
     - merge_requests

@@ -1,6 +1,6 @@
-# Cascade Configuration Reference
+# Bam Configuration Reference
 
-Complete guide to `cscd.yaml` configuration syntax and options.
+Complete guide to `bam.yaml` configuration syntax and options.
 
 ## File Structure
 

@@ -1,23 +1,23 @@
-# Cascade - Workflow Planning Tool - Design Document
+# Bam - Workflow Orchestration Tool - Design Document
 
-**Project Name:** Cascade 🌊  
+**Project Name:** Bam 
 **Tagline:** "Flow naturally through your build pipeline"  
-**Status:** Design Phase  
+**Status:** Living Document  
 **Date:** 2026-02-12  
 **Integration:** Python CAS Server for artifact caching  
-**Repository:** https://gitlab.com/cascascade/cscd
+**Repository:** https://gitlab.com/cascascade/bam
 
 ## 1. Vision & Goals
 
 ### Vision Statement
-A flexible workflow planning and execution tool that integrates seamlessly into existing development environments without enforcing rigid build system concepts. Named "Cascade" because workflows flow naturally from one step to the next, like water cascading down - smooth, continuous, and following the path of least resistance.
+A flexible workflow planning and execution tool that integrates seamlessly into existing development environments without enforcing rigid build system concepts.
 
-### The Cascade Philosophy
+### The Bam Philosophy
 - **Flow, don't fight:** Work with your existing tools, not against them
 - **Cache everything:** Every step's output is cached by content
 - **Fail gracefully:** Errors don't break the flow, they redirect it  
 - **Progressive complexity:** Start with simple tasks, scale to orchestration
-- **Task output first:** What matters is your tool's output, not Cascade's messages
+- **Task output first:** What matters is your tool's output, not bam's messages
 
 ### Primary Goals
 1. **Flexibility First:** Integrate with any developer workflow without enforcing concepts
@@ -139,10 +139,10 @@ Uses Python CAS server as primary cache backend:
 
 ## 4. Configuration Format
 
-### 4.1 Project File: `flow.yaml`
+### 4.1 Project File: `bam.yaml`
 
 ```yaml
-# flow.yaml - Workflow definition
+# bam.yaml - Workflow definition
 version: "1"
 name: my-project
 
@@ -218,7 +218,7 @@ tasks:
 
 # Named workflows (optional)
 workflows:
-  # Default workflow (run with: flow run)
+  # Default workflow (run with: bam run)
   default:
     - install-deps
     - generate-protos
@@ -239,10 +239,10 @@ workflows:
     - deploy-staging
 ```
 
-### 4.2 Alternative: TOML Format
+### 4.2 Alternative: TOML Format (Deferred)
 
 ```toml
-# flow.toml - Alternative format
+# bam.toml - Alternative format (not currently implemented)
 version = "1"
 name = "my-project"
 
@@ -271,48 +271,45 @@ protoc --python_out=src/generated/proto \
 ### 5.1 Command Structure
 
 ```bash
-# Initialize new project
-flow init
-
 # List available tasks
-flow list
+bam list
 
 # Run specific task (with dependencies)
-flow run generate-protos
+bam run generate-protos
 
 # Run workflow
-flow run ci
+bam run ci
 
 # Run multiple tasks
-flow run lint test build
+bam run lint test build
 
 # Clean cache
-flow clean
+bam clean
 
 # Show task graph
-flow graph
+bam graph
 
 # Check what would run (dry-run)
-flow run build --dry-run
+bam run build --dry-run
 
 # Force re-run (ignore cache)
-flow run build --force
+bam run build --force
 
 # Show cache statistics
-flow cache stats
+bam cache stats
 
 # Configure remote cache
-flow cache config --url grpc://cas.example.com:50051
+bam cache config --url grpc://cas.example.com:50051
 ```
 
 ### 5.2 Watch Mode (Development)
 
 ```bash
 # Watch for changes, auto-run tasks
-flow watch test
+bam watch test
 
 # Watch with specific pattern
-flow watch --pattern 'src/**/*.py' -- lint test
+bam watch --pattern 'src/**/*.py' -- lint test
 ```
 
 ## 6. Execution Model
@@ -320,7 +317,7 @@ flow watch --pattern 'src/**/*.py' -- lint test
 ### 6.1 Task Execution Flow
 
 ```
-1. Parse flow.yaml
+1. Parse bam.yaml
 2. Build dependency graph
 3. Determine which tasks to run
 4. For each task (in dependency order):
@@ -391,7 +388,7 @@ Configuration:
 cache:
   local:
     enabled: true
-    path: .cscd/cache
+    path: .bam/cache
   remote:
     enabled: true
     type: cas
@@ -520,13 +517,13 @@ Tasks with no dependencies run in parallel:
 ### 8.3 File Structure
 
 ```
-flowbuild/
+bam/
 ├── src/
-│   └── flowbuild/
+│   └── bam/
 │       ├── __init__.py
 │       ├── __main__.py
 │       ├── cli.py              # Click/Typer CLI
-│       ├── config.py           # Parse flow.yaml
+│       ├── config.py           # Parse bam.yaml
 │       ├── task.py             # Task model
 │       ├── workflow.py         # Workflow execution
 │       ├── graph.py            # Dependency graph
@@ -541,11 +538,11 @@ flowbuild/
 ├── tests/
 ├── examples/
 │   ├── basic/
-│   │   └── flow.yaml
+│   │   └── bam.yaml
 │   ├── multi-language/
-│   │   └── flow.yaml
+│   │   └── bam.yaml
 │   └── ci-pipeline/
-│       └── flow.yaml
+│       └── bam.yaml
 ├── pyproject.toml
 └── README.md
 ```
@@ -593,20 +590,20 @@ flowbuild/
 - [ ] Timeout support
 - [ ] Artifact publishing
 
-**Deliverable:** Production-ready CI integration
+**Deliverable:** CI-friendly workflow integration
 
 ## 10. Example: Complete Project
 
 ### Project Structure
 ```
 my-service/
-├── flow.yaml
+├── bam.yaml
 ├── protos/
 │   ├── service.proto
 │   └── types.proto
 ├── src/
 │   ├── main.py
-│   ├── generated/  # Generated by flow
+│   ├── generated/  # Generated by bam
 │   └── api/
 ├── tests/
 ├── Dockerfile
@@ -614,7 +611,7 @@ my-service/
     └── k8s.yaml
 ```
 
-### flow.yaml
+### bam.yaml
 ```yaml
 version: "1"
 name: my-service
@@ -695,29 +692,29 @@ workflows:
 ### Usage
 ```bash
 # Developer workflow
-flow run dev
+bam run dev
 
 # Watch mode during development
-flow watch test
+bam watch test
 
 # CI workflow
-flow run ci
+bam run ci
 
 # Deploy after CI pass
-flow run deploy
+bam run deploy
 
 # Check what would run
-flow run build --dry-run
+bam run build --dry-run
 
 # See task graph
-flow graph ci
+bam graph ci
 ```
 
 ## 11. Open Questions
 
 1. **Error Handling:** How to handle partial failures? Retry? Fail fast?
 2. **Security:** How to prevent malicious cache poisoning?
-3. **Versioning:** How to handle flow.yaml format evolution?
+3. **Versioning:** How to handle bam.yaml format evolution?
 4. **Secrets:** How to handle secrets in tasks? Environment? Vault integration?
 5. **Artifacts:** Should we support artifact metadata (size, hash, creator)?
 6. **Language API:** Python API for programmatic task definition?
@@ -742,8 +739,8 @@ flow graph ci
 ## 13. Next Steps
 
 ### Immediate Actions
-1. ✅ **Naming decided:** Cascade
-2. ⏳ **Repository setup:** Create new repository `cascade`
+1. ✅ **Naming decided:** Bam
+2. ⏳ **Repository setup:** Create new repository `bam`
 3. ⏳ **Initial structure:** Project skeleton with uv
 4. ⏳ **Design refinement:** Finalize open questions
 5. ⏳ **Prototype:** MVP implementation
@@ -752,34 +749,34 @@ flow graph ci
 
 **Recommended: Separate Repository**
 
-Create new repo: `gitlab.com/cascascade/cscd`
+Create new repo: `gitlab.com/cascascade/bam`
 
 **Reasons:**
 - Different audiences (developers vs ops)
 - Independent versioning and releases  
-- Clear dependency: cascade → cascache (client to server)
+- Clear dependency: bam → cascache (client to server)
 - Focused development and CI
 - Separate documentation and examples
 
 **Integration:**
-- Cascade uses cascache as remote cache backend
+- Bam uses cascache as remote cache backend
 - Reuse gRPC client code from cascache
 - Share proto definitions
 - Cross-reference documentation
 
 **Project Structure:**
 ```
-cascade/                    # New repository
-├── src/cascade/
+bam/                    # New repository
+├── src/bam/
 ├── tests/
 ├── examples/
 ├── docs/
 └── pyproject.toml
 
-python-cas/                 # Existing repository
+cascache_server/                 # Existing repository
 ├── src/cascache/             # Server stays here
 └── docs/
-    └── cascade-design.md  # Planning doc (move to cascade repo later)
+    └── bam-design.md  # Planning doc (move to bam repo later)
 ```
 
 ---
@@ -802,7 +799,7 @@ Week 7+:  Advanced        ━━━━━━━━━━━━━━━━━━
 **Goal:** Execute tasks with dependency tracking and local caching
 
 **Day 1-2: Project Setup**
-- [ ] Create new repository `cascade`
+- [ ] Create new repository `bam`
 - [ ] Initialize with uv package manager
 - [ ] Define project structure
 - [ ] Set up testing infrastructure (pytest)
@@ -810,18 +807,18 @@ Week 7+:  Advanced        ━━━━━━━━━━━━━━━━━━
 - [ ] README with vision statement
 
 **Day 3-4: Configuration Parsing**
-- [ ] Implement YAML parser for `cscd.yaml`
+- [ ] Implement YAML parser for `bam.yaml`
 - [ ] Task model: inputs, outputs, command, dependencies
 - [ ] Config validation
 - [ ] Schema definition
 - [ ] Example configurations
-- [ ] Config file discovery (cscd.yaml, .cscd.yaml)
+- [ ] Config file discovery (bam.yaml, .bam.yaml)
 
 **Day 5-6: Task Graph**
 - [ ] Dependency graph builder (networkx)
 - [ ] Topological sort for execution order
 - [ ] Cycle detection
-- [ ] `cscd graph` command (visualize dependencies)
+- [ ] `bam graph` command (visualize dependencies)
 - [ ] Dry-run mode
 
 **Day 7-9: Task Execution**
@@ -835,10 +832,10 @@ Week 7+:  Advanced        ━━━━━━━━━━━━━━━━━━
 **Day 10-12: Local Caching**
 - [ ] Content hashing (SHA256)
 - [ ] Input fingerprinting (files + command + env)
-- [ ] Local cache directory structure (.cscd/cache/)
+- [ ] Local cache directory structure (.bam/cache/)
 - [ ] Cache lookup and restore
 - [ ] Cache storage format (tar.gz)
-- [ ] `cscd clean` command
+- [ ] `bam clean` command
 
 **Day 13-14: Testing & Documentation**
 - [ ] Unit tests for all components
@@ -851,11 +848,11 @@ Week 7+:  Advanced        ━━━━━━━━━━━━━━━━━━
 
 ```bash
 # Example usage after Phase 1
-cscd init
-cscd list
-cscd run build
-cscd run build --force
-cscd clean
+bam init
+bam list
+bam run build
+bam run build --force
+bam clean
 ```
 
 ---
@@ -892,8 +889,8 @@ cscd clean
 
 ```bash
 # Example parallel execution
-cscd run --jobs 4 build  # Run up to 4 tasks in parallel
-cscd run --jobs auto build  # Auto-detect CPU count
+bam run --jobs 4 build  # Run up to 4 tasks in parallel
+bam run --jobs auto build  # Auto-detect CPU count
 ```
 
 ---
@@ -921,7 +918,7 @@ cscd run --jobs auto build  # Auto-detect CPU count
 - [ ] Download artifacts from CAS
 - [ ] Fallback to local on CAS failure
 - [ ] Cache statistics tracking
-- [ ] `cascade cache stats` command
+- [ ] `bam cache stats` command
 
 **Day 7: Testing**
 - [ ] Unit tests with mock CAS server
@@ -951,7 +948,7 @@ cache:
 - [ ] Auto-run tasks on file changes
 - [ ] Debouncing (avoid rapid re-runs)
 - [ ] Filtered patterns
-- [ ] `cscd watch` command
+- [ ] `bam watch` command
 
 **Day 4-5: Rich CLI**
 - [ ] Colored output
@@ -966,7 +963,7 @@ cache:
 - [ ] Output formatting options (json, table, minimal)
 
 **Day 7: Developer Tooling**
-- [ ] `cscd init` wizard (interactive)
+- [ ] `bam init` wizard (interactive)
 - [ ] Configuration validation with helpful errors
 - [ ] Task templates
 - [ ] Example project scaffolding
@@ -975,12 +972,12 @@ cache:
 
 ```bash
 # Watch mode examples
-cscd watch test          # Re-run tests on changes
-cscd watch --pattern 'src/**/*.py' -- lint test
+bam watch test          # Re-run tests on changes
+bam watch --pattern 'src/**/*.py' -- lint test
 
 # Better output
-cscd run build --format json
-cscd run build --quiet
+bam run build --format json
+bam run build --quiet
 ```
 
 ---
@@ -1085,8 +1082,8 @@ Execute tasks on remote machines with pre-configured environments.
 - Simple SSH-based communication for coordination
 
 **Components:**
-1. Local coordinator (cascade CLI)
-2. Remote task runner (cascade worker daemon)
+1. Local coordinator (bam CLI)
+2. Remote task runner (bam worker daemon)
 3. cascache server (artifact exchange)
 4. SSH connection for control
 
@@ -1138,19 +1135,19 @@ tasks:
 - [ ] Dynamic task generation
 
 **VSCode Integration:**
-- [ ] VSCode tasks.json generator (`cascade vscode-tasks`)
+- [ ] VSCode tasks.json generator (`bam vscode-tasks`)
 - [ ] Optional: Full VSCode extension with task explorer
 - [ ] Task graph visualization in IDE
 - [ ] Integrated execution and output
-- [ ] Language server for cscd.yaml validation
+- [ ] Language server for bam.yaml validation
 
 **CI Pipeline Generation:**
-- [ ] Auto-generate CI configs from cscd.yaml
+- [ ] Auto-generate CI configs from bam.yaml
 - [ ] Support for GitHub Actions, GitLab CI, Jenkins, CircleCI
 - [ ] Automatic parallelization detection
 - [ ] Smart caching strategy generation
 - [ ] Platform-specific optimizations
-- [ ] Command: `cascade ci-gen github|gitlab|jenkins`
+- [ ] Command: `bam ci-gen github|gitlab|jenkins`
 
 **Plugins & Extensions:**
 - [ ] Plugin system architecture
@@ -1280,7 +1277,7 @@ Decision needed: Week 3
 **4. Workflow Composition**
 ```
 Q: How to reuse workflows across projects?
-   - Import other cscd.yaml files?
+   - Import other bam.yaml files?
    - Package and distribute workflows?
    - Workflow registry?
 ```
@@ -1290,7 +1287,7 @@ Q: How to reuse workflows across projects?
 Q: How to handle secrets securely?
    - Environment variables only?
    - Integrate with vault services?
-   - Encrypted cscd.yaml sections?
+   - Encrypted bam.yaml sections?
 ```
 
 **6. Multi-Repository Projects**
@@ -1298,7 +1295,7 @@ Q: How to handle secrets securely?
 Q: How to orchestrate across multiple repos?
    - Monorepo only?
    - Remote task references?
-   - Cascade in each repo?
+   - Bam in each repo?
 ```
 
 ---
@@ -1334,7 +1331,7 @@ Q: How to orchestrate across multiple repos?
 
 ### User Documentation
 - [ ] Getting Started Guide
-- [ ] Configuration Reference (cscd.yaml)
+- [ ] Configuration Reference (bam.yaml)
 - [ ] CLI Command Reference
 - [ ] Caching Guide
 - [ ] CI Integration Guide

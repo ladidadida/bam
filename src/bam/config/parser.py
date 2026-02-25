@@ -9,9 +9,9 @@ from typing import Any
 import yaml
 from pydantic import ValidationError
 
-from .schema import CascadeConfig
+from .schema import BamConfig
 
-CONFIG_FILENAMES = ("cscd.yaml", ".cscd.yaml")
+CONFIG_FILENAMES = ("bam.yaml", ".bam.yaml")
 
 
 class ConfigurationError(Exception):
@@ -48,12 +48,12 @@ def discover_config_path(
             return resolved
         raise ConfigurationError(f"Config file not found: {resolved}")
 
-    env_config = os.getenv("CSCD_CONFIG")
+    env_config = os.getenv("BAM_CONFIG")
     if env_config:
         resolved = _resolve_candidate(Path(env_config), search_root)
         if resolved.is_file():
             return resolved
-        raise ConfigurationError(f"Config file from CSCD_CONFIG not found: {resolved}")
+        raise ConfigurationError(f"Config file from BAM_CONFIG not found: {resolved}")
 
     for directory in (search_root, *search_root.parents):
         for filename in CONFIG_FILENAMES:
@@ -62,7 +62,7 @@ def discover_config_path(
                 return candidate
 
     raise ConfigurationError(
-        "No cscd configuration found. Searched for 'cscd.yaml' and '.cscd.yaml' "
+        "No bam configuration found. Searched for 'bam.yaml' and '.bam.yaml' "
         f"from {search_root} upwards."
     )
 
@@ -70,8 +70,8 @@ def discover_config_path(
 def load_config(
     config_path: Path | None = None,
     start_dir: Path | None = None,
-) -> tuple[Path, CascadeConfig]:
-    """Load and validate Cascade configuration."""
+) -> tuple[Path, BamConfig]:
+    """Load and validate Bam configuration."""
     resolved_path = discover_config_path(config_path=config_path, start_dir=start_dir)
 
     try:
@@ -90,7 +90,7 @@ def load_config(
     expanded_data = _expand_env(raw_data)
 
     try:
-        config = CascadeConfig.model_validate(expanded_data)
+        config = BamConfig.model_validate(expanded_data)
     except ValidationError as exc:
         raise ConfigurationError(
             f"Configuration validation failed in {resolved_path}:\n{exc}"

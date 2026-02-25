@@ -1,16 +1,16 @@
-# Cascade - GitHub Copilot Instructions
+# Bam - GitHub Copilot Instructions
 
 ## Project Context
 
-**Cascade** is a content-addressed workflow orchestration tool that brings the power of content-addressable storage (CAS) to everyday development workflows. It bridges the gap between simple task runners (like Make/Just) and complex build systems (like Bazel), providing intelligent caching without forcing teams to restructure their projects.
+**Bam** is a content-addressed workflow orchestration tool that brings the power of content-addressable storage (CAS) to everyday development workflows. It bridges the gap between simple task runners (like Make/Just) and complex build systems (like Bazel), providing intelligent caching without forcing teams to restructure their projects.
 
 **Tagline:** Flow naturally through your build pipeline 🌊
 
 **⚠️ Project Status:** Concept/Experimental - NOT production-ready  
-**Development Status:** Phase 1 ✅ Complete | Phase 2 ✅ Complete | Phase 3 ✅ Complete  
+**Development Status:** Phase 1 ✅ Complete | Phase 2 ✅ Complete | Phase 3 🔄 Planned  
 **Target:** Python 3.13+ (using uv package manager)  
 **Primary Use Cases:** Research, experimentation, feedback gathering  
-**Cache Backend:** Python CAS server (cascache) with local fallback
+**Cache Backend:** cascache_lib (local/hybrid cache client) + cascache_server (remote CAS)
 
 **Purpose:** This is a proof-of-concept implementation to explore content-addressed workflow orchestration patterns. It demonstrates feasibility and gathers insights for potential future production development.
 
@@ -28,7 +28,7 @@
 - Integration over invasion (wrap existing commands)
 - Local-first, remote-optional (works offline)
 - Zero-config defaults with escape hatches
-- Minimal Cascade messages, maximum task visibility
+- Minimal bam messages, maximum task visibility
 
 ## Architecture Overview
 
@@ -37,7 +37,7 @@
 ```
 ┌─────────────────────────────────────┐
 │     CLI Layer (click/typer)         │  - User commands
-│  cscd run/watch/clean/graph      │  - Argument parsing
+│  bam run/watch/clean/graph      │  - Argument parsing
 └─────────────────────────────────────┘
            ↓
 ┌─────────────────────────────────────┐
@@ -92,12 +92,11 @@
    - Output handling
    - Status tracking
 
-5. **Cache Layer** (`cache/`)
-   - CacheBackend abstraction
-   - LocalCache implementation
-   - CASCache implementation (gRPC client)
-   - Content hashing (SHA256)
-   - Cache key computation
+5. **Cache Layer** (`cache/` + `cascache_lib`)
+  - Compatibility exports in `src/bam/cache/__init__.py`
+  - Implementations provided by `cascache_lib`
+  - Local, remote, and hybrid cache strategies
+  - Content hashing and cache key computation
 
 6. **CLI Layer** (`cli/`)
    - Command handlers
@@ -125,7 +124,7 @@
 
 **Preferred YAML structure:**
 ```yaml
-# cscd.yaml
+# bam.yaml
 version: 1
 
 cache:
@@ -172,7 +171,7 @@ tasks:
 - ✅ Content-addressable local caching (SHA256)
 - ✅ Rich CLI with colored output
 - ✅ Graph visualization (ASCII + DOT)
-- ✅ 85% test coverage with 60 tests
+- ✅ 85% test coverage with 101+ tests
 - ✅ Complete documentation
 
 ### Phase 2: Parallelization ✅ COMPLETE (2026-02-12)
@@ -194,18 +193,17 @@ tasks:
 - ✅ TTY detection for CI/CD compatibility
   - Auto-switches to plain buffered output
   - `--plain` flag for explicit control
-- ✅ 85 passing tests (up from 60)
+- ✅ 101 passing tests
 
-### Phase 3: CAS Integration (Week 4) - 🔄 NEXT
-**Goal:** Remote caching with cascache server
+### Phase 3: Remote Cache Hardening (Week 4) - 🔄 NEXT
+**Goal:** Harden remote caching behavior, observability, and reliability
 
 - [ ] CacheBackend abstraction
-- [ ] gRPC client for cascache
-- [ ] CASCache implementation
-- [ ] Upload/download blobs
-- [ ] Token-based authentication
-- [ ] Automatic fallback to local cache
-- [ ] Network error handling
+- [ ] Refine remote/hybrid behavior via cascache_lib
+- [ ] Improve retry/backoff tuning and timeout controls
+- [ ] Improve metrics/observability for cache hit/miss paths
+- [ ] Improve token handling and auth failure diagnostics
+- [ ] Improve failure-mode fallback and user-facing errors
 
 ### Phase 4-6: See spec/roadmap.md
 
@@ -221,12 +219,12 @@ tasks:
 **Async & Parallelization:**
 - `asyncio` (stdlib) - Concurrent task execution
 
-**CAS Integration (Phase 3):**
+**Remote Cache Integration (Phase 3):**
 - `pydantic>=2.0.0` - Config validation
 
-**CAS Integration (Phase 2):**
+**CAS Client Dependencies:**
 - `grpcio>=1.64.0` - gRPC client
-- `protobuf>=5.26.0` - Proto definitions (from cascache)
+- `protobuf>=5.26.0` - Proto definitions (from cascache_server)
 
 **Parallelization (Phase 3):**
 - `aiofiles>=23.0.0` - Async file I/O
@@ -242,19 +240,19 @@ tasks:
 ## Configuration
 
 **Environment Variables:**
-- `CSCD_CONFIG` - Path to cscd.yaml (default: ./cscd.yaml)
-- `CSCD_CACHE_DIR` - Local cache directory (default: ./.cscd/cache)
-- `CSCD_CACHE_TYPE` - Cache backend: local, cas (default: local)
-- `CSCD_CAS_URL` - CAS server URL (default: grpc://localhost:50051)
-- `CSCD_CAS_TOKEN_FILE` - CAS auth token file
-- `CSCD_LOG_LEVEL` - Logging level (DEBUG, INFO, WARNING)
-- `CSCD_MAX_PARALLEL` - Max parallel tasks (default: CPU count)
+- `BAM_CONFIG` - Path to bam.yaml (default: ./bam.yaml)
+- `BAM_CACHE_DIR` - Local cache directory (default: ./.bam/cache)
+- `BAM_CACHE_TYPE` - Cache backend: local, cas (default: local)
+- `BAM_CAS_URL` - CAS server URL (default: grpc://localhost:50051)
+- `BAM_CAS_TOKEN_FILE` - CAS auth token file
+- `BAM_LOG_LEVEL` - Logging level (DEBUG, INFO, WARNING)
+- `BAM_MAX_PARALLEL` - Max parallel tasks (default: CPU count)
 
 **Configuration File Discovery:**
 1. `--config` CLI argument
-2. `CSCD_CONFIG` environment variable
-3. `./cscd.yaml` in current directory
-4. `./.cscd.yaml` (hidden file)
+2. `BAM_CONFIG` environment variable
+3. `./bam.yaml` in current directory
+4. `./.bam.yaml` (hidden file)
 5. Walk up directory tree to find config
 
 ## Testing Strategy
@@ -274,10 +272,13 @@ tasks:
 - Parallel execution
 - Error recovery
 
-### End-to-End Tests (`tests/e2e/`)
-- Real project examples
-- CAS server integration
-- Multi-machine caching
+### Component Tests (`tests/component/`)
+- CLI entrypoint and module invocation
+- Version/help output behavior
+
+### CAS Integration Tests (`tests/integration-cascache/`)
+- Real cascache_server integration (optional)
+- Docker-compose based test environment
 
 **Target:** 80%+ code coverage
 
@@ -285,32 +286,26 @@ tasks:
 ```
 tests/
   unit/
-    config/
-      test_parser.py
-      test_validation.py
-    tasks/
-      test_task_model.py
-      test_registry.py
-    graph/
-      test_builder.py
-      test_cycles.py
+    test_cache.py
+    test_cli.py
+    test_config_parser.py
+    test_executor.py
+    test_graph_builder.py
     cache/
-      test_local.py
-      test_hash.py
-      test_backend.py
-    executor/
-      test_subprocess.py
-      test_parallel.py
+      test_cas_retry.py
   integration/
-    test_workflow.py
-    test_dependencies.py
-    test_caching.py
-  e2e/
-    test_python_project.py
-    test_multi_language.py
-    test_cas_integration.py
-  fixtures/
-    sample_projects/
+    test_cache_manager.py
+    test_error_context.py
+    test_errors.py
+    test_parallel.py
+    test_rich_progress.py
+    test_workflows.py
+  integration-cascache/
+    test_cascache_integration.py
+    docker-compose.yml
+    run-tests.sh
+  component/
+    test_cli_e2e.py
   conftest.py
 ```
 
@@ -339,36 +334,28 @@ tests/
 
 ### Project Structure
 ```
-cascade/
+bam/
 ├── src/
-│   └── cascade/
+│   └── bam/
 │       ├── __init__.py
 │       ├── __main__.py
-│       ├── cli/
-│       │   ├── __init__.py
-│       │   ├── commands.py
-│       │   └── output.py
+│       ├── _version.py
+│       ├── cli.py
 │       ├── config/
 │       │   ├── __init__.py
 │       │   ├── parser.py
 │       │   └── schema.py
 │       ├── tasks/
 │       │   ├── __init__.py
-│       │   ├── task.py
-│       │   └── registry.py
+│       │   └── task.py
 │       ├── graph/
 │       │   ├── __init__.py
 │       │   └── builder.py
 │       ├── executor/
 │       │   ├── __init__.py
-│       │   ├── subprocess.py
-│       │   └── parallel.py
+│       │   └── executor.py
 │       └── cache/
-│           ├── __init__.py
-│           ├── backend.py
-│           ├── local.py
-│           ├── cas.py
-│           └── hash.py
+│           └── __init__.py
 ├── tests/
 ├── examples/
 │   ├── hello-world/
@@ -398,17 +385,17 @@ uv sync
 uv run pytest
 
 # Run with coverage
-uv run pytest --cov=cascade --cov-report=html
+uv run pytest --cov=bam --cov-report=html
 
 # Type checking
 uv run pyright
 
 # Linting
-uv run ruff check src/cascade
+uv run ruff check src/bam
 
-# Run cascade CLI
-uv run cascade --help
-uv run cscd run build
+# Run bam CLI
+uv run bam --help
+uv run bam run build
 ```
 
 ## Key Design Patterns
@@ -419,19 +406,19 @@ from abc import ABC, abstractmethod
 
 class CacheBackend(ABC):
     @abstractmethod
-    async def get(self, key: str) -> bytes | None:
-        """Retrieve cached artifact."""
-        pass
+  async def get(self, cache_key: str, output_paths: list[Path]) -> bool:
+    """Restore cached outputs."""
+    ...
     
     @abstractmethod
-    async def put(self, key: str, data: bytes) -> None:
-        """Store artifact in cache."""
-        pass
+  async def put(self, cache_key: str, output_paths: list[Path]) -> bool:
+    """Store task outputs in cache."""
+    ...
     
     @abstractmethod
     async def exists(self, key: str) -> bool:
         """Check if artifact is cached."""
-        pass
+        ...
 ```
 
 ### 2. Dependency Injection
@@ -441,7 +428,7 @@ class WorkflowRunner:
         self,
         executor: TaskExecutor,
         cache: CacheBackend,
-        config: CascadeConfig,
+        config: BamConfig,
     ):
         self.executor = executor
         self.cache = cache
@@ -474,29 +461,21 @@ def create_cache_backend(config: CacheConfig) -> CacheBackend:
         raise ValueError(f"Unknown cache type: {config.type}")
 ```
 
-## Integration with cascache
+## Integration with cascache ecosystem
 
-### Proto Definitions
-- Reuse proto files from cascache (`protos/` directory)
-- Generate Python bindings with `grpc_tools.protoc`
-- Import as: `from cascade.api.generated import cas_simple_pb2`
+### Companion Repositories
+- cascache_lib: `https://gitlab.com/cascascade/cascache_lib`
+- cascache_server: `https://gitlab.com/cascascade/cascache_server`
 
-### gRPC Client
+### Remote Cache Client
 ```python
-import grpc
-from cascade.api.generated import cas_simple_pb2_grpc
+from cascache_lib.cache import RemoteCache
 
-class CASClient:
-    def __init__(self, url: str, token: str | None = None):
-        self.channel = grpc.insecure_channel(url)
-        self.stub = cas_simple_pb2_grpc.ContentAddressableStorageStub(
-            self.channel
-        )
-        self.token = token
-    
-    async def upload_blob(self, digest: str, data: bytes) -> None:
-        # Implementation using cascache protocol
-        pass
+cache = RemoteCache(
+  cas_url="grpc://localhost:50051",
+  token=None,
+  timeout=30.0,
+)
 ```
 
 ### Cache Key Format
@@ -594,7 +573,8 @@ class TaskExecutionError(Exception):
 
 - **Progress Tracking:** spec/roadmap.md (use this for tracking all implementation progress)
 - **Design Doc:** spec/design.md (comprehensive design document)
-- **cascache:** https://gitlab.com/cascascade/cascache_server (CAS server implementation)
+- **cascache_lib:** https://gitlab.com/cascascade/cascache_lib (cache client library)
+- **cascache_server:** https://gitlab.com/cascascade/cascache_server (CAS server implementation)
 - **Examples:** examples/ directory
 - **networkx docs:** https://networkx.org/documentation/stable/
 - **Rich CLI:** https://rich.readthedocs.io/
@@ -604,28 +584,28 @@ class TaskExecutionError(Exception):
 
 ```bash
 # Initialize new project
-cscd init
+bam init
 
 # List available tasks
-cscd list
+bam list
 
 # Run specific task
-cscd run build
+bam run build
 
 # Run with all dependencies
-cscd run --with-deps test
+bam run --with-deps test
 
 # Watch mode (re-run on changes)
-cscd watch test
+bam watch test
 
 # Visualize task graph
-cscd graph --output graph.png
+bam graph --output graph.png
 
 # Clean cache
-cscd clean
+bam clean
 
 # Check configuration
-cscd validate
+bam validate
 ```
 
 ## Success Criteria
@@ -655,5 +635,5 @@ cscd validate
 
 ---
 
-**Last Updated:** 2026-02-12 (Phase 2 Complete)  
-**Status:** Ready for Phase 3 CAS Integration 🚀
+**Last Updated:** 2026-02-25 (bam rename + cascache_lib integration)  
+**Status:** Ready for Phase 3 Remote Cache Hardening 🚀

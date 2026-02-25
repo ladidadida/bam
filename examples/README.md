@@ -1,6 +1,6 @@
 # Examples
 
-This directory will contain sample `cscd.yaml` configurations used throughout implementation phases.
+This directory will contain sample `bam.yaml` configurations used throughout implementation phases.
 
 Planned examples:
 

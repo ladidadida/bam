@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import pytest
 
-from cscd.config.schema import TaskConfig
-from cscd.graph import (
+from bam.config.schema import TaskConfig
+from bam.graph import (
     CyclicDependencyError,
     MissingTaskError,
     build_task_graph,

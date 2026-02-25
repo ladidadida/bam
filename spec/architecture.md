@@ -1,12 +1,12 @@
-# Cascade Architecture Specification
+# Bam Architecture Specification
 
 **Version:** 1.0  
 **Last Updated:** 2026-02-12  
-**Status:** Phase 1 Complete
+**Status:** Phase 2 Complete
 
 ## Overview
 
-Cascade follows a layered architecture with clear separation of concerns. Each layer has well-defined responsibilities and interfaces, making the system maintainable and testable.
+Bam follows a layered architecture with clear separation of concerns. Each layer has well-defined responsibilities and interfaces, making the system maintainable and testable.
 
 ## System Architecture
 
@@ -36,7 +36,7 @@ Cascade follows a layered architecture with clear separation of concerns. Each l
 
 ### 1. CLI Layer
 
-**Location:** `src/cascade/cli.py`
+**Location:** `src/bam/cli.py`
 
 **Responsibilities:**
 - Command parsing and argument validation
@@ -51,11 +51,11 @@ Cascade follows a layered architecture with clear separation of concerns. Each l
 - Click (via Typer) - Command structure
 
 **Commands:**
-- `cscd run [TASKS...]` - Execute tasks
-- `cscd list` - Show available tasks
-- `cscd graph` - Visualize dependencies
-- `cscd validate` - Check configuration
-- `cscd clean` - Manage cache
+- `bam run [TASKS...]` - Execute tasks
+- `bam list` - Show available tasks
+- `bam graph` - Visualize dependencies
+- `bam validate` - Check configuration
+- `bam clean` - Manage cache
 
 **Design Decisions:**
 - Rich output for better UX
@@ -65,16 +65,14 @@ Cascade follows a layered architecture with clear separation of concerns. Each l
 
 ### 2. Configuration Layer
 
-**Location:** `src/cascade/config/`
+**Location:** `src/bam/config/`
 
 **Components:**
 - `parser.py` - YAML parsing
 - `schema.py` - Pydantic models
-- `validator.py` - Validation logic
-- `loader.py` - File discovery
 
 **Responsibilities:**
-- Load and parse cscd.yaml
+- Load and parse bam.yaml
 - Validate configuration schema
 - Expand environment variables
 - Resolve glob patterns
@@ -85,8 +83,13 @@ Cascade follows a layered architecture with clear separation of concerns. Each l
 version: 1  # Schema version
 
 cache:  # Optional
-  type: local  # local (Phase 1), cas (Phase 2+)
-  cache_dir: .cscd/cache
+   local:
+      enabled: true
+      path: .bam/cache
+   remote:
+      enabled: false
+      type: cas
+      url: grpc://localhost:50051
 
 tasks:  # Required
   task_name:
@@ -107,12 +110,10 @@ tasks:  # Required
 
 ### 3. Task Graph Layer
 
-**Location:** `src/cascade/graph/`
+**Location:** `src/bam/graph/`
 
 **Components:**
 - `builder.py` - Graph construction
-- `resolver.py` - Topological sort
-- `visualizer.py` - ASCII/DOT output
 
 **Responsibilities:**
 - Build directed acyclic graph (DAG)
@@ -137,12 +138,10 @@ tasks:  # Required
 
 ### 4. Task Executor Layer
 
-**Location:** `src/cascade/executor/`
+**Location:** `src/bam/executor/`
 
 **Components:**
 - `executor.py` - Main execution logic
-- `subprocess_runner.py` - Command execution
-- `environment.py` - Environment management
 
 **Responsibilities:**
 - Execute tasks in dependency order
@@ -179,24 +178,23 @@ For each task in topological order:
 
 ### 5. Cache Layer
 
-**Location:** `src/cascade/cache/`
+**Location:** `src/bam/cache/` + `cascache_lib`
 
 **Components:**
-- `backend.py` - Abstract interface
-- `local.py` - Local filesystem cache
-- `hash.py` - Content hashing
-- `storage.py` - Archive operations
+- `__init__.py` - Compatibility exports used by bam
+- `cascache_lib.cache` - Backend implementations
+- `cascache_lib.config` - Cache configuration models
 
 **Cache Backend Interface:**
 ```python
 class CacheBackend(ABC):
     @abstractmethod
-    async def get(self, cache_key: str) -> Path | None:
-        """Retrieve cached artifact."""
+   async def get(self, cache_key: str, output_paths: list[Path]) -> bool:
+      """Restore cached outputs."""
         
     @abstractmethod
-    async def put(self, cache_key: str, paths: list[Path]) -> None:
-        """Store artifact in cache."""
+   async def put(self, cache_key: str, output_paths: list[Path]) -> bool:
+      """Store outputs in cache."""
         
     @abstractmethod
     async def exists(self, cache_key: str) -> bool:
@@ -217,7 +215,7 @@ cache_key = SHA256(
 ```
 
 **Storage Format (Local):**
-- Directory: `.cscd/cache/`
+- Directory: `.bam/cache/`
 - Format: `tar.gz` archives
 - Naming: `{cache_key[:8]}.tar.gz`
 - Index: `index.json` with metadata
@@ -256,7 +254,7 @@ cache_key = SHA256(
 
 ```
 1. Discover config file
-   (CLI arg → env var → ./cscd.yaml → walk up)
+   (CLI arg → env var → ./bam.yaml → walk up)
    ↓
 2. Read YAML file
    ↓
@@ -290,8 +288,8 @@ cache_key = SHA256(
 ## Project Structure
 
 ```text
-cascade/
-├── src/cascade/
+bam/
+├── src/bam/
 │   ├── __init__.py           # Package root
 │   ├── __main__.py           # Entry point
 │   ├── _version.py           # Version info
@@ -300,9 +298,7 @@ cascade/
 │   ├── config/               # Configuration layer
 │   │   ├── __init__.py
 │   │   ├── parser.py         # YAML parsing
-│   │   ├── schema.py         # Pydantic models
-│   │   ├── validator.py      # Validation logic
-│   │   └── loader.py         # File discovery
+│   │   └── schema.py         # Pydantic models
 │   │
 │   ├── tasks/                # Task models
 │   │   ├── __init__.py
@@ -311,22 +307,14 @@ cascade/
 │   │
 │   ├── graph/                # Dependency graph
 │   │   ├── __init__.py
-│   │   ├── builder.py        # Graph construction
-│   │   ├── resolver.py       # Topological sort
-│   │   └── visualizer.py     # Graph output
+│   │   └── builder.py        # Graph construction + sort + rendering
 │   │
 │   ├── executor/             # Task execution
 │   │   ├── __init__.py
-│   │   ├── executor.py       # Main executor
-│   │   ├── subprocess_runner.py  # Command execution
-│   │   └── environment.py    # Env management
+│   │   └── executor.py       # Main executor
 │   │
-│   └── cache/                # Caching system
-│       ├── __init__.py
-│       ├── backend.py        # Abstract interface
-│       ├── local.py          # Local cache impl
-│       ├── hash.py           # Content hashing
-│       └── storage.py        # Archive operations
+│   └── cache/                # Cache compatibility layer
+│       └── __init__.py       # Re-exports from cascache_lib
 │
 ├── tests/
 │   ├── unit/                 # Unit tests
@@ -431,20 +419,20 @@ cascade/
 
 ### 7. Task Output Focus
 - **Task output is primary:** Users care about what their tools produce (build errors, test results)
-- **Cascade messages are secondary:** Orchestration messages should be minimal and unobtrusive
-- **Clear separation:** Distinguish Cascade metadata from task output
+- **Bam messages are secondary:** Orchestration messages should be minimal and unobtrusive
+- **Clear separation:** Distinguish bam metadata from task output
 - **Verbosity control:** Support different output modes for different contexts
 
 **Output Modes:**
-- `--quiet` / `-q`: Only task output, no Cascade messages
-- Default: Minimal Cascade messages (task start/complete), full task output
-- `--verbose` / `-v`: Include Cascade diagnostics and timing
+- `--quiet` / `-q`: Only task output, no bam messages
+- Default: Minimal bam messages (task start/complete), full task output
+- `--verbose` / `-v`: Include bam diagnostics and timing
 - `--debug`: Full debug output for troubleshooting
 
 **Implementation Guidelines:**
 - Stream task stdout/stderr directly (don't buffer unnecessarily)
-- Prefix Cascade messages with colored markers (e.g., `[cascade]`)
-- Never interleave Cascade messages with task output
+- Prefix bam messages with colored markers (e.g., `[bam]`)
+- Never interleave bam messages with task output
 - For parallel execution: buffer task output, show complete on finish
 - Provide `--format json` for machine-readable output
 
@@ -452,7 +440,7 @@ cascade/
 
 **Good (minimal):**
 ```
-$ cscd run test
+$ bam run test
 ============================= test session starts ==============================
 platform linux -- Python 3.13.0, pytest-9.0.0
 collected 60 items
@@ -463,20 +451,20 @@ tests/unit/test_executor.py .........                                    [ 28%]
 ============================== 60 passed in 2.83s ==============================
 ```
 
-**Bad (too much Cascade noise):**
+**Bad (too much bam noise):**
 ```
-$ cscd run test
-[cascade] Loading configuration from cscd.yaml
-[cascade] Validating task graph
-[cascade] Computing cache keys
-[cascade] Cache miss for task: test
-[cascade] Executing task: test
-[cascade] Task started at 2026-02-12 14:32:01
+$ bam run test
+[bam] Loading configuration from bam.yaml
+[bam] Validating task graph
+[bam] Computing cache keys
+[bam] Cache miss for task: test
+[bam] Executing task: test
+[bam] Task started at 2026-02-12 14:32:01
 ============================= test session starts ==============================
-[cascade] Task output detected
+[bam] Task output detected
 ...
-[cascade] Task completed at 2026-02-12 14:32:04
-[cascade] Storing outputs in cache
+[bam] Task completed at 2026-02-12 14:32:04
+[bam] Storing outputs in cache
 ```
 
 ## Error Handling Strategy
@@ -564,7 +552,7 @@ $ cscd run test
 - Support for specialized hardware (GPU, large RAM)
 
 **VSCode Integration:**
-- Generate VSCode tasks.json from cscd.yaml
+- Generate VSCode tasks.json from bam.yaml
 - Optional full VSCode extension
 - Task explorer in IDE sidebar
 - Graph visualization panel
@@ -572,7 +560,7 @@ $ cscd run test
 
 **CI Pipeline Generation:**
 - Auto-generate CI configs (GitHub Actions, GitLab CI, Jenkins)
-- Parse cscd.yaml to create optimized pipelines
+- Parse bam.yaml to create optimized pipelines
 - Automatic parallelization and caching strategies
 - Platform-specific best practices
 - Multi-platform support

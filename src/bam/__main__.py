@@ -1,4 +1,4 @@
-"""Enable 'python -m cascade'."""
+"""Enable 'python -m bam'."""
 
 from __future__ import annotations
 

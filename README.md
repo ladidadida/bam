@@ -1,6 +1,4 @@
-# cscd 🌊
-
-> **Pronounced "cascade" • Companion to cascache**
+# bam 🌊
 
 > **⚠️ PROOF OF CONCEPT - NOT PRODUCTION READY**
 >
@@ -12,8 +10,9 @@
 
 **Flow naturally through your build pipeline**
 
-cscd (pronounced "cascade") is a content-addressed workflow orchestration tool that brings the power of content-addressable storage to everyday development workflows. It bridges the gap between simple task runners (like Make/Just) and complex build systems (like Bazel), providing intelligent caching without forcing teams to restructure their projects.
-There exists a companion server app [cascache](https://gitlab.com/cascascade/cascache_server) that is used for remote caching.
+bam is a content-addressed workflow orchestration tool that brings the power of content-addressable storage to everyday development workflows. It bridges the gap between simple task runners (like Make/Just) and complex build systems (like Bazel), providing intelligent caching without forcing teams to restructure their projects.
+
+bam utilizes its partner projects [cascache_lib](https://gitlab.com/cascascade/cascache_lib) and [cascache_server](https://gitlab.com/cascascade/cascache_server) that implement local and remote CAS caching.
 
 **Warning**: Large parts of this tool were generated with the help of AI. Special thanks to Claude Sonnet for the excellent support!
 
@@ -36,20 +35,20 @@ There exists a companion server app [cascache](https://gitlab.com/cascascade/cas
 
 ```bash
 # Using uv (recommended)
-uv pip install cscd
+uv pip install bam
 
 # Using pip
-pip install cscd
+pip install bam
 
 # From source
-git clone https://gitlab.com/cascascade/cscd.git
-cd cascade
+git clone https://gitlab.com/cascascade/bam.git
+cd bam
 uv sync
 ```
 
 ### Your First Workflow
 
-Create `cscd.yaml` in your project:
+Create `bam.yaml` in your project:
 
 ```yaml
 version: 1
@@ -76,26 +75,26 @@ Run your tasks:
 
 ```bash
 # Execute tasks with dependencies
-cscd run test
+bam run test
 
 # Parallel execution (auto-detect CPUs)
-cscd run test  # defaults to parallel
+bam run test  # defaults to parallel
 
 # Control parallelism
-cscd run test --jobs 4     # use 4 workers
-cscd run test --jobs 1     # sequential
+bam run test --jobs 4     # use 4 workers
+bam run test --jobs 1     # sequential
 
 # Plain output for CI/CD
-cscd run test --plain
+bam run test --plain
 
 # List available tasks
-cscd list
+bam list
 
 # Visualize dependency graph
-cscd graph
+bam graph
 
 # Validate configuration
-cscd validate
+bam validate
 ```
 
 ### Distributed Caching
@@ -106,12 +105,12 @@ Share cache across your team with a remote CAS server:
 cache:
   local:
     enabled: true
-    path: .cscd/cache
+    path: .bam/cache
   remote:
     enabled: true
     type: cas
     url: grpc://cas.example.com:50051
-    token_file: ~/.cscd/cas-token
+    token_file: ~/.bam/cas-token
     timeout: 30.0
     max_retries: 3  # Automatic retry on transient errors
 ```
@@ -121,16 +120,16 @@ cache:
 - 🔌 Connection pooling for low latency
 - ⚡ Local-first strategy (check local → remote → miss)
 - 🛡️ Graceful fallback to local on network errors
-- 📊 Statistics tracking (future: `cascade cache stats`)
+- 📊 Statistics tracking (future: `bam cache stats`)
 
 See [examples/remote-cache/](examples/remote-cache/) for complete setup guide.
 
 ## 📖 Documentation
 
 **User Guides:**
-- [Concept Document](docs/concept.md) - What is Cascade? Core concepts and technology stack
+- [Concept Document](docs/concept.md) - What is bam? Core concepts and technology stack
 - [CLI Reference](docs/cli.md) - Complete command documentation
-- [Configuration Guide](docs/configuration.md) - Full cscd.yaml reference
+- [Configuration Guide](docs/configuration.md) - Full bam.yaml reference
 
 **Technical Specifications:**
 - [Architecture](spec/architecture.md) - System design and components
@@ -197,33 +196,33 @@ tasks:
 
 ## 🎨 CLI Commands
 
-### `cscd run`
+### `bam run`
 
 Execute tasks with automatic dependency resolution and parallel execution:
 
 ```bash
 # Run single task (parallel by default)
-cscd run build
+bam run build
 
 # Control parallelism
-cscd run build --jobs 8      # use 8 workers
-cscd run build --jobs auto   # auto-detect CPUs
-cscd run build --jobs 1      # sequential
+bam run build --jobs 8      # use 8 workers
+bam run build --jobs auto   # auto-detect CPUs
+bam run build --jobs 1      # sequential
 
 # Plain output for CI/CD
-cscd run build --plain
+bam run build --plain
 
 # Run multiple tasks
-cscd run lint test build
+bam run lint test build
 
 # Dry run (show execution plan)
-cscd run --dry-run deploy
+bam run --dry-run deploy
 
 # Disable caching
-cscd run --no-cache build
+bam run --no-cache build
 
 # Quiet mode
-cscd run -q test
+bam run -q test
 ```
 
 **Interactive Tree View:**
@@ -243,7 +242,7 @@ cscd run -q test
 
 **Error Context:**
 
-When tasks fail, Cascade provides detailed context:
+When tasks fail, bam provides detailed context:
 
 ```
 ✗ Task failed: step3
@@ -258,16 +257,16 @@ When tasks fail, Cascade provides detailed context:
   • final
 ```
 
-### `cscd graph`
+### `bam graph`
 
 Visualize task dependencies:
 
 ```bash
 # ASCII tree output
-cscd graph
+bam graph
 
 # GraphViz DOT format
-cscd graph --format dot > graph.dot
+bam graph --format dot > graph.dot
 ```
 
 **Example Output:**
@@ -289,12 +288,12 @@ cscd graph --format dot > graph.dot
    └─ deploy
 ```
 
-### `cscd validate`
+### `bam validate`
 
 Validate configuration:
 
 ```bash
-cscd validate
+bam validate
 ```
 
 Checks:
@@ -303,21 +302,21 @@ Checks:
 - ✅ All dependencies defined
 - ✅ Required fields present
 
-### `cscd clean`
+### `bam clean`
 
 Manage cache:
 
 ```bash
 # Clean with confirmation
-cscd clean
+bam clean
 
 # Force clean
-cscd clean --force
+bam clean --force
 ```
 
 ## 🏗️ Architecture
 
-Cascade is built as a layered system:
+bam is built as a layered system:
 
 **CLI → Config → Graph → Executor → Cache**
 
@@ -327,14 +326,14 @@ For detailed architecture documentation, see [spec/architecture.md](spec/archite
 
 ## 🧪 Testing
 
-Cascade maintains high code quality with comprehensive testing:
+bam maintains high code quality with comprehensive testing:
 
 ```bash
 # Run unit and integration tests
 uv run pytest
 
 # With coverage report
-uv run pytest --cov=cascade --cov-report=html
+uv run pytest --cov=bam --cov-report=html
 
 # cascache integration tests (requires Docker)
 ./tests/integration-cascache/run-tests.sh
@@ -362,8 +361,8 @@ For detailed testing strategy, see [spec/testing.md](spec/testing.md) and [tests
 
 ```bash
 # Clone and install
-git clone https://gitlab.com/yourusername/cascade.git
-cd cascade
+git clone https://gitlab.com/cascascade/bam.git
+cd bam
 uv sync
 ```
 
@@ -402,7 +401,7 @@ For detailed development setup and project structure, see [spec/architecture.md]
 - ✅ TTY detection for CI/CD compatibility
 
 **Coming Soon:**
-- 🔄 Phase 3: CAS Integration (remote caching with cascache)
+- 🔄 Phase 3: Remote Cache Hardening (advanced CAS sync, observability, reliability)
 - 🎨 Phase 4: Enhanced developer experience
 - 🤖 Phase 5: CI/CD optimizations
 

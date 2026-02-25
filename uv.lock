@@ -42,6 +42,60 @@ wheels = [
 ]
 
 [[package]]
+name = "bam"
+source = { editable = "." }
+dependencies = [
+    { name = "cascache-lib" },
+    { name = "networkx" },
+    { name = "pydantic" },
+    { name = "pyyaml" },
+    { name = "rich" },
+    { name = "typer" },
+]
+
+[package.dev-dependencies]
+cascache-server = [
+    { name = "cascache-server" },
+]
+dev = [
+    { name = "build" },
+    { name = "grpcio-tools" },
+    { name = "pyright" },
+    { name = "pytest" },
+    { name = "pytest-asyncio" },
+    { name = "pytest-cov" },
+    { name = "ruff" },
+    { name = "twine" },
+    { name = "types-networkx" },
+    { name = "types-pyyaml" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "cascache-lib", git = "https://gitlab.com/cascascade/cascache_lib.git?rev=main" },
+    { name = "networkx", specifier = ">=3.0" },
+    { name = "pydantic", specifier = ">=2.0.0" },
+    { name = "pyyaml", specifier = ">=6.0.0" },
+    { name = "rich", specifier = ">=13.0.0" },
+    { name = "typer", specifier = ">=0.12.0" },
+]
+
+[package.metadata.requires-dev]
+cascache-server = [{ name = "cascache-server", git = "https://gitlab.com/cascascade/cascache_server?rev=main" }]
+dev = [
+    { name = "build", specifier = ">=1.0" },
+    { name = "grpcio-tools", specifier = ">=1.64.0" },
+    { name = "pyright", specifier = ">=1.1.0" },
+    { name = "pytest", specifier = ">=9.0.0" },
+    { name = "pytest-asyncio", specifier = ">=0.23.0" },
+    { name = "pytest-cov", specifier = ">=7.0.0" },
+    { name = "ruff", specifier = ">=0.3.0" },
+    { name = "twine", specifier = ">=4.0" },
+    { name = "types-networkx", specifier = ">=3.5.0" },
+    { name = "types-pyyaml", specifier = ">=6.0.12" },
+]
+
+[[package]]
 name = "boto3"
 version = "1.42.56"
 source = { registry = "https://pypi.org/simple" }
@@ -324,60 +378,6 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/99/0f/a3076874e9c88ecb2ecc31382f6e7c21b428ede6f55aafa1aa272613e3cd/cryptography-46.0.5-cp38-abi3-manylinux_2_34_x86_64.whl", hash = "sha256:a3d507bb6a513ca96ba84443226af944b0f7f47dcc9a399d110cd6146481d24c", size = 4452794, upload-time = "2026-02-10T19:18:12.914Z" },
     { url = "https://files.pythonhosted.org/packages/02/ef/ffeb542d3683d24194a38f66ca17c0a4b8bf10631feef44a7ef64e631b1a/cryptography-46.0.5-cp38-abi3-musllinux_1_2_aarch64.whl", hash = "sha256:9f16fbdf4da055efb21c22d81b89f155f02ba420558db21288b3d0035bafd5f4", size = 4404160, upload-time = "2026-02-10T19:18:14.375Z" },
     { url = "https://files.pythonhosted.org/packages/96/93/682d2b43c1d5f1406ed048f377c0fc9fc8f7b0447a478d5c65ab3d3a66eb/cryptography-46.0.5-cp38-abi3-musllinux_1_2_x86_64.whl", hash = "sha256:ced80795227d70549a411a4ab66e8ce307899fad2220ce5ab2f296e687eacde9", size = 4667123, upload-time = "2026-02-10T19:18:15.886Z" },
-]
-
-[[package]]
-name = "cscd"
-source = { editable = "." }
-dependencies = [
-    { name = "cascache-lib" },
-    { name = "networkx" },
-    { name = "pydantic" },
-    { name = "pyyaml" },
-    { name = "rich" },
-    { name = "typer" },
-]
-
-[package.dev-dependencies]
-cascache-server = [
-    { name = "cascache-server" },
-]
-dev = [
-    { name = "build" },
-    { name = "grpcio-tools" },
-    { name = "pyright" },
-    { name = "pytest" },
-    { name = "pytest-asyncio" },
-    { name = "pytest-cov" },
-    { name = "ruff" },
-    { name = "twine" },
-    { name = "types-networkx" },
-    { name = "types-pyyaml" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "cascache-lib", git = "https://gitlab.com/cascascade/cascache_lib.git?rev=main" },
-    { name = "networkx", specifier = ">=3.0" },
-    { name = "pydantic", specifier = ">=2.0.0" },
-    { name = "pyyaml", specifier = ">=6.0.0" },
-    { name = "rich", specifier = ">=13.0.0" },
-    { name = "typer", specifier = ">=0.12.0" },
-]
-
-[package.metadata.requires-dev]
-cascache-server = [{ name = "cascache-server", git = "https://gitlab.com/cascascade/cascache_server?rev=main" }]
-dev = [
-    { name = "build", specifier = ">=1.0" },
-    { name = "grpcio-tools", specifier = ">=1.64.0" },
-    { name = "pyright", specifier = ">=1.1.0" },
-    { name = "pytest", specifier = ">=9.0.0" },
-    { name = "pytest-asyncio", specifier = ">=0.23.0" },
-    { name = "pytest-cov", specifier = ">=7.0.0" },
-    { name = "ruff", specifier = ">=0.3.0" },
-    { name = "twine", specifier = ">=4.0" },
-    { name = "types-networkx", specifier = ">=3.5.0" },
-    { name = "types-pyyaml", specifier = ">=6.0.12" },
 ]
 
 [[package]]
