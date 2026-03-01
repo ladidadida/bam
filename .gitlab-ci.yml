@@ -1,5 +1,3 @@
-image: python:3.13
-
 stages:
   - lint
   - typecheck
@@ -7,52 +5,89 @@ stages:
   - build
   - deploy
 
-variables:
-  UV_CACHE_DIR: .cache/uv
+# ── Reusable templates ──────────────────────────────────────────────────────
 
-cache:
-  key:
-    files:
-      - pyproject.toml
-      - uv.lock
-  paths:
-    - .cache/uv
-    - .venv/
+.uv_dev:
+  image: python:${PYTHON_VERSION}
+  variables:
+    PYTHON_VERSION: "3.13"
+  cache:
+    key:
+      files:
+        - uv.lock
+        - pyproject.toml
+      prefix: uv-${PYTHON_VERSION}
+    paths:
+      - .cache/pip
+      - .venv/
+  before_script:
+    - pip install uv
+    - uv sync --dev --frozen
 
-before_script:
-  - python -m pip install --upgrade pip
-  - python -m pip install uv
-  - uv sync --all-groups
+.uv_release:
+  image: python:${PYTHON_VERSION}
+  variables:
+    PYTHON_VERSION: "3.13"
+  cache: []
+  before_script:
+    - pip install uv
+    - uv sync --frozen
+
+# ── Lint ────────────────────────────────────────────────────────────────────
 
 # Linting with ruff
 lint:ruff:
+  extends: .uv_dev
   stage: lint
   script:
     - uv run ruff check src tests
-  allow_failure: false
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH
+    - if: $CI_COMMIT_TAG
+
+# ── Type check ──────────────────────────────────────────────────────────────
 
 # Type checking with pyright
 typecheck:pyright:
+  extends: .uv_dev
   stage: typecheck
   script:
     - uv run pyright
-  allow_failure: false
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH
+    - if: $CI_COMMIT_TAG
+
+# ── Test ────────────────────────────────────────────────────────────────────
 
 # Unit tests
 test:unit:
+  extends: .uv_dev
   stage: test
   script:
     - uv run pytest -v --tb=short -k "not component" tests/unit
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH
+    - if: $CI_COMMIT_TAG
 
 # Component tests
 test:component:
+  extends: .uv_dev
   stage: test
   script:
     - uv run pytest -v --tb=short -m component tests/component
-  allow_failure: false
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH
+    - if: $CI_COMMIT_TAG
+
+# ── Build ───────────────────────────────────────────────────────────────────
 
 # Build distribution
 build:wheel:
+  extends: .uv_release
   stage: build
   script:
     - rm -rf dist/
@@ -61,52 +96,55 @@ build:wheel:
     paths:
       - dist/
     expire_in: 1 day
-  only:
-    - tags
-    - main
-    - merge_requests
+  rules:
+    - if: $CI_COMMIT_TAG
+    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+
+# ── Deploy ──────────────────────────────────────────────────────────────────
 
 # Deploy to PyPI (automatic on tags)
 deploy:pypi:
+  extends: .uv_release
   stage: deploy
   script:
     - uv publish --token $PYPI_API_TOKEN
   environment:
     name: production
     url: https://pypi.org/project/bam/
-  only:
-    - tags
-  except:
-    - branches
+  rules:
+    - if: $CI_COMMIT_TAG
   dependencies:
     - build:wheel
 
 # Deploy to Test PyPI (manual on main branch)
 deploy:testpypi:main:
+  extends: .uv_release
   stage: deploy
   script:
     - uv publish --publish-url https://test.pypi.org/legacy/ --token $PYPI_TEST_API_TOKEN
   environment:
     name: test
     url: https://test.pypi.org/project/bam/
-  when: manual
-  only:
-    - main
-  except:
-    - tags
+  rules:
+    - if: $CI_COMMIT_TAG
+      when: never
+    - if: $CI_COMMIT_BRANCH == "main"
+      when: manual
   dependencies:
     - build:wheel
 
 # Deploy to Test PyPI (manual on merge requests)
 deploy:testpypi:mr:
+  extends: .uv_release
   stage: deploy
   script:
     - uv publish --publish-url https://test.pypi.org/legacy/ --token $PYPI_TEST_API_TOKEN
   environment:
     name: test
     url: https://test.pypi.org/project/bam/
-  when: manual
-  only:
-    - merge_requests
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: manual
   dependencies:
     - build:wheel
