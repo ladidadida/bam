@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from bam.cache import CacheManager, CASCache, LocalCache
+from bam_tool.cache import CacheManager, CASCache, LocalCache
 
 
 @pytest.mark.asyncio

@@ -42,7 +42,7 @@ wheels = [
 ]
 
 [[package]]
-name = "bam"
+name = "bam-tool"
 source = { editable = "." }
 dependencies = [
     { name = "cascache-lib" },

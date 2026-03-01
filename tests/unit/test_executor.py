@@ -7,8 +7,8 @@ from pathlib import Path
 import pytest
 from rich.console import Console
 
-from bam.cache import LocalCache
-from bam.executor import TaskExecutionError, TaskExecutor, TaskState
+from bam_tool.cache import LocalCache
+from bam_tool.executor import TaskExecutionError, TaskExecutor, TaskState
 
 
 @pytest.mark.asyncio

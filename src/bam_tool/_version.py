@@ -15,7 +15,7 @@ def _get_version() -> str:
     try:
         from importlib.metadata import version
 
-        return version("bam")
+        return version("bam-tool")
     except Exception:
         # Fallback for development (not installed)
         return "0.0.0.dev0"

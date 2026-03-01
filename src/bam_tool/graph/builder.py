@@ -7,7 +7,7 @@ from typing import cast
 
 import networkx as nx
 
-from bam.config.schema import TaskConfig
+from bam_tool.config.schema import TaskConfig
 
 
 class MissingTaskError(Exception):

@@ -26,7 +26,7 @@ def test_cli_entrypoint() -> None:
 def test_cli_module_invocation() -> None:
     """Test CLI via python -m invocation."""
     result = subprocess.run(
-        [sys.executable, "-m", "bam", "--help"],
+        [sys.executable, "-m", "bam_tool", "--help"],
         capture_output=True,
         text=True,
         check=False,

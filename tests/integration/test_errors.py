@@ -5,8 +5,8 @@ from textwrap import dedent
 
 import pytest
 
-from bam.config import ConfigurationError, load_config
-from bam.graph import CyclicDependencyError, MissingTaskError, build_task_graph
+from bam_tool.config import ConfigurationError, load_config
+from bam_tool.graph import CyclicDependencyError, MissingTaskError, build_task_graph
 
 
 def test_invalid_yaml_syntax(tmp_path: Path):
@@ -120,7 +120,7 @@ def test_empty_tasks_dict(tmp_path: Path):
 
 def test_glob_with_no_matches(tmp_path: Path):
     """Test glob pattern that matches no files."""
-    from bam.cache import expand_globs
+    from bam_tool.cache import expand_globs
 
     expanded = expand_globs(["*.nonexistent"], tmp_path)
 
@@ -133,7 +133,7 @@ def test_glob_expansion(tmp_path: Path):
     (tmp_path / "file1.txt").write_text("1")
     (tmp_path / "file2.txt").write_text("2")
 
-    from bam.cache import expand_globs
+    from bam_tool.cache import expand_globs
 
     expanded = expand_globs(["*.txt"], tmp_path)
     assert len(expanded) == 2
@@ -164,7 +164,7 @@ def test_env_var_expansion(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
 @pytest.mark.asyncio
 async def test_cache_backend_interface(tmp_path: Path):
     """Test cache backend interface contract."""
-    from bam.cache import LocalCache
+    from bam_tool.cache import LocalCache
 
     cache = LocalCache(tmp_path / ".bam/cache")
 
@@ -223,7 +223,7 @@ def test_task_ordering_deterministic(tmp_path: Path):
     _, loaded_config = load_config(tmp_path / "bam.yaml")
     graph = build_task_graph(loaded_config.tasks)
 
-    from bam.graph import execution_order_for_targets
+    from bam_tool.graph import execution_order_for_targets
 
     # Run multiple times - should always get same order
     orders = [execution_order_for_targets(graph, ["m"]) for _ in range(5)]

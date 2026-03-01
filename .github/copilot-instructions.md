@@ -93,7 +93,7 @@
    - Status tracking
 
 5. **Cache Layer** (`cache/` + `cascache_lib`)
-  - Compatibility exports in `src/bam/cache/__init__.py`
+  - Compatibility exports in `src/bam_tool/cache/__init__.py`
   - Implementations provided by `cascache_lib`
   - Local, remote, and hybrid cache strategies
   - Content hashing and cache key computation
@@ -336,7 +336,7 @@ tests/
 ```
 bam/
 ├── src/
-│   └── bam/
+│   └── bam_tool/
 │       ├── __init__.py
 │       ├── __main__.py
 │       ├── _version.py
@@ -385,13 +385,13 @@ uv sync
 uv run pytest
 
 # Run with coverage
-uv run pytest --cov=bam --cov-report=html
+uv run pytest --cov=bam_tool --cov-report=html
 
 # Type checking
 uv run pyright
 
 # Linting
-uv run ruff check src/bam
+uv run ruff check src/bam_tool
 
 # Run bam CLI
 uv run bam --help

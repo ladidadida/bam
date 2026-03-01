@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 from typer.testing import CliRunner
 
-from bam.cli import app
+from bam_tool.cli import app
 
 
 @pytest.fixture

@@ -3,7 +3,7 @@ build-backend = "hatchling.build"
 requires = ["hatchling", "hatch-vcs"]
 
 [project]
-name = "bam"
+name = "bam-tool"
 dynamic = ["version"]
 description = "**bam** is a content-addressed workflow orchestration tool that brings the power of content-addressable storage (CAS) to everyday development workflows. Based on side projects cascache_lib and cascache_server."
 readme = "README.md"
@@ -54,7 +54,7 @@ cascache_server = [
 ]
 
 [project.scripts]
-bam = "bam.cli:main"
+bam = "bam_tool.cli:main"
 
 [tool.hatch.version]
 source = "vcs"
@@ -71,7 +71,7 @@ include = [
 ]
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/bam"]
+packages = ["src/bam_tool"]
 
 [tool.pytest.ini_options]
 addopts = "--strict-markers"

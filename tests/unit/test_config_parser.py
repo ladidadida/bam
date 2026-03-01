@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from bam.config import ConfigurationError, discover_config_path, load_config
+from bam_tool.config import ConfigurationError, discover_config_path, load_config
 
 
 def test_discover_config_in_parent_directory(sample_workspace: Path) -> None:

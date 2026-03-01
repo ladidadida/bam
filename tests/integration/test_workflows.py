@@ -6,11 +6,11 @@ from textwrap import dedent
 import pytest
 from typer.testing import CliRunner
 
-from bam.cache import LocalCache, compute_cache_key, expand_globs
-from bam.cli import app
-from bam.config import load_config
-from bam.executor import TaskExecutor
-from bam.graph import build_task_graph, execution_order_for_targets
+from bam_tool.cache import LocalCache, compute_cache_key, expand_globs
+from bam_tool.cli import app
+from bam_tool.config import load_config
+from bam_tool.executor import TaskExecutor
+from bam_tool.graph import build_task_graph, execution_order_for_targets
 
 
 @pytest.fixture

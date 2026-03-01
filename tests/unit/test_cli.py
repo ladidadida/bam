@@ -7,7 +7,7 @@ import os
 import pytest
 from typer.testing import CliRunner
 
-from bam.cli import _parse_jobs_value, app
+from bam_tool.cli import _parse_jobs_value, app
 
 runner = CliRunner()
 

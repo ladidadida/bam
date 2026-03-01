@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from bam.cache import LocalCache, compute_cache_key, expand_globs
+from bam_tool.cache import LocalCache, compute_cache_key, expand_globs
 
 
 def test_compute_cache_key_deterministic(tmp_path: Path) -> None:
