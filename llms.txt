@@ -1,0 +1,265 @@
+# bam
+
+> Content-addressed workflow orchestration tool.
+> Bridges Make/Just and Bazel: YAML task definitions → dependency graph → parallel async execution → CAS caching.
+> Not production-ready — experimental/proof-of-concept.
+
+## What bam does
+
+- Defines tasks in a `bam.yaml` file (name, command, inputs, outputs, dependencies, env vars)
+- Builds a dependency graph and runs tasks in topological order, in parallel where possible
+- Computes a content hash from input files + command; skips execution (cache hit) when nothing changed
+- Stores/restores outputs as compressed archives in a local `.bam/cache/` dir or a remote CAS server
+
+## Installation
+
+```bash
+uv pip install bam   # recommended
+pip install bam
+```
+
+## bam.yaml — Full Schema
+
+```yaml
+version: 1                   # required; only valid value is 1
+
+cache:                        # optional block
+  type: local                 # "local" (default) or "cas"
+  url: grpc://host:50051      # CAS server URL; required when type=cas
+  local_fallback: true        # fall back to local cache on CAS failure
+
+tasks:
+  <task-name>:                # unique identifier; used in depends_on and CLI
+    command: "..."            # required; shell command (supports pipes, redirects, multiline |)
+    inputs:                   # optional; glob patterns used to compute cache key
+      - "src/**/*.py"
+      - "pyproject.toml"
+    outputs:                  # optional; files/dirs produced; required for caching
+      - "dist/"
+      - "build/app.js"
+    depends_on:               # optional; tasks that must complete before this one
+      - other-task
+    env:                      # optional; extra environment variables for this task
+      NODE_ENV: production
+      DEBUG: "0"
+```
+
+### Key rules
+- A task is **only cached** when it declares `outputs`.
+- A cache hit requires all `inputs` to be unchanged **and** the `command` string to be identical.
+- `depends_on` tasks run first; independent tasks run in parallel automatically.
+- Cycles in `depends_on` are detected at startup and reported as an error.
+- `command` is executed via the system shell (`shell=True`); supports `$VAR`, `${VAR}` expansion.
+
+## CLI Reference
+
+```
+bam run [OPTIONS] TASK [TASK...]    # Run tasks (+ dependencies)
+bam list [OPTIONS]                  # List all tasks
+bam graph [OPTIONS]                 # Visualize dependency graph
+bam validate [OPTIONS]              # Check config for errors
+bam clean [OPTIONS]                 # Clear local cache
+```
+
+### bam run options
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--config PATH` | auto-discover | Path to `bam.yaml` |
+| `--dry-run` | off | Show plan without executing |
+| `--quiet / -q` | off | Suppress command output |
+| `--no-cache` | off | Disable cache reads and writes |
+| `--jobs N` | CPU count | Max parallel workers |
+| `--plain` | off | Plain output (no rich/tree UI) |
+
+### bam graph options
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--format ascii\|dot` | `ascii` | Output format (`dot` for GraphViz) |
+
+### bam clean options
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--cache-dir PATH` | `.bam/cache` | Cache directory to remove |
+| `--force / -f` | off | Skip confirmation prompt |
+
+## Config File Discovery (in order)
+
+1. `--config` CLI flag
+2. `BAM_CONFIG` environment variable
+3. `./bam.yaml` in current directory
+4. `./.bam.yaml` in current directory
+5. Walk parent directories until found
+
+## Environment Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `BAM_CONFIG` | `./bam.yaml` | Override config path |
+| `BAM_CACHE_DIR` | `./.bam/cache` | Local cache directory |
+| `BAM_CACHE_TYPE` | `local` | `local` or `cas` |
+| `BAM_CAS_URL` | `grpc://localhost:50051` | Remote CAS server |
+| `BAM_LOG_LEVEL` | `INFO` | `DEBUG` / `INFO` / `WARNING` |
+| `BAM_MAX_PARALLEL` | CPU count | Max concurrent tasks |
+
+## Common Patterns
+
+### Linear pipeline
+```yaml
+version: 1
+tasks:
+  install:
+    command: npm ci
+    inputs: [package-lock.json]
+    outputs: [node_modules/]
+
+  build:
+    command: npm run build
+    inputs: [src/**/*.ts]
+    outputs: [dist/]
+    depends_on: [install]
+
+  test:
+    command: npm test
+    inputs: [src/**/*.ts, tests/**/*.ts]
+    depends_on: [build]
+```
+
+### Fan-out / fan-in (parallel lint + test, then deploy)
+```yaml
+version: 1
+tasks:
+  setup:
+    command: pip install -e .
+    inputs: [pyproject.toml]
+    outputs: [.venv/]
+
+  lint:
+    command: ruff check .
+    inputs: [src/**/*.py]
+    depends_on: [setup]
+
+  test:
+    command: pytest
+    inputs: [src/**/*.py, tests/**/*.py]
+    depends_on: [setup]
+
+  deploy:
+    command: ./scripts/deploy.sh
+    depends_on: [lint, test]   # both must pass; ran in parallel before this
+```
+
+### Remote (distributed) cache
+```yaml
+version: 1
+cache:
+  type: cas
+  url: grpc://cache.internal:50051
+  local_fallback: true
+
+tasks:
+  build:
+    command: make build
+    inputs: [src/**]
+    outputs: [build/]
+```
+
+### Per-task environment variables
+```yaml
+version: 1
+tasks:
+  build-prod:
+    command: npm run build
+    env:
+      NODE_ENV: production
+      API_URL: https://api.example.com
+    inputs: [src/**]
+    outputs: [dist/]
+```
+
+### Multiline command
+```yaml
+tasks:
+  ci:
+    command: |
+      set -e
+      echo "Running CI..."
+      ruff check .
+      pyright
+      pytest --tb=short
+```
+
+## Exit Codes
+
+| Code | Meaning |
+|------|---------|
+| 0 | All tasks succeeded |
+| 1 | Task failure, config error, or validation error |
+| 130 | Interrupted (Ctrl-C) |
+
+## Tips
+
+- `bam run --dry-run build` — preview execution order without running anything
+- `bam run --no-cache build` — force rebuild, ignoring cached outputs
+- `bam graph --format dot | dot -Tsvg > graph.svg` — render dependency graph as SVG
+- `bam validate` — always run before deploying config changes to CI
+- Cache misses are silently skipped; the task re-runs and its outputs are stored on completion
+
+## Full Example (Python project)
+
+```yaml
+version: 1
+
+cache:
+  type: local
+
+tasks:
+  install:
+    command: uv sync
+    inputs:
+      - pyproject.toml
+      - uv.lock
+    outputs:
+      - .venv/
+
+  lint:
+    command: ruff check src/
+    inputs:
+      - src/**/*.py
+      - pyproject.toml
+    depends_on:
+      - install
+
+  typecheck:
+    command: pyright
+    inputs:
+      - src/**/*.py
+      - pyproject.toml
+    depends_on:
+      - install
+
+  test:
+    command: pytest --tb=short -q
+    inputs:
+      - src/**/*.py
+      - tests/**/*.py
+      - pyproject.toml
+    depends_on:
+      - lint
+      - typecheck
+
+  build:
+    command: uv build
+    inputs:
+      - src/**/*.py
+      - pyproject.toml
+    outputs:
+      - dist/
+    depends_on:
+      - test
+```
+
+Run with: `bam run build`
+
+---
+Source: https://gitlab.com/cascascade/bam  
+Docs: `docs/configuration.md` · `docs/cli.md`
