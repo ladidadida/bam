@@ -1,5 +1,9 @@
 version: 1
 
+cache:
+  local:
+    path: .bam/cache
+
 tasks:
   # Independent tasks that can run in parallel
   lint-python:

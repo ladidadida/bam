@@ -71,7 +71,7 @@ def test_parallel_execution_completes_successfully(parallel_workspace: Path) -> 
     runner = CliRunner()
     result = runner.invoke(
         app,
-        ["run", "--config", str(parallel_workspace / "bam.yaml"), "task-d", "--jobs", "2"],
+        ["run", "--config", str(parallel_workspace / "bam.yaml"), "task-d", "--jobs", "2", "--no-cache"],
     )
 
     assert result.exit_code == 0
@@ -162,7 +162,7 @@ tasks:
     start = time.time()
     result = runner.invoke(
         app,
-        ["run", "--config", str(parallel_workspace / "bam.yaml"), "final", "--jobs", "1"],
+        ["run", "--config", str(parallel_workspace / "bam.yaml"), "final", "--jobs", "1", "--no-cache"],
     )
     sequential_time = time.time() - start
 
@@ -172,7 +172,7 @@ tasks:
     start = time.time()
     result = runner.invoke(
         app,
-        ["run", "--config", str(parallel_workspace / "bam.yaml"), "final", "--jobs", "3"],
+        ["run", "--config", str(parallel_workspace / "bam.yaml"), "final", "--jobs", "3", "--no-cache"],
     )
     parallel_time = time.time() - start
 

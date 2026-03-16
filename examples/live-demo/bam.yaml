@@ -1,5 +1,9 @@
 version: 1
 
+cache:
+  local:
+    path: .bam/cache
+
 tasks:
   fast:
     command: echo "Fast task" && sleep 0.2

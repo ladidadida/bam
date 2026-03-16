@@ -1,5 +1,9 @@
 version: 1
 
+cache:
+  local:
+    path: .bam/cache
+
 tasks:
   proto:
     command: echo "Generate protocol artifacts"

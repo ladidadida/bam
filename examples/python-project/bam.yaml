@@ -1,5 +1,9 @@
 version: 1
 
+cache:
+  local:
+    path: .bam/cache
+
 tasks:
   lint:
     command: uv run ruff check src tests

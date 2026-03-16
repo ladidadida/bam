@@ -1,0 +1,94 @@
+version: 1
+
+cache:
+  local:
+    enabled: true
+    path: .bam/cache
+
+tasks:
+  # ── Static checks ────────────────────────────────────────────────────────────
+
+  lint:
+    command: uv run ruff check src tests
+    inputs:
+      - "src/**/*.py"
+      - "tests/**/*.py"
+      - pyproject.toml
+
+  format-check:
+    command: uv run ruff format --check src tests
+    inputs:
+      - "src/**/*.py"
+      - "tests/**/*.py"
+      - pyproject.toml
+
+  typecheck:
+    command: uv run pyright
+    inputs:
+      - "src/**/*.py"
+      - pyproject.toml
+
+  # ── Tests ─────────────────────────────────────────────────────────────────────
+
+  test-unit:
+    command: uv run pytest -q tests/unit --junit-xml=.reports/junit-unit.xml
+    inputs:
+      - "src/**/*.py"
+      - "tests/unit/**/*.py"
+      - "tests/conftest.py"
+      - pyproject.toml
+    outputs:
+      - .reports/junit-unit.xml
+
+  test-integration:
+    command: uv run pytest -q tests/integration --junit-xml=.reports/junit-integration.xml
+    inputs:
+      - "src/**/*.py"
+      - "tests/integration/**/*.py"
+      - "tests/conftest.py"
+      - pyproject.toml
+    outputs:
+      - .reports/junit-integration.xml
+
+  test-component:
+    command: uv run pytest -q -m component tests/component --junit-xml=.reports/junit-component.xml
+    inputs:
+      - "src/**/*.py"
+      - "tests/component/**/*.py"
+      - "tests/conftest.py"
+      - pyproject.toml
+    outputs:
+      - .reports/junit-component.xml
+
+  test:
+    command: echo "✓ All tests passed"
+    depends_on:
+      - test-unit
+      - test-integration
+      - test-component
+
+  # ── Build ─────────────────────────────────────────────────────────────────────
+
+  build:
+    command: uv run python -m build
+    inputs:
+      - "src/**/*.py"
+      - pyproject.toml
+      - README.md
+      - LICENSE
+    outputs:
+      - dist/
+    depends_on:
+      - lint
+      - typecheck
+      - test
+
+  # ── Aggregate CI ──────────────────────────────────────────────────────────────
+
+  ci:
+    command: echo "✓ All CI checks passed"
+    depends_on:
+      - lint
+      - format-check
+      - typecheck
+      - test

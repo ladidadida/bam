@@ -41,3 +41,8 @@ htmlcov/
 # OS
 Thumbs.db
 *.log
+
+# bam
+.bam/
+.cache/
+.reports/

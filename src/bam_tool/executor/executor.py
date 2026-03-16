@@ -99,8 +99,8 @@ class TaskExecutor:
         input_paths = inputs or []
         output_paths = outputs or []
 
-        # Check cache if enabled and outputs are specified
-        if self.cache and output_paths:
+        # Check cache if enabled
+        if self.cache:
             cache_key = compute_cache_key(command, input_paths, env)
 
             if await self.cache.exists(cache_key):
@@ -172,7 +172,7 @@ class TaskExecutor:
                 self.console.print(status_msg)
 
             # Store outputs in cache if enabled
-            if self.cache and output_paths:
+            if self.cache:
                 cache_key = compute_cache_key(command, input_paths, env)
                 if await self.cache.put(cache_key, output_paths):
                     if not self.quiet:

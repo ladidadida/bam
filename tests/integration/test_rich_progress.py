@@ -22,7 +22,7 @@ tasks:
 """)
 
     result = subprocess.run(
-        ["uv", "run", "bam", "run", "--config", str(config), "task3", "--jobs", "4", "--plain"],
+        ["uv", "run", "bam", "run", "--config", str(config), "task3", "--jobs", "4", "--plain", "--no-cache"],
         capture_output=True,
         text=True,
         cwd=Path(__file__).parent.parent.parent,
@@ -64,7 +64,7 @@ def test_rich_progress_disabled_in_non_tty() -> None:
     config_path = Path(__file__).parent.parent.parent / "examples" / "parallel" / "bam.yaml"
 
     result = subprocess.run(
-        ["uv", "run", "bam", "run", "--config", str(config_path), "package", "--jobs", "4"],
+        ["uv", "run", "bam", "run", "--config", str(config_path), "package", "--jobs", "4", "--no-cache"],
         capture_output=True,  # Piping output makes it non-TTY
         text=True,
         timeout=30,
@@ -89,7 +89,7 @@ tasks:
 """)
 
     result = subprocess.run(
-        ["uv", "run", "bam", "run", "--config", str(config), "task2", "--jobs", "1"],
+        ["uv", "run", "bam", "run", "--config", str(config), "task2", "--jobs", "1", "--no-cache"],
         capture_output=True,
         text=True,
         cwd=Path(__file__).parent.parent.parent,

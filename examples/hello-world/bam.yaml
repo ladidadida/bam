@@ -1,5 +1,9 @@
 version: 1
 
+cache:
+  local:
+    path: .bam/cache
+
 tasks:
   hello:
     command: echo "Hello from bam"

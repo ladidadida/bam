@@ -1,5 +1,9 @@
 version: 1
 
+cache:
+  local:
+    path: .bam/cache
+
 tasks:
   task1:
     command: echo "Task 1 running" && sleep 0.3

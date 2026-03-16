@@ -8,11 +8,13 @@ import sys
 from pathlib import Path
 from typing import Annotated
 
+import click
 import networkx as nx
 import typer
 from rich.console import Console
 from rich.live import Live
 from rich.tree import Tree
+from typer.core import TyperGroup
 
 from ._version import __version__
 from .cache import LocalCache, create_cache, expand_globs
@@ -27,6 +29,21 @@ from .graph import (
     render_dot_graph,
 )
 
+
+class DefaultCommandGroup(TyperGroup):
+    """Typer group that falls back to 'run <token>' for unknown first tokens.
+
+    Allows `bam <task>` as shorthand for `bam run <task>`.
+    """
+
+    def parse_args(self, ctx: click.Context, args: list[str]) -> list[str]:
+        # list_commands() uses TyperGroup's lazy registry, unlike self.commands
+        # which is the underlying click.Group dict and is always empty.
+        if args and not args[0].startswith("-") and args[0] not in self.list_commands(ctx):
+            args = ["run", *args]
+        return super().parse_args(ctx, args)
+
+
 app = typer.Typer(
     name="bam",
     help=(
@@ -35,6 +52,7 @@ app = typer.Typer(
         "CAS-style caching to existing development workflows. Companion to cascache."
     ),
     no_args_is_help=True,
+    cls=DefaultCommandGroup,
 )
 
 

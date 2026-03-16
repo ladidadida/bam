@@ -130,3 +130,46 @@ async def test_execute_with_cache_hit(tmp_path: Path) -> None:
     assert result2.state == TaskState.COMPLETED
     assert result2.cache_hit
     assert output_file.exists()
+
+
+@pytest.mark.asyncio
+async def test_execute_with_cache_no_outputs(tmp_path: Path) -> None:
+    """Cache tasks that produce no outputs (e.g. lint, typecheck)."""
+    cache_dir = tmp_path / "cache"
+    cache = LocalCache(cache_dir)
+
+    input_file = tmp_path / "input.txt"
+    input_file.write_text("data", encoding="utf-8")
+
+    executor = TaskExecutor(console=Console(file=None), quiet=True, cache=cache)
+
+    # First run: should execute and store an empty cache entry
+    result1 = await executor.execute_task(
+        task_name="lint-test",
+        command="echo lint-ok",
+        inputs=[input_file],
+        outputs=[],
+    )
+    assert result1.state == TaskState.COMPLETED
+    assert not result1.cache_hit
+
+    # Second run: same inputs → cache hit, command not re-executed
+    result2 = await executor.execute_task(
+        task_name="lint-test",
+        command="echo lint-ok",
+        inputs=[input_file],
+        outputs=[],
+    )
+    assert result2.state == TaskState.COMPLETED
+    assert result2.cache_hit
+
+    # Changing input content should invalidate the cache
+    input_file.write_text("changed", encoding="utf-8")
+    result3 = await executor.execute_task(
+        task_name="lint-test",
+        command="echo lint-ok",
+        inputs=[input_file],
+        outputs=[],
+    )
+    assert result3.state == TaskState.COMPLETED
+    assert not result3.cache_hit
