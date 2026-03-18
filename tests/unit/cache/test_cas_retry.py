@@ -141,8 +141,11 @@ async def test_exponential_backoff(cas_cache):
 @pytest.mark.asyncio
 async def test_connection_pooling_options(cas_cache):
     """Test that connection pooling options are set."""
-    with patch("cascache_lib.cache.remote.grpc.aio.insecure_channel") as mock_channel:
-        mock_channel.return_value = AsyncMock()
+    with (
+        patch("cascache_lib.cache.remote.grpc.aio.insecure_channel") as mock_channel,
+        patch("cascache_lib.cache.remote.cas_simple_pb2_grpc.ContentAddressableStorageStub"),
+    ):
+        mock_channel.return_value = MagicMock()
         await cas_cache._ensure_connected()
 
         # Verify keepalive options were passed

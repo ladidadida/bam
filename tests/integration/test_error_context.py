@@ -29,6 +29,7 @@ tasks:
         ["uv", "run", "bam", "run", "--config", str(config), "final"],
         capture_output=True,
         text=True,
+        cwd=tmp_path,
         timeout=30,
     )
 
@@ -61,6 +62,7 @@ tasks:
         ["uv", "run", "bam", "run", "--config", str(config), "task3"],
         capture_output=True,
         text=True,
+        cwd=tmp_path,
         timeout=30,
     )
 
@@ -88,6 +90,7 @@ tasks:
         ["uv", "run", "bam", "run", "--config", str(config), "task2"],
         capture_output=True,
         text=True,
+        cwd=tmp_path,
         timeout=30,
     )
 
@@ -110,6 +113,7 @@ tasks:
         ["uv", "run", "bam", "run", "--config", str(config), "solo"],
         capture_output=True,
         text=True,
+        cwd=tmp_path,
         timeout=30,
     )
 

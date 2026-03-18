@@ -59,7 +59,7 @@ def test_parallel_execution_with_jobs_flag(parallel_workspace: Path) -> None:
     runner = CliRunner()
     result = runner.invoke(
         app,
-        ["run", "--config", str(parallel_workspace / "bam.yaml"), "task-d", "--jobs", "3"],
+        ["run", "--config", str(parallel_workspace / "bam.yaml"), "task-d", "--jobs", "3", "--no-cache"],
     )
 
     assert result.exit_code == 0
@@ -115,7 +115,7 @@ tasks:
     runner = CliRunner()
     result = runner.invoke(
         app,
-        ["run", "--config", str(tmp_path / "bam.yaml"), "dependent", "--jobs", "3"],
+        ["run", "--config", str(tmp_path / "bam.yaml"), "dependent", "--jobs", "3", "--no-cache"],
     )
 
     assert result.exit_code == 1
@@ -216,7 +216,7 @@ tasks:
     runner = CliRunner()
     result = runner.invoke(
         app,
-        ["run", "--config", str(tmp_path / "bam.yaml"), "third", "--jobs", "3"],
+        ["run", "--config", str(tmp_path / "bam.yaml"), "third", "--jobs", "3", "--no-cache"],
     )
 
     assert result.exit_code == 0
