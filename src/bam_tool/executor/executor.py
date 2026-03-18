@@ -39,10 +39,19 @@ class TaskResult:
 class TaskExecutionError(Exception):
     """Raised when a task execution fails."""
 
-    def __init__(self, task_name: str, command: str, exit_code: int):
+    def __init__(
+        self,
+        task_name: str,
+        command: str,
+        exit_code: int,
+        stdout: str = "",
+        stderr: str = "",
+    ):
         self.task_name = task_name
         self.command = command
         self.exit_code = exit_code
+        self.stdout = stdout
+        self.stderr = stderr
         super().__init__(
             f"Task '{task_name}' failed with exit code {exit_code}\nCommand: {command}"
         )
@@ -165,7 +174,7 @@ class TaskExecutor:
                 if not self.quiet:
                     status_msg = f"[red]✗[/red] {task_name} (exit {exit_code})"
                     self.console.print(status_msg)
-                raise TaskExecutionError(task_name, command, exit_code)
+                raise TaskExecutionError(task_name, command, exit_code, stdout, stderr)
 
             if not self.quiet:
                 status_msg = f"[green]✓[/green] {task_name}"
@@ -193,4 +202,4 @@ class TaskExecutor:
             # Catch all other exceptions (OSError, asyncio errors, etc.)
             if not self.quiet:
                 self.console.print(f"[red]✗[/red] Task '{task_name}' failed: {exc}")
-            raise TaskExecutionError(task_name, command, -1) from exc
+            raise TaskExecutionError(task_name, command, -1, "", str(exc)) from exc

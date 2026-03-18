@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import os
+import shutil
 import sys
 from pathlib import Path
 from typing import Annotated
@@ -136,32 +137,102 @@ def _get_dependency_chain(graph: nx.DiGraph, task_name: str) -> list[str]:
         return [task_name]
 
 
-def _format_task_label(task_name: str, state: str, progress: int) -> str:
+def _format_task_label(
+    task_name: str, state: str, progress: int, nesting: int = 0, name_col: int = 24
+) -> str:
     """Format a task label with icon, name, progress bar, and percentage.
 
     Args:
         task_name: Name of the task.
         state: Task state (pending, running, completed, failed).
         progress: Task progress percentage (0-100).
+        nesting: Rich tree nesting depth (0 = direct child of root). Each level
+            adds 4 chars of tree-connector prefix, so we subtract 4 per level
+            from the name width to keep the bar column fixed.
+        name_col: Total name-column width allocated at nesting 0. Shared across
+            all labels in the tree so bars always start at the same column.
 
     Returns:
         Formatted label string with Rich markup.
     """
+    # Rich adds 4 chars of guide prefix per nesting level (├── / │   └── etc.).
+    # Subtract the same amount from the name field so bars stay at one column.
+    name_width = max(8, name_col - 4 * nesting)
+
     if state == "completed":
         icon = "[green]✓[/]"
         bar = "━" * 30
-        return f"{icon} {task_name:20} {bar} 100%"
+        return f"{icon} {task_name:{name_width}} {bar} 100%"
     elif state == "failed":
         icon = "[red]✗[/]"
         bar = "━" * 30
-        return f"{icon} {task_name:20} {bar} {progress:3}%"
+        return f"{icon} {task_name:{name_width}} {bar} {progress:3}%"
     elif state == "running":
         filled = int(progress * 30 / 100)
         bar = "━" * filled + "╸" + " " * (29 - filled)
-        return f"[cyan]⠿[/] {task_name:20} {bar} {progress:3}%"
+        return f"[cyan]⠿[/] {task_name:{name_width}} {bar} {progress:3}%"
     else:  # pending
         bar = " " * 30
-        return f"[dim]○ {task_name:20} {bar}   0%[/]"
+        return f"[dim]○ {task_name:{name_width}} {bar}   0%[/]"
+
+
+def _measure_task_nestings(
+    graph: nx.DiGraph,
+    task_set: set[str],
+    execution_order: list[str],
+    roots: list[str],
+    root_start_nesting: int,
+) -> dict[str, int]:
+    """DFS pre-pass: return the nesting depth for each task in task_set."""
+    task_nesting: dict[str, int] = {}
+    seen: set[str] = set()
+
+    def _visit(task_name: str, nesting: int) -> None:
+        if task_name in seen:
+            return
+        seen.add(task_name)
+        task_nesting[task_name] = nesting
+        for pred in sorted(
+            (p for p in graph.predecessors(task_name) if p in task_set),
+            key=execution_order.index,
+        ):
+            _visit(pred, nesting + 1)
+
+    for root in roots:
+        _visit(root, root_start_nesting)
+    for task_name in execution_order:  # safety net for disconnected nodes
+        if task_name not in task_nesting:
+            task_nesting[task_name] = 0
+    return task_nesting
+
+
+def _add_dep_children(
+    rich_node: Tree,
+    task_name: str,
+    nesting: int,
+    graph: nx.DiGraph,
+    task_set: set[str],
+    execution_order: list[str],
+    task_states: dict[str, str],
+    task_progress: dict[str, int],
+    visited: set[str],
+    name_col: int,
+) -> None:
+    """Recursively add dependency children of task_name to a Rich Tree node."""
+    for pred in sorted(
+        (p for p in graph.predecessors(task_name) if p in task_set),
+        key=execution_order.index,
+    ):
+        if pred not in visited:
+            visited.add(pred)
+            state = task_states.get(pred, "pending")
+            progress = task_progress.get(pred, 0)
+            child = rich_node.add(_format_task_label(pred, state, progress, nesting, name_col))
+            _add_dep_children(
+                child, pred, nesting + 1,
+                graph, task_set, execution_order,
+                task_states, task_progress, visited, name_col,
+            )
 
 
 def _build_task_tree(
@@ -169,51 +240,78 @@ def _build_task_tree(
     execution_order: list[str],
     task_states: dict[str, str],
     task_progress: dict[str, int],
+    target_tasks: list[str] | None = None,
 ) -> Tree:
-    """Build a tree visualization of task dependencies with status.
+    """Build a Rich tree rooted at the target task(s) with dependencies as children.
+
+    The tree is shown top-down: the explicitly requested task(s) appear at the
+    root, and each task's dependencies fan out beneath it.  When a dependency
+    is shared by multiple parents it is attached to the first parent visited
+    (DFS, topo order) and skipped in subsequent visits so every task appears
+    exactly once.
+
+    The name-column width is computed adaptively from the longest
+    ``4*nesting + len(task_name)`` value in the current task set, padded by 2
+    and capped at half the terminal width.  All labels share the same
+    ``name_col`` value so bars always start at the same column.
 
     Args:
         graph: Task dependency graph.
-        execution_order: Topologically sorted task list.
+        execution_order: Topologically sorted task list (used for stable ordering).
         task_states: Task states (pending, running, completed, failed).
         task_progress: Task progress percentages (0-100).
+        target_tasks: Explicitly requested tasks.  They form the tree root(s).
+            Falls back to tasks with no successors in the execution set.
 
     Returns:
-        Rich Tree object representing the task hierarchy.
+        Rich Tree object rooted at the target task(s).
     """
-    # Find root tasks (tasks with no dependencies)
-    root_tasks = [t for t in execution_order if graph.in_degree(t) == 0]
+    task_set = set(execution_order)
 
-    tree = Tree("📦 Tasks")
-    added_tasks: set[str] = set()
+    # Determine root tasks (what the user explicitly asked to run).
+    roots = target_tasks or [
+        t for t in execution_order if not any(s in task_set for s in graph.successors(t))
+    ]
+    root_start_nesting = 0 if len(roots) == 1 else 1
 
-    def add_task_to_tree(task_name: str, parent_node: Tree) -> None:
-        """Recursively add a task and its dependents to the tree."""
-        if task_name in added_tasks:
-            return
-        added_tasks.add(task_name)
+    # Pre-pass: collect nesting depth of every task, then derive column width.
+    task_nesting = _measure_task_nestings(graph, task_set, execution_order, roots, root_start_nesting)
+    terminal_cols = shutil.get_terminal_size((80, 24)).columns
+    max_effective = max(4 * n + len(name) for name, n in task_nesting.items())
+    name_col = max(min(max_effective + 2, terminal_cols // 2), 8)
 
-        # Format task label based on current state
-        state = task_states.get(task_name, "pending")
-        progress = task_progress.get(task_name, 0)
-        label = _format_task_label(task_name, state, progress)
+    # Build tree.
+    visited: set[str] = set()
 
-        node = parent_node.add(label)
+    def _add(node: Tree, task: str, nest: int) -> None:
+        _add_dep_children(
+            node, task, nest, graph, task_set, execution_order,
+            task_states, task_progress, visited, name_col,
+        )
 
-        # Add dependents (tasks that depend on this one)
-        for successor in graph.successors(task_name):
-            if successor in execution_order:
-                add_task_to_tree(successor, node)
+    if len(roots) == 1:
+        root_task = roots[0]
+        visited.add(root_task)
+        state = task_states.get(root_task, "pending")
+        progress = task_progress.get(root_task, 0)
+        tree = Tree(_format_task_label(root_task, state, progress, 0, name_col))
+        _add(tree, root_task, 1)
+    else:
+        tree = Tree("📦 Tasks")
+        for root_task in roots:
+            if root_task not in visited:
+                visited.add(root_task)
+                state = task_states.get(root_task, "pending")
+                progress = task_progress.get(root_task, 0)
+                child = tree.add(_format_task_label(root_task, state, progress, 1, name_col))
+                _add(child, root_task, 2)
 
-    # Add root tasks and their dependencies
-    for root_task in root_tasks:
-        add_task_to_tree(root_task, tree)
-
-    # Add any remaining tasks that weren't added (shouldn't happen with valid graph)
+    # Safety net: disconnected tasks not reached by DFS above.
     for task_name in execution_order:
-        if task_name not in added_tasks:
-            add_task_to_tree(task_name, tree)
-
+        if task_name not in visited:
+            state = task_states.get(task_name, "pending")
+            progress = task_progress.get(task_name, 0)
+            tree.add(_format_task_label(task_name, state, progress, 0, name_col))
     return tree
 
 
@@ -254,7 +352,8 @@ async def _execute_tasks_parallel(  # noqa: C901
     executor: TaskExecutor,
     max_workers: int,
     use_rich: bool = False,
-) -> tuple[list[str], list[str]]:
+    target_tasks: list[str] | None = None,
+) -> tuple[list[str], list[str], dict[str, tuple[str, str]]]:
     """Execute tasks in parallel respecting dependencies.
 
     Args:
@@ -264,14 +363,17 @@ async def _execute_tasks_parallel(  # noqa: C901
         executor: Task executor instance.
         max_workers: Maximum number of concurrent tasks.
         use_rich: Whether to use rich progress display.
+        target_tasks: Explicitly requested tasks (used to root the progress tree).
 
     Returns:
-        Tuple of (failed_tasks, skipped_tasks).
+        Tuple of (failed_tasks, skipped_tasks, failed_outputs) where
+        failed_outputs maps task name to (stdout, stderr) captured during failure.
     """
     completed: set[str] = set()
     failed: list[str] = []
     running: dict[str, asyncio.Task] = {}
     semaphore = asyncio.Semaphore(max_workers)
+    failed_outputs: dict[str, tuple[str, str]] = {}
 
     # Track tasks remaining to execute
     remaining = set(execution_order)
@@ -294,10 +396,11 @@ async def _execute_tasks_parallel(  # noqa: C901
                 task_states[task_name] = "completed"
                 task_progress_pct[task_name] = 100
                 return task_name, True
-            except TaskExecutionError:
-                # Mark as failed
+            except TaskExecutionError as exc:
+                # Mark as failed and preserve captured output for error display
                 task_states[task_name] = "failed"
                 task_progress_pct[task_name] = 100
+                failed_outputs[task_name] = (exc.stdout, exc.stderr)
                 return task_name, False
 
     def get_ready_tasks() -> list[str]:
@@ -310,7 +413,7 @@ async def _execute_tasks_parallel(  # noqa: C901
                 ready.append(task_name)
         return ready
 
-    async def execute_loop() -> tuple[list[str], list[str]]:
+    async def execute_loop() -> tuple[list[str], list[str], dict[str, tuple[str, str]]]:
         """Main execution loop."""
         # Main execution loop
         while remaining or running:
@@ -348,28 +451,28 @@ async def _execute_tasks_parallel(  # noqa: C901
                         pending_task.cancel()
                     # Wait for cancellations
                     await asyncio.gather(*running.values(), return_exceptions=True)
-                    return failed, skipped
+                    return failed, skipped, failed_outputs
 
-        return failed, []
+        return failed, [], failed_outputs
 
     # Execute with or without rich tree display
     if use_rich:
         # Use Live display with tree view
-        async def execute_with_tree() -> tuple[list[str], list[str]]:
-            tree = _build_task_tree(graph, execution_order, task_states, task_progress_pct)
+        async def execute_with_tree() -> tuple[list[str], list[str], dict[str, tuple[str, str]]]:
+            tree = _build_task_tree(graph, execution_order, task_states, task_progress_pct, target_tasks)
             with Live(tree, console=console, refresh_per_second=4) as live:
                 # Start execution
                 loop_task = asyncio.create_task(execute_loop())
 
                 # Update tree periodically
                 while not loop_task.done():
-                    tree = _build_task_tree(graph, execution_order, task_states, task_progress_pct)
+                    tree = _build_task_tree(graph, execution_order, task_states, task_progress_pct, target_tasks)
                     live.update(tree)
                     await asyncio.sleep(0.25)
 
                 # Final update
                 result = await loop_task
-                tree = _build_task_tree(graph, execution_order, task_states, task_progress_pct)
+                tree = _build_task_tree(graph, execution_order, task_states, task_progress_pct, target_tasks)
                 live.update(tree)
                 return result
 
@@ -378,31 +481,53 @@ async def _execute_tasks_parallel(  # noqa: C901
         return await execute_loop()
 
 
+def _display_failed_task_details(
+    graph: nx.DiGraph,
+    failed_task: str,
+    outputs: dict[str, tuple[str, str]],
+) -> None:
+    """Print captured output and dependency chain for one failed task."""
+    typer.secho(f"✗ Task failed: {failed_task}", fg=typer.colors.RED, err=True)
+
+    stdout, stderr = outputs.get(failed_task, ("", ""))
+    if stdout or stderr:
+        typer.secho("  Output:", fg=typer.colors.YELLOW, err=True)
+        for line in stdout.splitlines():
+            typer.echo(f"  {line}", err=True)
+        for line in stderr.splitlines():
+            typer.secho(f"  {line}", fg=typer.colors.RED, err=True)
+
+    dep_chain = _get_dependency_chain(graph, failed_task)
+    if len(dep_chain) > 1:
+        typer.secho("  Dependency chain:", fg=typer.colors.YELLOW, err=True)
+        for i, dep in enumerate(dep_chain):
+            prefix = "    └─" if i == len(dep_chain) - 1 else "    ├─"
+            typer.echo(f"{prefix} {dep}", err=True)
+
+
 def _display_execution_errors(
     graph: nx.DiGraph,
     failed_tasks: list[str],
     skipped_tasks: list[str],
+    failed_outputs: dict[str, tuple[str, str]] | None = None,
 ) -> None:
     """Display detailed error information for failed tasks.
+
+    Replays the captured stdout/stderr of each failed task so the user always
+    sees the full tool output regardless of whether rich/quiet mode was active
+    during execution.
 
     Args:
         graph: Task dependency graph.
         failed_tasks: List of failed task names.
         skipped_tasks: List of skipped task names.
+        failed_outputs: Captured (stdout, stderr) per failed task name.
     """
+    outputs = failed_outputs or {}
     typer.echo()
     for failed_task in failed_tasks:
-        typer.secho(f"✗ Task failed: {failed_task}", fg=typer.colors.RED, err=True)
+        _display_failed_task_details(graph, failed_task, outputs)
 
-        # Show dependency chain
-        dep_chain = _get_dependency_chain(graph, failed_task)
-        if len(dep_chain) > 1:
-            typer.secho("  Dependency chain:", fg=typer.colors.YELLOW, err=True)
-            for i, dep in enumerate(dep_chain):
-                prefix = "    └─" if i == len(dep_chain) - 1 else "    ├─"
-                typer.echo(f"{prefix} {dep}", err=True)
-
-    # Show skipped tasks if any
     if skipped_tasks:
         typer.echo()
         typer.secho(
@@ -467,13 +592,14 @@ async def _run_task_async(
 
     # Use parallel execution path for both sequential and parallel
     # (provides tree view and better progress tracking)
-    failed_tasks, skipped_tasks = await _execute_tasks_parallel(
-        graph, execution_order, loaded_config, executor, max_workers, use_rich_progress
+    failed_tasks, skipped_tasks, failed_outputs = await _execute_tasks_parallel(
+        graph, execution_order, loaded_config, executor, max_workers, use_rich_progress,
+        target_tasks=[task],
     )
 
     if failed_tasks:
         # Display detailed error information
-        _display_execution_errors(graph, failed_tasks, skipped_tasks)
+        _display_execution_errors(graph, failed_tasks, skipped_tasks, failed_outputs)
         raise typer.Exit(code=1)
 
     typer.secho(
