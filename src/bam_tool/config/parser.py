@@ -13,6 +13,12 @@ from .schema import BamConfig
 
 CONFIG_FILENAMES = ("bam.yaml", ".bam.yaml")
 
+# Task names that shadow built-in bam commands.  When a task shares a name with
+# a built-in, `bam <task>` invokes the built-in instead of the task.
+RESERVED_TASK_NAMES: frozenset[str] = frozenset(
+    {"run", "list", "clean", "graph", "validate", "ci"}
+)
+
 
 class ConfigurationError(Exception):
     """Raised when configuration discovery, parsing, or validation fails."""
@@ -95,5 +101,9 @@ def load_config(
         raise ConfigurationError(
             f"Configuration validation failed in {resolved_path}:\n{exc}"
         ) from exc
+
+    # Warn about task names that shadow built-in bam commands.
+    # Warning is intentionally not emitted here — callers (e.g. the CLI) are
+    # responsible for surfacing it in a way appropriate for their context.
 
     return resolved_path, config

@@ -19,7 +19,8 @@ from typer.core import TyperGroup
 
 from ._version import __version__
 from .cache import LocalCache, create_cache, expand_globs
-from .config import BamConfig, ConfigurationError, load_config
+from .ci import generate_pipeline
+from .config import RESERVED_TASK_NAMES, BamConfig, ConfigurationError, load_config
 from .executor import TaskExecutionError, TaskExecutor
 from .graph import (
     CyclicDependencyError,
@@ -29,6 +30,18 @@ from .graph import (
     render_ascii_graph,
     render_dot_graph,
 )
+
+
+def _warn_reserved_tasks(loaded_config: BamConfig) -> None:
+    """Print a styled warning for any task that shadows a built-in bam command."""
+    for task_name in loaded_config.tasks:
+        if task_name in RESERVED_TASK_NAMES:
+            typer.secho(
+                f"Warning: task '{task_name}' shadows the built-in 'bam {task_name}' command. "
+                f"Use 'bam run {task_name}' to run it explicitly, or rename the task.",
+                fg=typer.colors.YELLOW,
+                err=True,
+            )
 
 
 class DefaultCommandGroup(TyperGroup):
@@ -551,7 +564,9 @@ async def _run_task_async(
     """Internal async implementation of run command.
 
     Args:
-        task: Target task to execute.
+        task: Target task or stage name to execute.  When a stage name is given
+            (not matching any task directly), all tasks belonging to that stage
+            are executed.
         dry_run: Show execution plan without running.
         quiet: Suppress output.
         no_cache: Disable caching.
@@ -562,10 +577,18 @@ async def _run_task_async(
     try:
         _, loaded_config = load_config(config_path=config)
         graph = build_task_graph(loaded_config.tasks)
-        execution_order = execution_order_for_targets(graph, [task])
+        # Resolve stage name → list of task names when the target is not a
+        # direct task name.  Task names always take precedence.
+        if task not in loaded_config.tasks:
+            stage_tasks = [n for n, c in loaded_config.tasks.items() if c.stage == task]
+            targets = stage_tasks if stage_tasks else [task]
+        else:
+            targets = [task]
+        execution_order = execution_order_for_targets(graph, targets)
     except (ConfigurationError, MissingTaskError, CyclicDependencyError) as exc:
         typer.secho(str(exc), fg=typer.colors.RED, err=True)
         raise typer.Exit(code=1) from exc
+    _warn_reserved_tasks(loaded_config)
 
     if dry_run:
         typer.secho("Dry-run execution order:", fg=typer.colors.CYAN)
@@ -594,7 +617,7 @@ async def _run_task_async(
     # (provides tree view and better progress tracking)
     failed_tasks, skipped_tasks, failed_outputs = await _execute_tasks_parallel(
         graph, execution_order, loaded_config, executor, max_workers, use_rich_progress,
-        target_tasks=[task],
+        target_tasks=targets,
     )
 
     if failed_tasks:
@@ -677,6 +700,7 @@ def list_command(
     except ConfigurationError as exc:
         typer.secho(str(exc), fg=typer.colors.RED, err=True)
         raise typer.Exit(code=1) from exc
+    _warn_reserved_tasks(loaded_config)
 
     if not loaded_config.tasks:
         typer.echo("No tasks configured.")
@@ -758,6 +782,7 @@ def graph_command(
     except (ConfigurationError, MissingTaskError, CyclicDependencyError) as exc:
         typer.secho(str(exc), fg=typer.colors.RED, err=True)
         raise typer.Exit(code=1) from exc
+    _warn_reserved_tasks(loaded_config)
 
     if normalized_format == "dot":
         typer.echo(render_dot_graph(graph))
@@ -785,9 +810,67 @@ def validate_command(
     except ConfigurationError as exc:
         typer.secho(str(exc), fg=typer.colors.RED, err=True)
         raise typer.Exit(code=1) from exc
+    _warn_reserved_tasks(loaded_config)
 
     typer.secho(f"Configuration is valid: {config_path}", fg=typer.colors.GREEN)
     typer.echo(f"Discovered {len(loaded_config.tasks)} task(s).")
+
+
+@app.command("ci")
+def ci_command(
+    config: Annotated[
+        Path | None,
+        typer.Option(
+            "--config",
+            exists=False,
+            file_okay=True,
+            dir_okay=False,
+            help="Path to a bam configuration file.",
+        ),
+    ] = None,
+    output: Annotated[
+        Path | None,
+        typer.Option(
+            "--output", "-o",
+            help="Write the generated file to this path instead of the default location.",
+        ),
+    ] = None,
+    dry_run: Annotated[
+        bool,
+        typer.Option("--dry-run", help="Print the generated YAML without writing a file."),
+    ] = False,
+) -> None:
+    """Generate a CI pipeline file from the current bam configuration.
+
+    Reads the ``ci:`` section of bam.yaml and writes a ready-to-use pipeline
+    file.  Each bam task becomes one CI job that simply calls ``bam <task>``;
+    job dependencies are wired from ``depends_on`` so the CI runner can
+    still parallelise at the job level.
+
+    Supported providers: ``github-actions`` (.github/workflows/ci.yml),
+    ``gitlab-ci`` (.gitlab-ci.yml).
+    """
+    try:
+        _, loaded_config = load_config(config_path=config)
+    except ConfigurationError as exc:
+        typer.secho(str(exc), fg=typer.colors.RED, err=True)
+        raise typer.Exit(code=1) from exc
+    _warn_reserved_tasks(loaded_config)
+
+    try:
+        default_path, content = generate_pipeline(loaded_config)
+    except ValueError as exc:
+        typer.secho(str(exc), fg=typer.colors.RED, err=True)
+        raise typer.Exit(code=1) from exc
+
+    if dry_run:
+        typer.echo(content)
+        return
+
+    out_path = Path(output) if output else Path(default_path)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    out_path.write_text(content)
+    typer.secho(f"✓ Generated {out_path}", fg=typer.colors.GREEN)
 
 
 def main() -> None:

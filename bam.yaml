@@ -10,6 +10,7 @@ tasks:
 
   lint:
     command: uv run ruff check src tests
+    stage: lint
     inputs:
       - "src/**/*.py"
       - "tests/**/*.py"
@@ -17,6 +18,7 @@ tasks:
 
   format-check:
     command: uv run ruff format --check src tests
+    stage: lint
     inputs:
       - "src/**/*.py"
       - "tests/**/*.py"
@@ -24,6 +26,7 @@ tasks:
 
   typecheck:
     command: uv run pyright
+    stage: lint
     inputs:
       - "src/**/*.py"
       - pyproject.toml
@@ -32,6 +35,7 @@ tasks:
 
   test-unit:
     command: uv run pytest -q tests/unit --junit-xml=.reports/junit-unit.xml
+    stage: test
     inputs:
       - "src/**/*.py"
       - "tests/unit/**/*.py"
@@ -42,6 +46,7 @@ tasks:
 
   test-integration:
     command: uv run pytest -q tests/integration --junit-xml=.reports/junit-integration.xml
+    stage: test
     inputs:
       - "src/**/*.py"
       - "tests/integration/**/*.py"
@@ -52,6 +57,7 @@ tasks:
 
   test-component:
     command: uv run pytest -q -m component tests/component --junit-xml=.reports/junit-component.xml
+    stage: test
     inputs:
       - "src/**/*.py"
       - "tests/component/**/*.py"
@@ -62,6 +68,7 @@ tasks:
 
   test:
     command: echo "✓ All tests passed"
+    stage: test
     depends_on:
       - test-unit
       - test-integration
@@ -71,6 +78,7 @@ tasks:
 
   build:
     command: uv run python -m build
+    stage: build
     inputs:
       - "src/**/*.py"
       - pyproject.toml
@@ -87,8 +95,17 @@ tasks:
 
   ci:
     command: echo "✓ All CI checks passed"
+    stage: build
     depends_on:
       - lint
       - format-check
       - typecheck
       - test
+
+ci:
+  provider: gitlab-ci
+  python_version: "3.13"
+  triggers:
+    push:
+      branches: [main]
+    pull_request:

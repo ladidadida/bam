@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from bam_tool.config import ConfigurationError, discover_config_path, load_config
+from bam_tool.config import RESERVED_TASK_NAMES, ConfigurationError, discover_config_path, load_config
 
 
 def test_discover_config_in_parent_directory(sample_workspace: Path) -> None:
@@ -76,3 +76,18 @@ def test_load_config_raises_for_schema_error(sample_workspace: Path) -> None:
 
     with pytest.raises(ConfigurationError):
         load_config(start_dir=sample_workspace)
+
+
+def test_reserved_task_names_contains_builtin_commands() -> None:
+    """RESERVED_TASK_NAMES includes all built-in bam command names."""
+    assert "ci" in RESERVED_TASK_NAMES
+    assert "run" in RESERVED_TASK_NAMES
+    assert "list" in RESERVED_TASK_NAMES
+    assert "validate" in RESERVED_TASK_NAMES
+
+
+def test_ordinary_task_name_not_reserved() -> None:
+    """Common task names like 'build' and 'test' are not reserved."""
+    assert "build" not in RESERVED_TASK_NAMES
+    assert "test" not in RESERVED_TASK_NAMES
+    assert "lint" not in RESERVED_TASK_NAMES
