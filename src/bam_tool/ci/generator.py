@@ -156,7 +156,7 @@ def _gitlab_job_template(task_name: str, task: TaskConfig) -> dict[str, Any]:
         job["stage"] = task.stage
     if task.depends_on:
         job["needs"] = [_job_name(d) for d in task.depends_on]
-    job["script"] = [f"bam run {task_name}"]
+    job["script"] = [f"bam {task_name}"]
     if task.outputs:
         job["artifacts"] = {
             "paths": task.outputs,

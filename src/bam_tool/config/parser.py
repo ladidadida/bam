@@ -13,11 +13,8 @@ from .schema import BamConfig
 
 CONFIG_FILENAMES = ("bam.yaml", ".bam.yaml")
 
-# Task names that shadow built-in bam commands.  When a task shares a name with
-# a built-in, `bam <task>` invokes the built-in instead of the task.
-RESERVED_TASK_NAMES: frozenset[str] = frozenset(
-    {"run", "list", "clean", "graph", "validate", "ci"}
-)
+# No built-in subcommands exist; this set is kept for API compatibility.
+RESERVED_TASK_NAMES: frozenset[str] = frozenset()
 
 
 class ConfigurationError(Exception):

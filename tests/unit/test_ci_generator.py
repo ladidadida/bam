@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Literal
+
 import yaml
 
 from bam_tool.ci.generator import generate_pipeline
@@ -10,7 +12,7 @@ from bam_tool.config.schema import BamConfig, CiConfig, TaskConfig
 
 def _make_config(
     tasks: dict,
-    provider: str = "github-actions",
+    provider: Literal["github-actions", "gitlab-ci"] = "github-actions",
     python_version: str | None = None,
     env: dict | None = None,
 ) -> BamConfig:
@@ -136,8 +138,8 @@ def test_gitlab_ci_single_job():
     job = data[".lint"]
     # No image — user provides their own
     assert "image" not in job
-    # Script calls bam run <task>
-    assert "bam run lint" in job["script"]
+    # Script calls bam <task>
+    assert "bam lint" in job["script"]
 
 
 def test_gitlab_ci_needs_wired():

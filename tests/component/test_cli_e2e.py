@@ -19,7 +19,7 @@ def test_cli_entrypoint() -> None:
     )
     assert result.returncode == 0
     assert "Usage:" in result.stdout
-    assert "run" in result.stdout
+    assert "--list" in result.stdout
 
 
 @pytest.mark.component
@@ -33,7 +33,7 @@ def test_cli_module_invocation() -> None:
     )
     assert result.returncode == 0
     assert "Usage:" in result.stdout
-    assert "graph" in result.stdout
+    assert "--graph" in result.stdout
 
 
 @pytest.mark.component

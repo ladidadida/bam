@@ -21,14 +21,13 @@ def test_main_no_args_shows_help() -> None:
 
 
 def test_help_lists_skeleton_commands() -> None:
-    """Test that Day 1-2 skeleton commands are available."""
+    """Test that management flags are available."""
     result = runner.invoke(app, ["--help"])
     assert result.exit_code == 0
-    assert "run" in result.stdout
-    assert "list" in result.stdout
-    assert "clean" in result.stdout
-    assert "graph" in result.stdout
-    assert "validate" in result.stdout
+    assert "--list" in result.stdout
+    assert "--graph" in result.stdout
+    assert "--validate" in result.stdout
+    assert "--clean" in result.stdout
 
 
 def test_main_help() -> None:
@@ -44,24 +43,24 @@ def test_main_version() -> None:
 
 
 def test_run_command() -> None:
-    """Test run command executes tasks."""
+    """Test running a task directly from the base command."""
     with runner.isolated_filesystem():
         with open("bam.yaml", "w", encoding="utf-8") as file:
             file.write("version: 1\n\ntasks:\n  build:\n    command: echo 'Building project'\n")
 
-        result = runner.invoke(app, ["run", "build"])
+        result = runner.invoke(app, ["build"])
 
     assert result.exit_code == 0
     assert "Building project" in result.stdout or "Successfully executed" in result.stdout
 
 
 def test_run_command_with_failing_task() -> None:
-    """Test run command stops on task failure."""
+    """Test that a failing task sets exit code 1."""
     with runner.isolated_filesystem():
         with open("bam.yaml", "w", encoding="utf-8") as file:
             file.write("version: 1\n\ntasks:\n  fail:\n    command: exit 1\n")
 
-        result = runner.invoke(app, ["run", "fail"])
+        result = runner.invoke(app, ["fail"])
 
     assert result.exit_code == 1
     assert "✗ fail" in result.stdout or "Execution stopped" in result.stdout
@@ -82,7 +81,7 @@ def test_run_dry_run_shows_execution_plan() -> None:
                 "      - lint\n"
             )
 
-        result = runner.invoke(app, ["run", "build", "--dry-run"])
+        result = runner.invoke(app, ["build", "--dry-run"])
 
     assert result.exit_code == 0
     assert "Dry-run execution order:" in result.stdout
@@ -105,7 +104,7 @@ def test_graph_command_ascii_output() -> None:
                 "      - lint\n"
             )
 
-        result = runner.invoke(app, ["graph"])
+        result = runner.invoke(app, ["--graph"])
 
     assert result.exit_code == 0
     assert "Roots (no dependencies)" in result.stdout
@@ -113,7 +112,7 @@ def test_graph_command_ascii_output() -> None:
 
 
 def test_graph_command_dot_output() -> None:
-    """Test graph command DOT output."""
+    """Test --graph-dot outputs Graphviz DOT format."""
     with runner.isolated_filesystem():
         with open("bam.yaml", "w", encoding="utf-8") as file:
             file.write(
@@ -127,7 +126,7 @@ def test_graph_command_dot_output() -> None:
                 "      - lint\n"
             )
 
-        result = runner.invoke(app, ["graph", "--format", "dot"])
+        result = runner.invoke(app, ["--graph-dot"])
 
     assert result.exit_code == 0
     assert "digraph bam {" in result.stdout
@@ -140,7 +139,7 @@ def test_validate_command_with_valid_config() -> None:
         with open("bam.yaml", "w", encoding="utf-8") as file:
             file.write("version: 1\n\ntasks:\n  build:\n    command: echo build\n")
 
-        result = runner.invoke(app, ["validate"])
+        result = runner.invoke(app, ["--validate"])
 
     assert result.exit_code == 0
     assert "Configuration is valid:" in result.stdout
@@ -148,12 +147,12 @@ def test_validate_command_with_valid_config() -> None:
 
 
 def test_validate_command_with_invalid_config() -> None:
-    """Test validate command fails with invalid config."""
+    """Test --validate fails with invalid config."""
     with runner.isolated_filesystem():
         with open("bam.yaml", "w", encoding="utf-8") as file:
             file.write("tasks: []\n")
 
-        result = runner.invoke(app, ["validate"])
+        result = runner.invoke(app, ["--validate"])
 
     assert result.exit_code == 1
     assert (
@@ -215,7 +214,7 @@ def test_run_with_jobs_flag() -> None:
         with open("bam.yaml", "w", encoding="utf-8") as file:
             file.write("version: 1\n\ntasks:\n  build:\n    command: echo build\n")
 
-        result = runner.invoke(app, ["run", "build", "--jobs", "2"])
+        result = runner.invoke(app, ["build", "--jobs", "2"])
 
     assert result.exit_code == 0
 
@@ -226,7 +225,7 @@ def test_run_with_jobs_auto() -> None:
         with open("bam.yaml", "w", encoding="utf-8") as file:
             file.write("version: 1\n\ntasks:\n  build:\n    command: echo build\n")
 
-        result = runner.invoke(app, ["run", "build", "--jobs", "auto"])
+        result = runner.invoke(app, ["build", "--jobs", "auto"])
 
     assert result.exit_code == 0
 
@@ -237,7 +236,7 @@ def test_run_with_jobs_short_flag() -> None:
         with open("bam.yaml", "w", encoding="utf-8") as file:
             file.write("version: 1\n\ntasks:\n  build:\n    command: echo build\n")
 
-        result = runner.invoke(app, ["run", "build", "-j", "4"])
+        result = runner.invoke(app, ["build", "-j", "4"])
 
     assert result.exit_code == 0
 
@@ -248,7 +247,7 @@ def test_dry_run_with_jobs_shows_parallel_info() -> None:
         with open("bam.yaml", "w", encoding="utf-8") as file:
             file.write("version: 1\n\ntasks:\n  build:\n    command: echo build\n")
 
-        result = runner.invoke(app, ["run", "build", "--dry-run", "--jobs", "4"])
+        result = runner.invoke(app, ["build", "--dry-run", "--jobs", "4"])
 
     assert result.exit_code == 0
     assert "Dry-run execution order:" in result.stdout

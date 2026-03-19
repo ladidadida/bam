@@ -26,7 +26,7 @@ tasks:
 """)
 
     result = subprocess.run(
-        ["uv", "run", "bam", "run", "--config", str(config), "final"],
+        ["uv", "run", "bam", "--config", str(config), "final"],
         capture_output=True,
         text=True,
         cwd=tmp_path,
@@ -59,7 +59,7 @@ tasks:
 """)
 
     result = subprocess.run(
-        ["uv", "run", "bam", "run", "--config", str(config), "task3"],
+        ["uv", "run", "bam", "--config", str(config), "task3"],
         capture_output=True,
         text=True,
         cwd=tmp_path,
@@ -87,7 +87,7 @@ tasks:
 """)
 
     result = subprocess.run(
-        ["uv", "run", "bam", "run", "--config", str(config), "task2"],
+        ["uv", "run", "bam", "--config", str(config), "task2"],
         capture_output=True,
         text=True,
         cwd=tmp_path,
@@ -110,7 +110,7 @@ tasks:
 """)
 
     result = subprocess.run(
-        ["uv", "run", "bam", "run", "--config", str(config), "solo"],
+        ["uv", "run", "bam", "--config", str(config), "solo"],
         capture_output=True,
         text=True,
         cwd=tmp_path,

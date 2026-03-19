@@ -9,18 +9,16 @@ import sys
 from pathlib import Path
 from typing import Annotated
 
-import click
 import networkx as nx
 import typer
 from rich.console import Console
 from rich.live import Live
 from rich.tree import Tree
-from typer.core import TyperGroup
 
 from ._version import __version__
 from .cache import LocalCache, create_cache, expand_globs
 from .ci import generate_pipeline
-from .config import RESERVED_TASK_NAMES, BamConfig, ConfigurationError, load_config
+from .config import BamConfig, ConfigurationError, load_config
 from .executor import TaskExecutionError, TaskExecutor
 from .graph import (
     CyclicDependencyError,
@@ -31,42 +29,10 @@ from .graph import (
     render_dot_graph,
 )
 
-
-def _warn_reserved_tasks(loaded_config: BamConfig) -> None:
-    """Print a styled warning for any task that shadows a built-in bam command."""
-    for task_name in loaded_config.tasks:
-        if task_name in RESERVED_TASK_NAMES:
-            typer.secho(
-                f"Warning: task '{task_name}' shadows the built-in 'bam {task_name}' command. "
-                f"Use 'bam run {task_name}' to run it explicitly, or rename the task.",
-                fg=typer.colors.YELLOW,
-                err=True,
-            )
-
-
-class DefaultCommandGroup(TyperGroup):
-    """Typer group that falls back to 'run <token>' for unknown first tokens.
-
-    Allows `bam <task>` as shorthand for `bam run <task>`.
-    """
-
-    def parse_args(self, ctx: click.Context, args: list[str]) -> list[str]:
-        # list_commands() uses TyperGroup's lazy registry, unlike self.commands
-        # which is the underlying click.Group dict and is always empty.
-        if args and not args[0].startswith("-") and args[0] not in self.list_commands(ctx):
-            args = ["run", *args]
-        return super().parse_args(ctx, args)
-
-
 app = typer.Typer(
     name="bam",
-    help=(
-        "Flow naturally through your build pipeline 🌊\n\n"
-        "bam is a content-addressed workflow orchestration tool that brings "
-        "CAS-style caching to existing development workflows. Companion to cascache."
-    ),
-    no_args_is_help=True,
-    cls=DefaultCommandGroup,
+    no_args_is_help=False,
+    context_settings={"allow_interspersed_args": True},
 )
 
 
@@ -77,23 +43,13 @@ def version_callback(value: bool) -> None:
         raise typer.Exit()
 
 
-@app.callback(invoke_without_command=True)
-def common_options(
-    ctx: typer.Context,
-    _: Annotated[
-        bool | None,
-        typer.Option(
-            "--version",
-            callback=version_callback,
-            is_eager=True,
-            help="Show version and exit.",
-        ),
-    ] = None,
-) -> None:
-    """Bam command group."""
-    if ctx.invoked_subcommand is None:
-        typer.echo(ctx.get_help())
-        raise typer.Exit(code=0)
+def _complete_task_name(incomplete: str) -> list[str]:
+    """Return task names from bam.yaml that start with *incomplete*."""
+    try:
+        _, loaded_config = load_config()
+        return [name for name in loaded_config.tasks if name.startswith(incomplete)]
+    except Exception:  # noqa: BLE001
+        return []
 
 
 def _parse_jobs_value(jobs: str | None) -> int:
@@ -588,7 +544,6 @@ async def _run_task_async(
     except (ConfigurationError, MissingTaskError, CyclicDependencyError) as exc:
         typer.secho(str(exc), fg=typer.colors.RED, err=True)
         raise typer.Exit(code=1) from exc
-    _warn_reserved_tasks(loaded_config)
 
     if dry_run:
         typer.secho("Dry-run execution order:", fg=typer.colors.CYAN)
@@ -631,9 +586,65 @@ async def _run_task_async(
     )
 
 
-@app.command("run")
-def run_command(
-    task: str,
+@app.callback(invoke_without_command=True)
+def _main_callback(  # noqa: C901, PLR0912, PLR0913, PLR0915
+    ctx: typer.Context,
+    task: Annotated[
+        str | None,
+        typer.Argument(autocompletion=_complete_task_name, help="Task or stage to run."),
+    ] = None,
+    # ── Info ──────────────────────────────────────────────────────────────
+    _version: Annotated[
+        bool | None,
+        typer.Option(
+            "--version",
+            callback=version_callback,
+            is_eager=True,
+            help="Show version and exit.",
+        ),
+    ] = None,
+    # ── Management flags ──────────────────────────────────────────────────
+    list_tasks: Annotated[
+        bool,
+        typer.Option("--list", help="List available tasks and exit."),
+    ] = False,
+    validate: Annotated[
+        bool,
+        typer.Option("--validate", help="Validate config and report task count."),
+    ] = False,
+    graph: Annotated[
+        bool,
+        typer.Option("--graph", help="Show ASCII dependency graph and exit."),
+    ] = False,
+    graph_dot: Annotated[
+        bool,
+        typer.Option("--graph-dot", help="Show DOT dependency graph and exit."),
+    ] = False,
+    clean: Annotated[
+        bool,
+        typer.Option("--clean", help="Clean local cache artifacts (prompts for confirmation)."),
+    ] = False,
+    clean_force: Annotated[
+        bool,
+        typer.Option("--clean-force", help="Clean local cache without confirmation."),
+    ] = False,
+    cache_dir: Annotated[
+        Path,
+        typer.Option("--cache-dir", help="Cache directory path (used with --clean / --clean-force)."),
+    ] = Path(".bam/cache"),
+    ci: Annotated[
+        bool,
+        typer.Option("--ci", help="Generate CI pipeline file and exit."),
+    ] = False,
+    ci_output: Annotated[
+        Path | None,
+        typer.Option("--ci-output", help="Write CI pipeline to this path (default: provider-specific)."),
+    ] = None,
+    ci_dry_run: Annotated[
+        bool,
+        typer.Option("--ci-dry-run", help="Print CI YAML to stdout without writing a file."),
+    ] = False,
+    # ── Task run options ──────────────────────────────────────────────────
     dry_run: Annotated[
         bool,
         typer.Option("--dry-run", help="Show task execution plan without running commands."),
@@ -648,229 +659,121 @@ def run_command(
     ] = False,
     jobs: Annotated[
         str | None,
-        typer.Option(
-            "--jobs",
-            "-j",
-            help="Number of parallel workers. Use 'auto' to detect CPU count, or specify a number (default: auto).",
-        ),
+        typer.Option("--jobs", "-j", help="Parallel workers: 'auto' or a number (default: auto)."),
     ] = None,
     plain: Annotated[
         bool,
-        typer.Option(
-            "--plain",
-            help="Use plain output mode with task sections (auto-detected for non-TTY).",
-        ),
+        typer.Option("--plain", help="Use plain output mode (auto-detected for non-TTY)."),
     ] = False,
     config: Annotated[
         Path | None,
-        typer.Option(
-            "--config",
-            exists=False,
-            file_okay=True,
-            dir_okay=False,
-            help="Path to a bam configuration file.",
-        ),
+        typer.Option("--config", help="Path to a bam configuration file."),
     ] = None,
 ) -> None:
-    """Run a task from bam.yaml."""
-    max_workers = _parse_jobs_value(jobs)
+    """Flow naturally through your build pipeline 🌊
 
-    # Auto-detect plain mode if not explicitly set
-    use_plain = plain or not sys.stdout.isatty()
+    bam is a content-addressed workflow orchestration tool that brings
+    CAS-style caching to existing development workflows.
 
-    asyncio.run(_run_task_async(task, dry_run, quiet, no_cache, config, max_workers, use_plain))
-
-
-@app.command("list")
-def list_command(
-    config: Annotated[
-        Path | None,
-        typer.Option(
-            "--config",
-            exists=False,
-            file_okay=True,
-            dir_okay=False,
-            help="Path to a bam configuration file.",
-        ),
-    ] = None,
-) -> None:
-    """List configured tasks."""
-    try:
-        _, loaded_config = load_config(config_path=config)
-    except ConfigurationError as exc:
-        typer.secho(str(exc), fg=typer.colors.RED, err=True)
-        raise typer.Exit(code=1) from exc
-    _warn_reserved_tasks(loaded_config)
-
-    if not loaded_config.tasks:
-        typer.echo("No tasks configured.")
-        return
-
-    typer.secho("Available tasks:", fg=typer.colors.CYAN)
-    for task_name, task_config in sorted(loaded_config.tasks.items()):
-        typer.echo(f"  • {task_name}")
-        if task_config.depends_on:
-            typer.echo(f"    depends on: {', '.join(task_config.depends_on)}")
-
-
-@app.command("clean")
-def clean_command(
-    cache_dir: Annotated[
-        Path,
-        typer.Option("--cache-dir", help="Cache directory to clean."),
-    ] = Path(".bam/cache"),
-    force: Annotated[
-        bool,
-        typer.Option("--force", "-f", help="Skip confirmation prompt."),
-    ] = False,
-) -> None:
-    """Clean local cache artifacts."""
-    cache = LocalCache(cache_dir)
-
-    if not cache.cache_dir.exists() or not list(cache.cache_dir.iterdir()):
-        typer.echo("Cache is already empty.")
-        return
-
-    # Calculate cache size
-    total_size = sum(f.stat().st_size for f in cache.cache_dir.rglob("*") if f.is_file())
-    size_mb = total_size / (1024 * 1024)
-
-    typer.secho(f"Cache directory: {cache.cache_dir}", fg=typer.colors.CYAN)
-    typer.echo(f"Cache size: {size_mb:.2f} MB")
-
-    if not force:
-        confirmed = typer.confirm("Delete all cached artifacts?")
-        if not confirmed:
-            typer.echo("Aborted.")
-            raise typer.Exit()
-
-    asyncio.run(cache.clear())
-    typer.secho("✓ Cache cleared", fg=typer.colors.GREEN)
-
-
-@app.command("graph")
-def graph_command(
-    config: Annotated[
-        Path | None,
-        typer.Option(
-            "--config",
-            exists=False,
-            file_okay=True,
-            dir_okay=False,
-            help="Path to a bam configuration file.",
-        ),
-    ] = None,
-    output_format: Annotated[
-        str,
-        typer.Option(
-            "--format",
-            help="Graph output format. 'ascii' shows tree view (default), 'dot' outputs Graphviz DOT format.",
-        ),
-    ] = "ascii",
-) -> None:
-    """Show task dependency graph with layers and connections."""
-    normalized_format = output_format.lower().strip()
-    if normalized_format not in {"ascii", "dot"}:
-        typer.secho(
-            "Invalid --format. Supported values: ascii, dot.", fg=typer.colors.RED, err=True
-        )
-        raise typer.Exit(code=1)
-
-    try:
-        _, loaded_config = load_config(config_path=config)
-        graph = build_task_graph(loaded_config.tasks)
-    except (ConfigurationError, MissingTaskError, CyclicDependencyError) as exc:
-        typer.secho(str(exc), fg=typer.colors.RED, err=True)
-        raise typer.Exit(code=1) from exc
-    _warn_reserved_tasks(loaded_config)
-
-    if normalized_format == "dot":
-        typer.echo(render_dot_graph(graph))
-        return
-
-    typer.echo(render_ascii_graph(graph))
-
-
-@app.command("validate")
-def validate_command(
-    config: Annotated[
-        Path | None,
-        typer.Option(
-            "--config",
-            exists=False,
-            file_okay=True,
-            dir_okay=False,
-            help="Path to a bam configuration file.",
-        ),
-    ] = None,
-) -> None:
-    """Validate configuration file and report task count."""
-    try:
-        config_path, loaded_config = load_config(config_path=config)
-    except ConfigurationError as exc:
-        typer.secho(str(exc), fg=typer.colors.RED, err=True)
-        raise typer.Exit(code=1) from exc
-    _warn_reserved_tasks(loaded_config)
-
-    typer.secho(f"Configuration is valid: {config_path}", fg=typer.colors.GREEN)
-    typer.echo(f"Discovered {len(loaded_config.tasks)} task(s).")
-
-
-@app.command("ci")
-def ci_command(
-    config: Annotated[
-        Path | None,
-        typer.Option(
-            "--config",
-            exists=False,
-            file_okay=True,
-            dir_okay=False,
-            help="Path to a bam configuration file.",
-        ),
-    ] = None,
-    output: Annotated[
-        Path | None,
-        typer.Option(
-            "--output", "-o",
-            help="Write the generated file to this path instead of the default location.",
-        ),
-    ] = None,
-    dry_run: Annotated[
-        bool,
-        typer.Option("--dry-run", help="Print the generated YAML without writing a file."),
-    ] = False,
-) -> None:
-    """Generate a CI pipeline file from the current bam configuration.
-
-    Reads the ``ci:`` section of bam.yaml and writes a ready-to-use pipeline
-    file.  Each bam task becomes one CI job that simply calls ``bam <task>``;
-    job dependencies are wired from ``depends_on`` so the CI runner can
-    still parallelise at the job level.
-
-    Supported providers: ``github-actions`` (.github/workflows/ci.yml),
-    ``gitlab-ci`` (.gitlab-ci.yml).
+    Run a task:   bam <task>\n
+    List tasks:   bam --list\n
+    Show graph:   bam --graph\n
+    Validate:     bam --validate\n
+    Generate CI:  bam --ci\n
+    Clean cache:  bam --clean
     """
-    try:
-        _, loaded_config = load_config(config_path=config)
-    except ConfigurationError as exc:
-        typer.secho(str(exc), fg=typer.colors.RED, err=True)
-        raise typer.Exit(code=1) from exc
-    _warn_reserved_tasks(loaded_config)
-
-    try:
-        default_path, content = generate_pipeline(loaded_config)
-    except ValueError as exc:
-        typer.secho(str(exc), fg=typer.colors.RED, err=True)
-        raise typer.Exit(code=1) from exc
-
-    if dry_run:
-        typer.echo(content)
+    # ── --list ────────────────────────────────────────────────────────────
+    if list_tasks:
+        try:
+            _, loaded_config = load_config(config_path=config)
+        except ConfigurationError as exc:
+            typer.secho(str(exc), fg=typer.colors.RED, err=True)
+            raise typer.Exit(code=1) from exc
+        if not loaded_config.tasks:
+            typer.echo("No tasks configured.")
+            return
+        typer.secho("Available tasks:", fg=typer.colors.CYAN)
+        for name, cfg in sorted(loaded_config.tasks.items()):
+            typer.echo(f"  • {name}")
+            if cfg.depends_on:
+                typer.echo(f"    depends on: {', '.join(cfg.depends_on)}")
         return
 
-    out_path = Path(output) if output else Path(default_path)
-    out_path.parent.mkdir(parents=True, exist_ok=True)
-    out_path.write_text(content)
-    typer.secho(f"✓ Generated {out_path}", fg=typer.colors.GREEN)
+    # ── --validate ────────────────────────────────────────────────────────
+    if validate:
+        try:
+            config_path, loaded_config = load_config(config_path=config)
+        except ConfigurationError as exc:
+            typer.secho(str(exc), fg=typer.colors.RED, err=True)
+            raise typer.Exit(code=1) from exc
+        typer.secho(f"Configuration is valid: {config_path}", fg=typer.colors.GREEN)
+        typer.echo(f"Discovered {len(loaded_config.tasks)} task(s).")
+        return
+
+    # ── --graph / --graph-dot ─────────────────────────────────────────────
+    if graph or graph_dot:
+        try:
+            _, loaded_config = load_config(config_path=config)
+            g = build_task_graph(loaded_config.tasks)
+        except (ConfigurationError, MissingTaskError, CyclicDependencyError) as exc:
+            typer.secho(str(exc), fg=typer.colors.RED, err=True)
+            raise typer.Exit(code=1) from exc
+        if graph_dot:
+            typer.echo(render_dot_graph(g))
+        else:
+            typer.echo(render_ascii_graph(g))
+        return
+
+    # ── --clean / --clean-force ───────────────────────────────────────────
+    if clean or clean_force:
+        cache_obj = LocalCache(cache_dir)
+        if not cache_obj.cache_dir.exists() or not list(cache_obj.cache_dir.iterdir()):
+            typer.echo("Cache is already empty.")
+            return
+        total_size = sum(f.stat().st_size for f in cache_obj.cache_dir.rglob("*") if f.is_file())
+        size_mb = total_size / (1024 * 1024)
+        typer.secho(f"Cache directory: {cache_obj.cache_dir}", fg=typer.colors.CYAN)
+        typer.echo(f"Cache size: {size_mb:.2f} MB")
+        if not clean_force:
+            confirmed = typer.confirm("Delete all cached artifacts?")
+            if not confirmed:
+                typer.echo("Aborted.")
+                return
+        asyncio.run(cache_obj.clear())
+        typer.secho("✓ Cache cleared", fg=typer.colors.GREEN)
+        return
+
+    # ── --ci / --ci-dry-run / --ci-output ─────────────────────────────────
+    if ci or ci_dry_run or ci_output is not None:
+        try:
+            _, loaded_config = load_config(config_path=config)
+        except ConfigurationError as exc:
+            typer.secho(str(exc), fg=typer.colors.RED, err=True)
+            raise typer.Exit(code=1) from exc
+        try:
+            default_path, content = generate_pipeline(loaded_config)
+        except ValueError as exc:
+            typer.secho(str(exc), fg=typer.colors.RED, err=True)
+            raise typer.Exit(code=1) from exc
+        if ci_dry_run:
+            typer.echo(content)
+            return
+        out_path = Path(ci_output) if ci_output else Path(default_path)
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        out_path.write_text(content)
+        typer.secho(f"✓ Generated {out_path}", fg=typer.colors.GREEN)
+        return
+
+    # ── task execution ─────────────────────────────────────────────────────
+    if task:
+        max_workers = _parse_jobs_value(jobs)
+        use_plain = plain or not sys.stdout.isatty()
+        asyncio.run(_run_task_async(task, dry_run, quiet, no_cache, config, max_workers, use_plain))
+        return
+
+    # No task and no management flag: show help.
+    typer.echo(ctx.get_help())
+    raise typer.Exit(code=0)
 
 
 def main() -> None:

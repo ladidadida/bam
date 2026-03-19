@@ -6,7 +6,12 @@ from pathlib import Path
 
 import pytest
 
-from bam_tool.config import RESERVED_TASK_NAMES, ConfigurationError, discover_config_path, load_config
+from bam_tool.config import (
+    RESERVED_TASK_NAMES,
+    ConfigurationError,
+    discover_config_path,
+    load_config,
+)
 
 
 def test_discover_config_in_parent_directory(sample_workspace: Path) -> None:
@@ -79,11 +84,11 @@ def test_load_config_raises_for_schema_error(sample_workspace: Path) -> None:
 
 
 def test_reserved_task_names_contains_builtin_commands() -> None:
-    """RESERVED_TASK_NAMES includes all built-in bam command names."""
-    assert "ci" in RESERVED_TASK_NAMES
-    assert "run" in RESERVED_TASK_NAMES
-    assert "list" in RESERVED_TASK_NAMES
-    assert "validate" in RESERVED_TASK_NAMES
+    """RESERVED_TASK_NAMES is now empty — no subcommands exist."""
+    assert "ci" not in RESERVED_TASK_NAMES
+    assert "run" not in RESERVED_TASK_NAMES
+    assert "list" not in RESERVED_TASK_NAMES
+    assert "validate" not in RESERVED_TASK_NAMES
 
 
 def test_ordinary_task_name_not_reserved() -> None:

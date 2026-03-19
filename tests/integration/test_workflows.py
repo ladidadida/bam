@@ -357,10 +357,10 @@ async def test_local_cache_workflow(tmp_path: Path):
 
 
 def test_cli_list_command(multi_stage_workspace: Path, runner: CliRunner):
-    """Test 'bam list' command."""
+    """Test 'bam --list' flag."""
     result = runner.invoke(
         app,
-        ["list", "--config", str(multi_stage_workspace / "bam.yaml")],
+        ["--list", "--config", str(multi_stage_workspace / "bam.yaml")],
     )
 
     assert result.exit_code == 0
@@ -372,7 +372,7 @@ def test_cli_list_command(multi_stage_workspace: Path, runner: CliRunner):
 
 
 def test_cli_clean_command(tmp_path: Path, runner: CliRunner):
-    """Test 'bam clean' command."""
+    """Test 'bam --clean-force' flag."""
     # Create cache directory with content
     cache_dir = tmp_path / ".bam/cache"
     cache_dir.mkdir(parents=True)
@@ -380,7 +380,7 @@ def test_cli_clean_command(tmp_path: Path, runner: CliRunner):
 
     result = runner.invoke(
         app,
-        ["clean", "--cache-dir", str(cache_dir), "--force"],
+        ["--clean-force", "--cache-dir", str(cache_dir)],
     )
 
     assert result.exit_code == 0
@@ -388,15 +388,13 @@ def test_cli_clean_command(tmp_path: Path, runner: CliRunner):
 
 
 def test_cli_graph_ascii(multi_stage_workspace: Path, runner: CliRunner):
-    """Test 'bam graph' ASCII output."""
+    """Test 'bam --graph' ASCII output."""
     result = runner.invoke(
         app,
         [
-            "graph",
+            "--graph",
             "--config",
             str(multi_stage_workspace / "bam.yaml"),
-            "--format",
-            "ascii",
         ],
     )
 
@@ -408,15 +406,13 @@ def test_cli_graph_ascii(multi_stage_workspace: Path, runner: CliRunner):
 
 
 def test_cli_graph_dot(multi_stage_workspace: Path, runner: CliRunner):
-    """Test 'bam graph' DOT output."""
+    """Test 'bam --graph-dot' DOT output."""
     result = runner.invoke(
         app,
         [
-            "graph",
+            "--graph-dot",
             "--config",
             str(multi_stage_workspace / "bam.yaml"),
-            "--format",
-            "dot",
         ],
     )
 

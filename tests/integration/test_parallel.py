@@ -59,7 +59,7 @@ def test_parallel_execution_with_jobs_flag(parallel_workspace: Path) -> None:
     runner = CliRunner()
     result = runner.invoke(
         app,
-        ["run", "--config", str(parallel_workspace / "bam.yaml"), "task-d", "--jobs", "3", "--no-cache"],
+        ["--config", str(parallel_workspace / "bam.yaml"), "task-d", "--jobs", "3", "--no-cache"],
     )
 
     assert result.exit_code == 0
@@ -71,7 +71,7 @@ def test_parallel_execution_completes_successfully(parallel_workspace: Path) -> 
     runner = CliRunner()
     result = runner.invoke(
         app,
-        ["run", "--config", str(parallel_workspace / "bam.yaml"), "task-d", "--jobs", "2", "--no-cache"],
+        ["--config", str(parallel_workspace / "bam.yaml"), "task-d", "--jobs", "2", "--no-cache"],
     )
 
     assert result.exit_code == 0
@@ -115,7 +115,7 @@ tasks:
     runner = CliRunner()
     result = runner.invoke(
         app,
-        ["run", "--config", str(tmp_path / "bam.yaml"), "dependent", "--jobs", "3", "--no-cache"],
+        ["--config", str(tmp_path / "bam.yaml"), "dependent", "--jobs", "3", "--no-cache"],
     )
 
     assert result.exit_code == 1
@@ -162,7 +162,7 @@ tasks:
     start = time.time()
     result = runner.invoke(
         app,
-        ["run", "--config", str(parallel_workspace / "bam.yaml"), "final", "--jobs", "1", "--no-cache"],
+        ["--config", str(parallel_workspace / "bam.yaml"), "final", "--jobs", "1", "--no-cache"],
     )
     sequential_time = time.time() - start
 
@@ -172,7 +172,7 @@ tasks:
     start = time.time()
     result = runner.invoke(
         app,
-        ["run", "--config", str(parallel_workspace / "bam.yaml"), "final", "--jobs", "3", "--no-cache"],
+        ["--config", str(parallel_workspace / "bam.yaml"), "final", "--jobs", "3", "--no-cache"],
     )
     parallel_time = time.time() - start
 
@@ -216,7 +216,7 @@ tasks:
     runner = CliRunner()
     result = runner.invoke(
         app,
-        ["run", "--config", str(tmp_path / "bam.yaml"), "third", "--jobs", "3", "--no-cache"],
+        ["--config", str(tmp_path / "bam.yaml"), "third", "--jobs", "3", "--no-cache"],
     )
 
     assert result.exit_code == 0
