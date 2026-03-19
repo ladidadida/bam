@@ -26,6 +26,7 @@ stages:
     - pip install uv
     - uv sync --dev --frozen
     - uv tool install bam-tool
+    - export PATH="$HOME/.local/bin:$PATH"
 
 .uv_release:
   image: python:${PYTHON_VERSION}
