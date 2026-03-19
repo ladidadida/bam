@@ -68,10 +68,10 @@ def test_github_actions_single_job():
     assert "lint" in data["jobs"]
     job = data["jobs"]["lint"]
     assert job["runs-on"] == "ubuntu-latest"
-    # must have a step that runs `bam lint`
-    run_steps = [s for s in job["steps"] if s.get("run", "").startswith("bam ")]
-    assert run_steps, "missing 'bam lint' step"
-    assert run_steps[0]["run"] == "bam lint"
+    # must have a step that runs the bam task via BAM_TOOL
+    run_steps = [s for s in job["steps"] if s.get("run", "").startswith("$BAM_TOOL ")]
+    assert run_steps, "missing '$BAM_TOOL lint' step"
+    assert run_steps[0]["run"] == "$BAM_TOOL lint"
 
 
 def test_github_actions_needs_wired():
@@ -108,14 +108,15 @@ def test_github_actions_workflow_env():
     config = _make_config({"lint": {"command": "ruff ."}}, env={"FOO": "bar"})
     _, content = generate_pipeline(config)
     data = yaml.safe_load(content)
-    assert data["env"] == {"FOO": "bar"}
+    assert data["env"]["FOO"] == "bar"
+    assert data["env"]["BAM_TOOL"] == "bam"
 
 
 def test_github_actions_no_env_key_when_empty():
     config = _make_config({"lint": {"command": "ruff ."}})
     _, content = generate_pipeline(config)
     data = yaml.safe_load(content)
-    assert "env" not in data
+    assert data["env"]["BAM_TOOL"] == "bam"
 
 
 # ---------------------------------------------------------------------------
@@ -139,7 +140,7 @@ def test_gitlab_ci_single_job():
     # No image — user provides their own
     assert "image" not in job
     # Script calls bam <task>
-    assert "bam lint" in job["script"]
+    assert "$BAM_TOOL lint" in job["script"]
 
 
 def test_gitlab_ci_needs_wired():
@@ -224,4 +225,5 @@ def test_gitlab_ci_variables():
     )
     _, content = generate_pipeline(config)
     data = yaml.safe_load(content)
-    assert data["variables"] == {"MY_VAR": "hello"}
+    assert data["variables"]["MY_VAR"] == "hello"
+    assert data["variables"]["BAM_TOOL"] == "bam"

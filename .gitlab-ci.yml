@@ -1,6 +1,12 @@
 include:
   - local: .gitlab/generated.gitlab-ci.yml
 
+variables:
+  UV_CACHE_DIR: .cache/uv
+  # Override BAM_TOOL so all generated jobs run bam from the project venv
+  # instead of a separately installed binary.
+  BAM_TOOL: uv run bam
+
 stages:
   - lint
   - test
@@ -20,12 +26,11 @@ stages:
         - pyproject.toml
       prefix: uv-${PYTHON_VERSION}
     paths:
-      - .cache/pip
+      - .cache/uv/
       - .venv/
   before_script:
     - pip install uv
     - uv sync --dev --frozen
-    - UV_TOOL_BIN_DIR=/usr/local/bin uv tool install bam-tool
 
 .uv_release:
   image: python:${PYTHON_VERSION}

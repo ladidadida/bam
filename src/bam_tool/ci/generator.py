@@ -60,7 +60,7 @@ def _github_job(
         *_github_setup_steps(ci),
         {
             "name": f"Run {task_name}",
-            "run": f"bam {task_name}",
+            "run": f"$BAM_TOOL {task_name}",
         },
     ]
     return job
@@ -75,8 +75,7 @@ def _generate_github_actions(config: BamConfig) -> str:
         "name": "CI",
         "on": ci.triggers,
     }
-    if ci.env:
-        workflow["env"] = ci.env
+    workflow["env"] = {"BAM_TOOL": "bam", **(ci.env or {})}
 
     jobs: dict[str, Any] = {}
     for task_name, task in config.tasks.items():
@@ -156,7 +155,7 @@ def _gitlab_job_template(task_name: str, task: TaskConfig) -> dict[str, Any]:
         job["stage"] = task.stage
     if task.depends_on:
         job["needs"] = [_job_name(d) for d in task.depends_on]
-    job["script"] = [f"bam {task_name}"]
+    job["script"] = [f"$BAM_TOOL {task_name}"]
     if task.outputs:
         job["artifacts"] = {
             "paths": task.outputs,
@@ -184,10 +183,8 @@ def _generate_gitlab_ci(config: BamConfig) -> str:
     top: dict[str, Any] = {}
     if stages:
         top["stages"] = stages
-    if ci.env:
-        top["variables"] = ci.env
-    if top:
-        parts.append(_yaml_dump(top))
+    top["variables"] = {"BAM_TOOL": "bam", **(ci.env or {})}
+    parts.append(_yaml_dump(top))
 
     # Emit templates grouped by stage; tasks without a stage appear last.
     by_stage: dict[str | None, list[tuple[str, TaskConfig]]] = {}

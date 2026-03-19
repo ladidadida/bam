@@ -19,12 +19,14 @@ stages:
   - lint
   - test
   - build
+variables:
+  BAM_TOOL: bam
 
 # ─── lint ─────────────────────────────────────────────────────────────────────
 .lint:
   stage: lint
   script:
-    - bam lint
+    - $BAM_TOOL lint
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH
@@ -33,7 +35,7 @@ stages:
 .format-check:
   stage: lint
   script:
-    - bam format-check
+    - $BAM_TOOL format-check
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH
@@ -42,7 +44,7 @@ stages:
 .typecheck:
   stage: lint
   script:
-    - bam typecheck
+    - $BAM_TOOL typecheck
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH
@@ -52,7 +54,7 @@ stages:
 .test-unit:
   stage: test
   script:
-    - bam test-unit
+    - $BAM_TOOL test-unit
   artifacts:
     paths:
       - .reports/junit-unit.xml
@@ -65,7 +67,7 @@ stages:
 .test-integration:
   stage: test
   script:
-    - bam test-integration
+    - $BAM_TOOL test-integration
   artifacts:
     paths:
       - .reports/junit-integration.xml
@@ -78,7 +80,7 @@ stages:
 .test-component:
   stage: test
   script:
-    - bam test-component
+    - $BAM_TOOL test-component
   artifacts:
     paths:
       - .reports/junit-component.xml
@@ -95,7 +97,7 @@ stages:
     - test-integration
     - test-component
   script:
-    - bam test
+    - $BAM_TOOL test
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH
@@ -109,7 +111,7 @@ stages:
     - typecheck
     - test
   script:
-    - bam build
+    - $BAM_TOOL build
   artifacts:
     paths:
       - dist/
@@ -127,7 +129,7 @@ stages:
     - typecheck
     - test
   script:
-    - bam ci
+    - $BAM_TOOL ci
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH
