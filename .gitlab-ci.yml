@@ -25,8 +25,7 @@ stages:
   before_script:
     - pip install uv
     - uv sync --dev --frozen
-    - uv tool install bam-tool
-    - export PATH="$HOME/.local/bin:$PATH"
+    - UV_TOOL_BIN_DIR=/usr/local/bin uv tool install bam-tool
 
 .uv_release:
   image: python:${PYTHON_VERSION}
