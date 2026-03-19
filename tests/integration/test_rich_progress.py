@@ -22,7 +22,18 @@ tasks:
 """)
 
     result = subprocess.run(
-        ["uv", "run", "bam", "--config", str(config), "task3", "--jobs", "4", "--plain", "--no-cache"],
+        [
+            "uv",
+            "run",
+            "bam",
+            "--config",
+            str(config),
+            "task3",
+            "--jobs",
+            "4",
+            "--plain",
+            "--no-cache",
+        ],
         capture_output=True,
         text=True,
         cwd=Path(__file__).parent.parent.parent,

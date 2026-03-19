@@ -198,9 +198,16 @@ def _add_dep_children(
             progress = task_progress.get(pred, 0)
             child = rich_node.add(_format_task_label(pred, state, progress, nesting, name_col))
             _add_dep_children(
-                child, pred, nesting + 1,
-                graph, task_set, execution_order,
-                task_states, task_progress, visited, name_col,
+                child,
+                pred,
+                nesting + 1,
+                graph,
+                task_set,
+                execution_order,
+                task_states,
+                task_progress,
+                visited,
+                name_col,
             )
 
 
@@ -244,7 +251,9 @@ def _build_task_tree(
     root_start_nesting = 0 if len(roots) == 1 else 1
 
     # Pre-pass: collect nesting depth of every task, then derive column width.
-    task_nesting = _measure_task_nestings(graph, task_set, execution_order, roots, root_start_nesting)
+    task_nesting = _measure_task_nestings(
+        graph, task_set, execution_order, roots, root_start_nesting
+    )
     terminal_cols = shutil.get_terminal_size((80, 24)).columns
     max_effective = max(4 * n + len(name) for name, n in task_nesting.items())
     name_col = max(min(max_effective + 2, terminal_cols // 2), 8)
@@ -254,8 +263,16 @@ def _build_task_tree(
 
     def _add(node: Tree, task: str, nest: int) -> None:
         _add_dep_children(
-            node, task, nest, graph, task_set, execution_order,
-            task_states, task_progress, visited, name_col,
+            node,
+            task,
+            nest,
+            graph,
+            task_set,
+            execution_order,
+            task_states,
+            task_progress,
+            visited,
+            name_col,
         )
 
     if len(roots) == 1:
@@ -428,20 +445,26 @@ async def _execute_tasks_parallel(  # noqa: C901
     if use_rich:
         # Use Live display with tree view
         async def execute_with_tree() -> tuple[list[str], list[str], dict[str, tuple[str, str]]]:
-            tree = _build_task_tree(graph, execution_order, task_states, task_progress_pct, target_tasks)
+            tree = _build_task_tree(
+                graph, execution_order, task_states, task_progress_pct, target_tasks
+            )
             with Live(tree, console=console, refresh_per_second=4) as live:
                 # Start execution
                 loop_task = asyncio.create_task(execute_loop())
 
                 # Update tree periodically
                 while not loop_task.done():
-                    tree = _build_task_tree(graph, execution_order, task_states, task_progress_pct, target_tasks)
+                    tree = _build_task_tree(
+                        graph, execution_order, task_states, task_progress_pct, target_tasks
+                    )
                     live.update(tree)
                     await asyncio.sleep(0.25)
 
                 # Final update
                 result = await loop_task
-                tree = _build_task_tree(graph, execution_order, task_states, task_progress_pct, target_tasks)
+                tree = _build_task_tree(
+                    graph, execution_order, task_states, task_progress_pct, target_tasks
+                )
                 live.update(tree)
                 return result
 
@@ -571,7 +594,12 @@ async def _run_task_async(
     # Use parallel execution path for both sequential and parallel
     # (provides tree view and better progress tracking)
     failed_tasks, skipped_tasks, failed_outputs = await _execute_tasks_parallel(
-        graph, execution_order, loaded_config, executor, max_workers, use_rich_progress,
+        graph,
+        execution_order,
+        loaded_config,
+        executor,
+        max_workers,
+        use_rich_progress,
         target_tasks=targets,
     )
 
@@ -630,7 +658,9 @@ def _main_callback(  # noqa: C901, PLR0912, PLR0913, PLR0915
     ] = False,
     cache_dir: Annotated[
         Path,
-        typer.Option("--cache-dir", help="Cache directory path (used with --clean / --clean-force)."),
+        typer.Option(
+            "--cache-dir", help="Cache directory path (used with --clean / --clean-force)."
+        ),
     ] = Path(".bam/cache"),
     ci: Annotated[
         bool,
@@ -638,7 +668,9 @@ def _main_callback(  # noqa: C901, PLR0912, PLR0913, PLR0915
     ] = False,
     ci_output: Annotated[
         Path | None,
-        typer.Option("--ci-output", help="Write CI pipeline to this path (default: provider-specific)."),
+        typer.Option(
+            "--ci-output", help="Write CI pipeline to this path (default: provider-specific)."
+        ),
     ] = None,
     ci_dry_run: Annotated[
         bool,

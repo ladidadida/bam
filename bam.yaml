@@ -16,6 +16,13 @@ tasks:
       - "tests/**/*.py"
       - pyproject.toml
 
+  format:
+    command: uv run ruff format src tests
+    inputs:
+      - "src/**/*.py"
+      - "tests/**/*.py"
+      - pyproject.toml
+
   format-check:
     command: uv run ruff format --check src tests
     stage: lint

@@ -27,22 +27,29 @@ def _job_name(task_name: str) -> str:
 # GitHub Actions
 # ---------------------------------------------------------------------------
 
+
 def _github_setup_steps(ci: CiConfig) -> list[dict[str, Any]]:
     """Return the common boilerplate steps for every job."""
     steps: list[dict[str, Any]] = [{"uses": "actions/checkout@v4"}]
     if ci.python_version:
-        steps.append({
-            "uses": "actions/setup-python@v5",
-            "with": {"python-version": ci.python_version},
-        })
-    steps.append({
-        "uses": "astral-sh/setup-uv@v5",
-        "with": {"enable-cache": "true"},
-    })
-    steps.append({
-        "name": "Install bam",
-        "run": "uv tool install bam-tool",
-    })
+        steps.append(
+            {
+                "uses": "actions/setup-python@v5",
+                "with": {"python-version": ci.python_version},
+            }
+        )
+    steps.append(
+        {
+            "uses": "astral-sh/setup-uv@v5",
+            "with": {"enable-cache": "true"},
+        }
+    )
+    steps.append(
+        {
+            "name": "Install bam",
+            "run": "uv tool install bam-tool",
+        }
+    )
     return steps
 
 
@@ -208,6 +215,7 @@ def _generate_gitlab_ci(config: BamConfig) -> str:
 # ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
+
 
 def generate_pipeline(config: BamConfig) -> tuple[str, str]:
     """Generate a CI pipeline file from a BamConfig.

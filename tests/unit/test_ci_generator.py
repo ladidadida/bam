@@ -43,6 +43,7 @@ def test_no_ci_section_raises():
 def test_unknown_provider_raises():
     """Pydantic rejects unknown providers at config construction time."""
     from pydantic import ValidationError
+
     try:
         CiConfig(provider="circleci")  # type: ignore[arg-type]
         assert False, "expected ValidationError"
@@ -75,10 +76,12 @@ def test_github_actions_single_job():
 
 
 def test_github_actions_needs_wired():
-    config = _make_config({
-        "lint": {"command": "ruff ."},
-        "build": {"command": "python -m build", "depends_on": ["lint"]},
-    })
+    config = _make_config(
+        {
+            "lint": {"command": "ruff ."},
+            "build": {"command": "python -m build", "depends_on": ["lint"]},
+        }
+    )
     _, content = generate_pipeline(config)
     data = yaml.safe_load(content)
     assert data["jobs"]["build"]["needs"] == ["lint"]
