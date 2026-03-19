@@ -5,6 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-03-19
+
+### Changed (Breaking)
+
+- **Flat CLI interface** — tasks are now run directly as `bam <task>` instead of `bam run <task>`
+  - Management commands are now flags: `--list`, `--graph`, `--validate`, `--clean`, `--ci`
+  - All old subcommands (`run`, `list`, `graph`, `clean`) have been removed
+
+### Added
+
+- **Interactive rich tree view** — live progress display with hierarchical dependency tree (Dagger-style)
+  - Task states shown inline: pending → running → ✓ done / ✗ failed
+  - TTY detection; falls back to plain output in CI/non-TTY environments
+  - `--plain` flag to force plain output
+
+- **CI pipeline generator** (`--ci`)
+  - Generates GitHub Actions (`.github/workflows/bam.yml`) and GitLab CI (`.gitlab/generated.gitlab-ci.yml`) from `bam.yaml`
+  - `--ci-dry-run` to preview without writing
+  - `$BAM_TOOL` variable in generated scripts for flexible execution
+
+- **Shell tab completion** — `bam <TAB>` completes task names from `bam.yaml`
+
+- **Parallel job control** — `--jobs N` / `--jobs auto` for concurrent task execution
+
 ## [0.1.1]
 ### Changed
 
