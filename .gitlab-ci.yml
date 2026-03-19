@@ -1,6 +1,8 @@
+include:
+  - local: .gitlab/generated.gitlab-ci.yml
+
 stages:
   - lint
-  - typecheck
   - test
   - build
   - deploy
@@ -23,6 +25,7 @@ stages:
   before_script:
     - pip install uv
     - uv sync --dev --frozen
+    - uv tool install bam-tool
 
 .uv_release:
   image: python:${PYTHON_VERSION}
@@ -35,67 +38,57 @@ stages:
 
 # ── Lint ────────────────────────────────────────────────────────────────────
 
-# Linting with ruff
-lint:ruff:
-  extends: .uv_dev
+lint:
+  extends:
+    - .lint
+    - .uv_dev
   stage: lint
-  script:
-    - uv run ruff check src tests
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-    - if: $CI_COMMIT_BRANCH
-    - if: $CI_COMMIT_TAG
 
-# ── Type check ──────────────────────────────────────────────────────────────
+format-check:
+  extends:
+    - .format-check
+    - .uv_dev
+  stage: lint
 
-# Type checking with pyright
-typecheck:pyright:
-  extends: .uv_dev
-  stage: typecheck
-  script:
-    - uv run pyright
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-    - if: $CI_COMMIT_BRANCH
-    - if: $CI_COMMIT_TAG
+typecheck:
+  extends:
+    - .typecheck
+    - .uv_dev
+  stage: lint
 
 # ── Test ────────────────────────────────────────────────────────────────────
 
-# Unit tests
-test:unit:
-  extends: .uv_dev
+test-unit:
+  extends:
+    - .test-unit
+    - .uv_dev
   stage: test
-  script:
-    - uv run pytest -v --tb=short -k "not component" tests/unit
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-    - if: $CI_COMMIT_BRANCH
-    - if: $CI_COMMIT_TAG
 
-# Component tests
-test:component:
-  extends: .uv_dev
+test-integration:
+  extends:
+    - .test-integration
+    - .uv_dev
   stage: test
-  script:
-    - uv run pytest -v --tb=short -m component tests/component
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-    - if: $CI_COMMIT_BRANCH
-    - if: $CI_COMMIT_TAG
+
+test-component:
+  extends:
+    - .test-component
+    - .uv_dev
+  stage: test
+
+test:
+  extends:
+    - .test
+    - .uv_dev
+  stage: test
 
 # ── Build ───────────────────────────────────────────────────────────────────
 
-# Build distribution
-build:wheel:
-  extends: .uv_release
+build:
+  extends:
+    - .build
+    - .uv_dev
   stage: build
-  script:
-    - rm -rf dist/
-    - uv build
-  artifacts:
-    paths:
-      - dist/
-    expire_in: 1 day
   rules:
     - if: $CI_COMMIT_TAG
     - if: $CI_COMMIT_BRANCH == "main"
@@ -115,7 +108,7 @@ deploy:pypi:
   rules:
     - if: $CI_COMMIT_TAG
   dependencies:
-    - build:wheel
+    - build
 
 # Deploy to Test PyPI (manual on main branch)
 deploy:testpypi:main:
@@ -132,7 +125,7 @@ deploy:testpypi:main:
     - if: $CI_COMMIT_BRANCH == "main"
       when: manual
   dependencies:
-    - build:wheel
+    - build
 
 # Deploy to Test PyPI (manual on merge requests)
 deploy:testpypi:mr:
@@ -147,4 +140,4 @@ deploy:testpypi:mr:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: manual
   dependencies:
-    - build:wheel
+    - build
