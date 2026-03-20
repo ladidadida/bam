@@ -3,7 +3,12 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import os
+import shlex
+import shutil
+import tempfile
+from collections.abc import AsyncGenerator
 from dataclasses import dataclass
 from enum import StrEnum
 from pathlib import Path
@@ -11,6 +16,88 @@ from pathlib import Path
 from rich.console import Console
 
 from bam_tool.cache import CacheBackend, compute_cache_key
+from bam_tool.config.schema import RunnerConfig
+
+
+class RunnerNotFoundError(Exception):
+    """Raised when a required external tool for a runner is not on PATH."""
+
+    def __init__(self, tool: str, runner_type: str) -> None:
+        self.tool = tool
+        self.runner_type = runner_type
+        super().__init__(
+            f"Runner '{runner_type}' requires '{tool}' but it was not found on PATH. "
+            f"Install {tool} and make sure it is available before running this task."
+        )
+
+
+def _check_tool(name: str, runner_type: str) -> None:
+    """Raise RunnerNotFoundError if *name* is not on PATH."""
+    if shutil.which(name) is None:
+        raise RunnerNotFoundError(name, runner_type)
+
+
+
+def _runner_cache_prefix(runner: RunnerConfig | None) -> str:
+    """Return a stable string that uniquely identifies the runner configuration.
+
+    Prepended to the command before cache-key hashing so that the same command
+    run via different runners produces different cache entries.
+    """
+    if runner is None or runner.type == "shell":
+        return ""
+    if runner.type == "docker":
+        return f"[runner:docker:{runner.image}]"
+    if runner.type == "python-uv":
+        return "[runner:python-uv]"
+    return ""
+
+
+@contextlib.asynccontextmanager
+async def _resolve_command(
+    command: str,
+    runner: RunnerConfig | None,
+    cwd: Path,
+) -> AsyncGenerator[str]:
+    """Yield the actual shell command to execute for the given runner.
+
+    * ``shell`` / ``None`` — yields *command* unchanged.
+    * ``docker`` — wraps in ``docker run`` with the cwd bind-mounted.
+    * ``python-uv`` — writes the command body to a temp ``.py`` file and yields
+      a ``uv run python <tmpfile>`` invocation; cleans up on exit.
+    """
+    if runner is None or runner.type == "shell":
+        yield command
+        return
+
+    if runner.type == "docker":
+        _check_tool("docker", "docker")
+        cwd_str = str(cwd)
+        quoted_cwd = shlex.quote(cwd_str)
+        yield (
+            f"docker run --rm "
+            f"-v {quoted_cwd}:{quoted_cwd} "
+            f"-w {quoted_cwd} "
+            f"{runner.image} "
+            f"sh -c {shlex.quote(command)}"
+        )
+        return
+
+    if runner.type == "python-uv":
+        _check_tool("uv", "python-uv")
+        tmp = tempfile.NamedTemporaryFile(
+            mode="w", suffix=".py", delete=False, encoding="utf-8"
+        )
+        try:
+            tmp.write(command)
+            tmp.close()
+            yield f"uv run python {shlex.quote(tmp.name)}"
+        finally:
+            Path(tmp.name).unlink(missing_ok=True)
+        return
+
+    # Fallback for future runner types
+    yield command
 
 
 class TaskState(StrEnum):
@@ -88,16 +175,18 @@ class TaskExecutor:
         outputs: list[Path] | None = None,
         env: dict[str, str] | None = None,
         working_dir: Path | None = None,
+        runner: RunnerConfig | None = None,
     ) -> TaskResult:
         """Execute a task command via subprocess asynchronously.
 
         Args:
             task_name: Name of the task being executed.
-            command: Shell command to execute.
+            command: Shell command (or Python script body for python-uv runner).
             inputs: List of input file paths for cache key computation.
             outputs: List of output file paths to cache.
             env: Additional environment variables (merged with system env).
             working_dir: Working directory for command execution.
+            runner: Runner configuration controlling how the command is executed.
 
         Returns:
             TaskResult with execution outcome.
@@ -108,9 +197,12 @@ class TaskExecutor:
         input_paths = inputs or []
         output_paths = outputs or []
 
+        # Build cache key — includes runner config so different runners don't collide
+        cache_command = _runner_cache_prefix(runner) + command
+
         # Check cache if enabled
         if self.cache:
-            cache_key = compute_cache_key(command, input_paths, env)
+            cache_key = compute_cache_key(cache_command, input_paths, env)
 
             if await self.cache.exists(cache_key):
                 if not self.quiet:
@@ -137,66 +229,67 @@ class TaskExecutor:
             self.console.print(f"[dim]Command:[/dim] {command}")
 
         try:
-            # Create subprocess with asyncio
-            process = await asyncio.create_subprocess_shell(
-                command,
-                cwd=cwd,
-                env=merged_env,
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE,
-            )
+            async with _resolve_command(command, runner, cwd) as actual_command:
+                # Create subprocess with asyncio
+                process = await asyncio.create_subprocess_shell(
+                    actual_command,
+                    cwd=cwd,
+                    env=merged_env,
+                    stdout=asyncio.subprocess.PIPE,
+                    stderr=asyncio.subprocess.PIPE,
+                )
 
-            # Wait for process to complete and capture output
-            stdout_bytes, stderr_bytes = await process.communicate()
-            stdout = stdout_bytes.decode("utf-8", errors="replace")
-            stderr = stderr_bytes.decode("utf-8", errors="replace")
+                # Wait for process to complete and capture output
+                stdout_bytes, stderr_bytes = await process.communicate()
+                stdout = stdout_bytes.decode("utf-8", errors="replace")
+                stderr = stderr_bytes.decode("utf-8", errors="replace")
 
-            # Display output based on mode
-            if not self.quiet:
-                if self.buffer_output:
-                    # Buffered mode: Show task header with output
-                    self.console.print(f"\n[cyan]→[/cyan] {task_name}")
-                    if stdout:
-                        self.console.print(stdout, end="")
-                    if stderr:
-                        self.console.print(f"[yellow]{stderr}[/yellow]", end="")
-                else:
-                    # Streaming mode: Output already shown above, just print it
-                    if stdout:
-                        self.console.print(stdout, end="")
-                    if stderr:
-                        self.console.print(f"[yellow]{stderr}[/yellow]", end="")
-
-            # After communicate(), returncode should never be None
-            exit_code = process.returncode if process.returncode is not None else -1
-
-            if exit_code != 0:
+                # Display output based on mode
                 if not self.quiet:
-                    status_msg = f"[red]✗[/red] {task_name} (exit {exit_code})"
-                    self.console.print(status_msg)
-                raise TaskExecutionError(task_name, command, exit_code, stdout, stderr)
+                    if self.buffer_output:
+                        # Buffered mode: Show task header with output
+                        self.console.print(f"\n[cyan]→[/cyan] {task_name}")
+                        if stdout:
+                            self.console.print(stdout, end="")
+                        if stderr:
+                            self.console.print(f"[yellow]{stderr}[/yellow]", end="")
+                    else:
+                        # Streaming mode: Output already shown above, just print it
+                        if stdout:
+                            self.console.print(stdout, end="")
+                        if stderr:
+                            self.console.print(f"[yellow]{stderr}[/yellow]", end="")
 
-            if not self.quiet:
-                status_msg = f"[green]✓[/green] {task_name}"
-                self.console.print(status_msg)
+                # After communicate(), returncode should never be None
+                exit_code = process.returncode if process.returncode is not None else -1
 
-            # Store outputs in cache if enabled
-            if self.cache:
-                cache_key = compute_cache_key(command, input_paths, env)
-                if await self.cache.put(cache_key, output_paths):
+                if exit_code != 0:
                     if not self.quiet:
-                        self.console.print(f"[dim]Cached outputs (key: {cache_key[:12]}...)[/dim]")
+                        status_msg = f"[red]✗[/red] {task_name} (exit {exit_code})"
+                        self.console.print(status_msg)
+                    raise TaskExecutionError(task_name, command, exit_code, stdout, stderr)
 
-            return TaskResult(
-                task_name=task_name,
-                state=TaskState.COMPLETED,
-                exit_code=0,
-                stdout=stdout,
-                stderr=stderr,
-            )
+                if not self.quiet:
+                    status_msg = f"[green]✓[/green] {task_name}"
+                    self.console.print(status_msg)
 
-        except TaskExecutionError:
-            # Re-raise TaskExecutionError as-is (already has correct exit code)
+                # Store outputs in cache if enabled
+                if self.cache:
+                    cache_key = compute_cache_key(cache_command, input_paths, env)
+                    if await self.cache.put(cache_key, output_paths):
+                        if not self.quiet:
+                            self.console.print(f"[dim]Cached outputs (key: {cache_key[:12]}...)[/dim]")
+
+                return TaskResult(
+                    task_name=task_name,
+                    state=TaskState.COMPLETED,
+                    exit_code=0,
+                    stdout=stdout,
+                    stderr=stderr,
+                )
+
+        except (TaskExecutionError, RunnerNotFoundError):
+            # Re-raise as-is — callers handle these explicitly
             raise
         except Exception as exc:
             # Catch all other exceptions (OSError, asyncio errors, etc.)

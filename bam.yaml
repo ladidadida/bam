@@ -100,7 +100,7 @@ tasks:
 
   # ── Aggregate CI ──────────────────────────────────────────────────────────────
 
-  ci:
+  ci-checks:
     command: echo "✓ All CI checks passed"
     stage: build
     depends_on:

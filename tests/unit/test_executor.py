@@ -8,7 +8,7 @@ import pytest
 from rich.console import Console
 
 from bam_tool.cache import LocalCache
-from bam_tool.executor import TaskExecutionError, TaskExecutor, TaskState
+from bam_tool.executor import RunnerNotFoundError, TaskExecutionError, TaskExecutor, TaskState
 
 
 @pytest.mark.asyncio
@@ -173,3 +173,157 @@ async def test_execute_with_cache_no_outputs(tmp_path: Path) -> None:
     )
     assert result3.state == TaskState.COMPLETED
     assert not result3.cache_hit
+
+
+# ---------------------------------------------------------------------------
+# Runner tests
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_shell_runner_executes_normally() -> None:
+    """Explicit shell runner behaves like no runner at all."""
+    from bam_tool.config.schema import RunnerConfig
+
+    executor = TaskExecutor(console=Console(file=None), quiet=True)
+    result = await executor.execute_task(
+        task_name="shell-runner-test",
+        command="echo shell-ok",
+        runner=RunnerConfig(type="shell"),
+    )
+    assert result.state == TaskState.COMPLETED
+    assert "shell-ok" in result.stdout
+
+
+@pytest.mark.asyncio
+async def test_python_uv_runner_executes_inline_script() -> None:
+    """python-uv runner treats command body as an inline Python script."""
+    from bam_tool.config.schema import RunnerConfig
+
+    executor = TaskExecutor(console=Console(file=None), quiet=True)
+    result = await executor.execute_task(
+        task_name="python-runner-test",
+        command='print("hello from python")',
+        runner=RunnerConfig(type="python-uv"),
+    )
+    assert result.state == TaskState.COMPLETED
+    assert "hello from python" in result.stdout
+
+
+@pytest.mark.asyncio
+async def test_python_uv_runner_multiline_script() -> None:
+    """python-uv runner handles multiline scripts."""
+    from bam_tool.config.schema import RunnerConfig
+
+    script = "x = 6 * 7\nprint(f'answer={x}')"
+    executor = TaskExecutor(console=Console(file=None), quiet=True)
+    result = await executor.execute_task(
+        task_name="python-multiline-test",
+        command=script,
+        runner=RunnerConfig(type="python-uv"),
+    )
+    assert result.state == TaskState.COMPLETED
+    assert "answer=42" in result.stdout
+
+
+@pytest.mark.asyncio
+async def test_python_uv_runner_cleans_up_tempfile() -> None:
+    """python-uv runner removes the temp script file after execution."""
+    import glob
+    import tempfile
+
+    from bam_tool.config.schema import RunnerConfig
+    from bam_tool.executor.executor import _resolve_command
+
+    tmpdir = tempfile.gettempdir()
+    before = set(glob.glob(f"{tmpdir}/*.py"))
+
+    executor = TaskExecutor(console=Console(file=None), quiet=True)
+    await executor.execute_task(
+        task_name="cleanup-test",
+        command="pass",
+        runner=RunnerConfig(type="python-uv"),
+    )
+
+    after = set(glob.glob(f"{tmpdir}/*.py"))
+    # No new .py tempfiles should remain
+    assert not (after - before)
+
+
+def test_runner_cache_keys_differ_by_runner_type() -> None:
+    """Different runners produce different cache keys for the same command."""
+    from bam_tool.config.schema import RunnerConfig
+    from bam_tool.executor.executor import _runner_cache_prefix
+
+    shell_prefix = _runner_cache_prefix(None)
+    uv_prefix = _runner_cache_prefix(RunnerConfig(type="python-uv"))
+    docker_prefix = _runner_cache_prefix(RunnerConfig(type="docker", image="python:3.13"))
+
+    command = "echo hello"
+    assert shell_prefix + command != uv_prefix + command
+    assert shell_prefix + command != docker_prefix + command
+    assert uv_prefix + command != docker_prefix + command
+
+
+def test_runner_cache_key_includes_docker_image() -> None:
+    """Two docker runners with different images produce different cache prefixes."""
+    from bam_tool.config.schema import RunnerConfig
+    from bam_tool.executor.executor import _runner_cache_prefix
+
+    prefix_a = _runner_cache_prefix(RunnerConfig(type="docker", image="python:3.12"))
+    prefix_b = _runner_cache_prefix(RunnerConfig(type="docker", image="python:3.13"))
+    assert prefix_a != prefix_b
+
+
+# ---------------------------------------------------------------------------
+# Missing-tool error tests
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_docker_runner_raises_when_docker_missing(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """RunnerNotFoundError is raised before attempting execution when docker is absent."""
+    import shutil
+
+    from bam_tool.config.schema import RunnerConfig
+
+    monkeypatch.setattr(shutil, "which", lambda name: None)
+
+    executor = TaskExecutor(console=Console(file=None), quiet=True)
+    with pytest.raises(RunnerNotFoundError) as exc_info:
+        await executor.execute_task(
+            task_name="docker-missing",
+            command="echo hi",
+            runner=RunnerConfig(type="docker", image="python:3.13-slim"),
+        )
+
+    assert exc_info.value.tool == "docker"
+    assert exc_info.value.runner_type == "docker"
+    assert "docker" in str(exc_info.value).lower()
+    assert "PATH" in str(exc_info.value)
+
+
+@pytest.mark.asyncio
+async def test_python_uv_runner_raises_when_uv_missing(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """RunnerNotFoundError is raised before attempting execution when uv is absent."""
+    import shutil
+
+    from bam_tool.config.schema import RunnerConfig
+
+    monkeypatch.setattr(shutil, "which", lambda name: None)
+
+    executor = TaskExecutor(console=Console(file=None), quiet=True)
+    with pytest.raises(RunnerNotFoundError) as exc_info:
+        await executor.execute_task(
+            task_name="uv-missing",
+            command="print('hi')",
+            runner=RunnerConfig(type="python-uv"),
+        )
+
+    assert exc_info.value.tool == "uv"
+    assert exc_info.value.runner_type == "python-uv"
+

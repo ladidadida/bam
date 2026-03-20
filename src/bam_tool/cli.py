@@ -328,6 +328,7 @@ async def _execute_single_task(
         inputs=input_paths,
         outputs=output_paths,
         env=task_config.env,
+        runner=task_config.runner,
     )
 
 
