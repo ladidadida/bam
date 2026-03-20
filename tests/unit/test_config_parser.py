@@ -165,3 +165,42 @@ def test_task_config_runner_defaults_to_none(sample_workspace: Path) -> None:
 
     _, config = load_config(start_dir=sample_workspace)
     assert config.tasks["lint"].runner is None
+
+
+def test_output_path_within_project_is_accepted(sample_workspace: Path) -> None:
+    """Output paths that stay within the project root load without error."""
+    config_path = sample_workspace / "bam.yaml"
+    config_path.write_text(
+        "version: 1\ntasks:\n  build:\n    command: make\n    outputs:\n"
+        "      - dist/app\n      - .reports/junit.xml\n",
+        encoding="utf-8",
+    )
+
+    _, config = load_config(start_dir=sample_workspace)
+    assert "build" in config.tasks
+
+
+def test_output_path_traversal_is_rejected(sample_workspace: Path) -> None:
+    """Output paths escaping the project root raise ConfigurationError."""
+    config_path = sample_workspace / "bam.yaml"
+    config_path.write_text(
+        "version: 1\ntasks:\n  evil:\n    command: echo bad\n    outputs:\n"
+        "      - ../../etc/passwd\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ConfigurationError, match="resolves outside"):
+        load_config(start_dir=sample_workspace)
+
+
+def test_output_absolute_path_outside_project_is_rejected(sample_workspace: Path) -> None:
+    """Absolute output paths outside the project root raise ConfigurationError."""
+    config_path = sample_workspace / "bam.yaml"
+    config_path.write_text(
+        "version: 1\ntasks:\n  evil:\n    command: echo bad\n    outputs:\n"
+        "      - /tmp/stolen-file\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ConfigurationError, match="resolves outside"):
+        load_config(start_dir=sample_workspace)

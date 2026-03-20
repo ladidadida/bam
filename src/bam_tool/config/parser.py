@@ -103,4 +103,28 @@ def load_config(
     # Warning is intentionally not emitted here — callers (e.g. the CLI) are
     # responsible for surfacing it in a way appropriate for their context.
 
+    _validate_output_paths(config, resolved_path.parent)
+
     return resolved_path, config
+
+
+def _validate_output_paths(config: BamConfig, project_root: Path) -> None:
+    """Ensure all declared output paths resolve within the project root.
+
+    Outputs are written to (and later restored from) the cache, so allowing
+    paths that escape the project tree could silently overwrite files anywhere
+    on the filesystem.  Absolute paths and ``..``-based traversals are both
+    caught here.
+    """
+    project_root = project_root.resolve()
+    for task_name, task in config.tasks.items():
+        for raw_output in task.outputs:
+            resolved = (project_root / raw_output).resolve()
+            try:
+                resolved.relative_to(project_root)
+            except ValueError:
+                raise ConfigurationError(
+                    f"Task '{task_name}': output path '{raw_output}' resolves outside "
+                    f"the project root ({project_root}). "
+                    "Output paths must stay within the project directory."
+                ) from None
