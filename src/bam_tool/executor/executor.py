@@ -37,7 +37,6 @@ def _check_tool(name: str, runner_type: str) -> None:
         raise RunnerNotFoundError(name, runner_type)
 
 
-
 def _runner_cache_prefix(runner: RunnerConfig | None) -> str:
     """Return a stable string that uniquely identifies the runner configuration.
 
@@ -85,9 +84,7 @@ async def _resolve_command(
 
     if runner.type == "python-uv":
         _check_tool("uv", "python-uv")
-        tmp = tempfile.NamedTemporaryFile(
-            mode="w", suffix=".py", delete=False, encoding="utf-8"
-        )
+        tmp = tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False, encoding="utf-8")
         try:
             tmp.write(command)
             tmp.close()
@@ -278,7 +275,9 @@ class TaskExecutor:
                     cache_key = compute_cache_key(cache_command, input_paths, env)
                     if await self.cache.put(cache_key, output_paths):
                         if not self.quiet:
-                            self.console.print(f"[dim]Cached outputs (key: {cache_key[:12]}...)[/dim]")
+                            self.console.print(
+                                f"[dim]Cached outputs (key: {cache_key[:12]}...)[/dim]"
+                            )
 
                 return TaskResult(
                     task_name=task_name,

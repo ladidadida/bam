@@ -165,4 +165,3 @@ def test_task_config_runner_defaults_to_none(sample_workspace: Path) -> None:
 
     _, config = load_config(start_dir=sample_workspace)
     assert config.tasks["lint"].runner is None
-

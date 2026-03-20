@@ -5,6 +5,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2026-03-20
+
+### Added
+
+- **Execution runners** — tasks can now declare how their command is executed via a `runner:` field
+  - `shell` (default) — local shell execution, backwards-compatible
+  - `docker` — runs the command inside a Docker container (`image` required)
+  - `python-uv` — treats the command body as an inline Python script, executed via `uv run python`
+  - Runner type and image are included in the cache key so different runners never share a cache hit
+  - `RunnerNotFoundError` raised pre-flight with a clear message if `docker` or `uv` is not on PATH
+
+### Changed
+
+- Documentation overhaul: README, CLI reference, and configuration guide updated for v0.4.0
+  - PyPI install instructions corrected: `pip install bam-tool`
+  - All relative links in README replaced with absolute GitLab URLs (fixes broken links on PyPI)
+  - `runner` field fully documented in `docs/configuration.md`
+- Release workflow added to `AGENTS.md` for reproducible future releases
+
+### Fixed
+
+- `RunnerNotFoundError` was silently swallowed by the broad `except Exception` handler in the executor — now propagates correctly
+- Code formatting (`ruff format`) applied to executor and test files
+
+---
+
 ## [0.3.0] - 2026-03-19
 
 ### Changed (Breaking)

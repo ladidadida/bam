@@ -325,4 +325,3 @@ async def test_python_uv_runner_raises_when_uv_missing(
 
     assert exc_info.value.tool == "uv"
     assert exc_info.value.runner_type == "python-uv"
-
