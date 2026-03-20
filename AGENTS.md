@@ -251,6 +251,80 @@ Companion repos:
 
 ---
 
+## Release Workflow
+
+Follow these steps in order when cutting a new release:
+
+### 1. Sync tags from origin
+
+```bash
+git fetch --tags origin
+```
+
+This ensures the local tag list is complete so `hatch-vcs` derives the correct
+version and you don't accidentally reuse or skip a tag.
+
+### 2. Run all tests
+
+```bash
+uv run pytest
+```
+
+All tests must pass before proceeding.
+
+### 3. Update documentation
+
+- **`CHANGELOG.md`** — Add a new `## [vX.Y.Z] — YYYY-MM-DD` section with a
+  summary of changes grouped by Added / Changed / Fixed / Removed.
+- **`README.md`** — Update test count, feature list, and phase status if
+  anything changed.
+- **`docs/cli.md`** — Update the `**Version:** X.Y.Z` footer.
+- **`docs/configuration.md`** — Update the `**Version:** X.Y.Z` and
+  `**Last Updated:** YYYY-MM-DD` footer.
+- **`AGENTS.md`** — Update `**Last Updated:**` at the bottom.
+
+Version numbers in docs must match the new tag you are about to create.
+
+### 4. Commit the documentation changes
+
+```bash
+git add CHANGELOG.md README.md docs/cli.md docs/configuration.md AGENTS.md
+git commit -m "docs: prepare release vX.Y.Z"
+```
+
+### 5. Create an annotated tag with a release message
+
+The tag message becomes the release note shown in GitLab / PyPI. Keep it short
+but informative — one sentence summary, then a bullet list of highlights:
+
+```bash
+git tag -a vX.Y.Z -m "vX.Y.Z — <one-line summary>
+
+## Highlights
+- <change 1>
+- <change 2>
+- <change 3>
+
+See CHANGELOG.md for the full list of changes."
+```
+
+Use semantic versioning (`vMAJOR.MINOR.PATCH`):
+- **PATCH** — bug fixes, docs, minor improvements
+- **MINOR** — new backwards-compatible features
+- **MAJOR** — breaking changes
+
+### 6. Push commits and tag
+
+```bash
+git push origin main
+git push origin vX.Y.Z
+```
+
+`hatch-vcs` picks up the tag automatically; the version reported by `bam --version`
+and on PyPI is derived directly from it — no manual version file edits needed.
+
+---
+
 ## When In Doubt
 
 1. **Check `spec/roadmap.md` first** — authoritative source for what to implement next
@@ -259,4 +333,4 @@ Companion repos:
 4. **Log extensively** — `DEBUG` for troubleshooting, `INFO` for user feedback
 5. **Test before optimizing** — correctness first
 
-**Last Updated:** 2026-03-01
+**Last Updated:** 2026-03-20
