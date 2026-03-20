@@ -264,13 +264,20 @@ git fetch --tags origin
 This ensures the local tag list is complete so `hatch-vcs` derives the correct
 version and you don't accidentally reuse or skip a tag.
 
-### 2. Run all tests
+### 2. Run full CI checks
 
 ```bash
-uv run pytest
+uv run bam ci-checks
 ```
 
-All tests must pass before proceeding.
+This runs linting (`ruff`), type checking (`pyright`), and the full test suite
+in one go — the same checks that run in CI. All must pass before proceeding.
+
+To see what `ci-checks` includes:
+
+```bash
+bam --graph
+```
 
 ### 3. Update documentation
 
