@@ -233,7 +233,6 @@ async def test_python_uv_runner_cleans_up_tempfile() -> None:
     import tempfile
 
     from bam_tool.config.schema import RunnerConfig
-    from bam_tool.executor.executor import _resolve_command
 
     tmpdir = tempfile.gettempdir()
     before = set(glob.glob(f"{tmpdir}/*.py"))

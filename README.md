@@ -6,7 +6,7 @@
 > While it demonstrates core CAS functionality and includes comprehensive testing,
 > it is **not intended for production use**. Use at your own risk.
 >
-> See [docs/concept.md](docs/concept.md) for more details about the concept and technologies used.
+> See [docs/concept.md](https://gitlab.com/cascascade/bam/-/blob/main/docs/concept.md) for more details about the concept and technologies used.
 
 **Flow naturally through your build pipeline**
 
@@ -25,8 +25,10 @@ bam utilizes its partner projects [cascache_lib](https://gitlab.com/cascascade/c
 - **📊 Dependency Graphs** - Automatic topological sorting and cycle detection
 - **🔍 Rich CLI** - Beautiful tree views, error context, and progress tracking
 - **⚙️ Simple Config** - Clean YAML syntax with glob patterns and env vars
+- **� Runner Support** - Run tasks in Docker containers or as inline Python scripts
+- **🤖 CI Generation** - Auto-generate GitHub Actions and GitLab CI pipelines
 - **🛡️ Type Safe** - Full type hints with pyright validation
-- **🧪 Well Tested** - 85% coverage with 101 passing tests
+- **🧪 Well Tested** - 137 passing tests
 - **📚 Documented** - Complete CLI and configuration references
 
 ## 🚀 Quick Start
@@ -35,10 +37,10 @@ bam utilizes its partner projects [cascache_lib](https://gitlab.com/cascascade/c
 
 ```bash
 # Using uv (recommended)
-uv pip install bam
+uv pip install bam-tool
 
 # Using pip
-pip install bam
+pip install bam-tool
 
 # From source
 git clone https://gitlab.com/cascascade/bam.git
@@ -74,27 +76,25 @@ tasks:
 Run your tasks:
 
 ```bash
-# Execute tasks with dependencies
-bam run test
+# Execute a task (and all its dependencies)
+bam test
 
 # Parallel execution (auto-detect CPUs)
-bam run test  # defaults to parallel
-
-# Control parallelism
-bam run test --jobs 4     # use 4 workers
-bam run test --jobs 1     # sequential
+bam test                 # parallel by default
+bam test --jobs 4        # use 4 workers
+bam test --jobs 1        # sequential
 
 # Plain output for CI/CD
-bam run test --plain
+bam test --plain
 
 # List available tasks
-bam list
+bam --list
 
 # Visualize dependency graph
-bam graph
+bam --graph
 
 # Validate configuration
-bam validate
+bam --validate
 ```
 
 ### Distributed Caching
@@ -122,20 +122,20 @@ cache:
 - 🛡️ Graceful fallback to local on network errors
 - 📊 Statistics tracking (future: `bam cache stats`)
 
-See [examples/remote-cache/](examples/remote-cache/) for complete setup guide.
+See [examples/remote-cache/](https://gitlab.com/cascascade/bam/-/tree/main/examples/remote-cache/) for complete setup guide.
 
 ## 📖 Documentation
 
 **User Guides:**
-- [Concept Document](docs/concept.md) - What is bam? Core concepts and technology stack
-- [CLI Reference](docs/cli.md) - Complete command documentation
-- [Configuration Guide](docs/configuration.md) - Full bam.yaml reference
+- [Concept Document](https://gitlab.com/cascascade/bam/-/blob/main/docs/concept.md) - What is bam? Core concepts and technology stack
+- [CLI Reference](https://gitlab.com/cascascade/bam/-/blob/main/docs/cli.md) - Complete command documentation
+- [Configuration Guide](https://gitlab.com/cascascade/bam/-/blob/main/docs/configuration.md) - Full bam.yaml reference
 
 **Technical Specifications:**
-- [Architecture](spec/architecture.md) - System design and components
-- [Testing Strategy](spec/testing.md) - Test organization and practices
-- [Design Document](spec/design.md) - Philosophy and principles
-- [Roadmap](spec/roadmap.md) - Implementation timeline and status
+- [Architecture](https://gitlab.com/cascascade/bam/-/blob/main/spec/architecture.md) - System design and components
+- [Testing Strategy](https://gitlab.com/cascascade/bam/-/blob/main/spec/testing.md) - Test organization and practices
+- [Design Document](https://gitlab.com/cascascade/bam/-/blob/main/spec/design.md) - Philosophy and principles
+- [Roadmap](https://gitlab.com/cascascade/bam/-/blob/main/spec/roadmap.md) - Implementation timeline and status
 
 ## 🎯 Use Cases
 
@@ -194,124 +194,92 @@ tasks:
     depends_on: [build-backend, build-frontend]
 ```
 
-## 🎨 CLI Commands
+## 🎨 CLI Reference
 
-### `bam run`
+bam uses a **flat command interface** — tasks are run directly as `bam <task>`,
+and management operations are flags.
 
-Execute tasks with automatic dependency resolution and parallel execution:
+### Running Tasks
 
 ```bash
-# Run single task (parallel by default)
-bam run build
+# Run a task (and all its dependencies)
+bam build
 
 # Control parallelism
-bam run build --jobs 8      # use 8 workers
-bam run build --jobs auto   # auto-detect CPUs
-bam run build --jobs 1      # sequential
+bam build --jobs 8      # use 8 workers
+bam build --jobs auto   # auto-detect CPUs (default)
+bam build --jobs 1      # sequential
 
-# Plain output for CI/CD
-bam run build --plain
-
-# Run multiple tasks
-bam run lint test build
-
-# Dry run (show execution plan)
-bam run --dry-run deploy
+# Dry run (show execution plan without running)
+bam build --dry-run
 
 # Disable caching
-bam run --no-cache build
+bam build --no-cache
 
 # Quiet mode
-bam run -q test
+bam build -q
+
+# Plain output for CI/CD
+bam build --plain
 ```
 
 **Interactive Tree View:**
 
 ```
 📦 Tasks
-├── ✓ lint-css             ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100%
-│   └── ✓ test                 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100%
-│       └── ✓ build                ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100%
-│           └── ✓ package              ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100%
-├── ✓ lint-js              ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100%
-└── ✓ lint-python          ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100%
-    └── ✓ docs                 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100%
+├── ✓ lint               ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100%
+├── ✓ typecheck          ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100%
+│   └── ✓ test           ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100%
+│       └── ✓ build      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100%
 
-✓ Successfully executed 7 task(s)
+✓ Successfully executed 4 task(s)
 ```
 
 **Error Context:**
 
-When tasks fail, bam provides detailed context:
+When tasks fail, bam shows the full dependency chain and which tasks were skipped:
 
 ```
-✗ Task failed: step3
+✗ Task failed: test
   Dependency chain:
-    ├─ step1
-    ├─ step2
-    └─ step3
+    ├─ lint
+    ├─ typecheck
+    └─ test
 
-⊘ Skipped 3 task(s) due to failure:
-  • step4
-  • step5
-  • final
+⊘ Skipped 1 task(s) due to failure:
+  • build
 ```
 
-### `bam graph`
-
-Visualize task dependencies:
+### Management Flags
 
 ```bash
-# ASCII tree output
-bam graph
-
-# GraphViz DOT format
-bam graph --format dot > graph.dot
+bam --list              # List all configured tasks
+bam --validate          # Validate config (YAML, deps, cycles)
+bam --graph             # Show ASCII dependency graph
+bam --graph-dot         # Output DOT format (pipe to Graphviz)
+bam --clean             # Clean cache (prompts for confirmation)
+bam --clean-force       # Clean cache without confirmation
+bam --dry-run           # Show execution plan (no task specified)
+bam --version           # Show version
 ```
 
-**Example Output:**
-
-```
-┌─ Roots (no dependencies)
-│  ├─ setup-database
-│  └─ install-deps
-│
-├─ Layer 1
-│  ├─ lint-python
-│  └─ lint-js
-│
-├─ Layer 2
-│  ├─ test-unit
-│  └─ test-integration
-│
-└─ Final layer
-   └─ deploy
-```
-
-### `bam validate`
-
-Validate configuration:
+### CI Pipeline Generation
 
 ```bash
-bam validate
+bam --ci                # Generate CI pipeline (writes file)
+bam --ci-dry-run        # Preview CI YAML without writing
+bam --ci-output FILE    # Write to custom path
 ```
 
-Checks:
-- ✅ Valid YAML syntax
-- ✅ No cyclic dependencies
-- ✅ All dependencies defined
-- ✅ Required fields present
-
-### `bam clean`
-
-Manage cache:
+### Global Options
 
 ```bash
-# Clean with confirmation
-bam clean
-
-# Force clean
-bam clean --force
+--config PATH           # Path to bam.yaml (default: auto-discover)
+--jobs N / auto         # Parallel workers (default: auto)
+--no-cache              # Disable caching for this run
+--dry-run               # Show plan without running
+--quiet, -q             # Suppress output
+--plain                 # Force plain output (no rich UI)
 ```
 
 ## 🏗️ Architecture
@@ -322,7 +290,7 @@ bam is built as a layered system:
 
 Each layer is independently testable with clear interfaces. The architecture supports local-first operation with future remote cache backends.
 
-For detailed architecture documentation, see [spec/architecture.md](spec/architecture.md).
+For detailed architecture documentation, see [spec/architecture.md](https://gitlab.com/cascascade/bam/-/blob/main/spec/architecture.md).
 
 ## 🧪 Testing
 
@@ -333,18 +301,15 @@ bam maintains high code quality with comprehensive testing:
 uv run pytest
 
 # With coverage report
-uv run pytest --cov=bam --cov-report=html
+uv run pytest --cov=bam_tool --cov-report=html
 
 # cascache integration tests (requires Docker)
 ./tests/integration-cascache/run-tests.sh
-# Or with just:
-just test-cascache
 ```
 
 **Current Status:**
-- 101 tests (51 unit + 47 integration + 3 component)
-- 85% code coverage
-- All quality checks passing
+- 137 passing tests
+- Unit, integration, and component test levels
 - Optional: cascache integration tests with Docker Compose
 
 **Test Levels:**
@@ -353,7 +318,7 @@ just test-cascache
 - **Component tests** (`tests/component/`) - CLI end-to-end tests
 - **cascache integration** (`tests/integration-cascache/`) - Real cascache server (Docker-based)
 
-For detailed testing strategy, see [spec/testing.md](spec/testing.md) and [tests/integration-cascache/README.md](tests/integration-cascache/README.md).
+For detailed testing strategy, see [spec/testing.md](https://gitlab.com/cascascade/bam/-/blob/main/spec/testing.md) and [tests/integration-cascache/README.md](https://gitlab.com/cascascade/bam/-/blob/main/tests/integration-cascache/README.md).
 
 ## 🛠️ Development
 
@@ -369,14 +334,13 @@ uv sync
 ### Common Commands
 
 ```bash
-just lint        # Run linter (ruff)
-just typecheck   # Type checking (pyright)
-just test        # Run tests (pytest)
-just test-cascache  # cascache integration tests (Docker)
-just ci-gitlab   # Full CI pipeline
+uv run ruff check src tests     # Lint
+uv run pyright                  # Type checking
+uv run pytest                   # Tests
+bam lint                        # Run lint via bam
+bam test                        # Run all tests via bam
+bam build                       # Full build via bam
 ```
-
-For detailed development setup and project structure, see [spec/architecture.md](spec/architecture.md).
 
 ## 📊 Status
 
@@ -390,7 +354,7 @@ For detailed development setup and project structure, see [spec/architecture.md]
 - ✅ 85% test coverage
 - ✅ Complete documentation
 
-**Phase 2: Parallelization** ✅ COMPLETE (2026-02-12)
+**Phase 2: Parallelization** ✅ Complete
 
 - ✅ Async task execution
 - ✅ Parallel execution with `--jobs` flag
@@ -400,20 +364,20 @@ For detailed development setup and project structure, see [spec/architecture.md]
 - ✅ Better error context with dependency chains
 - ✅ TTY detection for CI/CD compatibility
 
+**Phase 3: Extended Runners & CI** ✅ Complete
+
+- ✅ Flat CLI interface (`bam <task>` instead of `bam run <task>`)
+- ✅ Shell tab completion for task names
+- ✅ CI pipeline generation (`--ci`) for GitHub Actions and GitLab CI
+- ✅ Docker runner (`runner.type: docker`)
+- ✅ Python-uv runner (`runner.type: python-uv`) for inline scripts
+- ✅ Runner-aware cache keys
+
 **Coming Soon:**
-- 🔄 Phase 3: Remote Cache Hardening (advanced CAS sync, observability, reliability)
-- 🎨 Phase 4: Enhanced developer experience
-- 🤖 Phase 5: CI/CD optimizations
+- 🔄 Phase 4: Remote cache hardening (advanced CAS sync, observability, reliability)
+- 🎨 Phase 5: Enhanced developer experience
 
-**Future Features:**
-- 🐳 Docker Integration - Run tasks in isolated containers
-- 🌐 Remote Execution - Execute tasks on remote machines via cascache
-- 🔌 Plugin System - Extensible architecture for custom integrations
-- 📊 Web Dashboard - Real-time monitoring and analytics
-- 🎨 VSCode Integration - Tasks generator or full extension
-- 🤖 CI Pipeline Generation - Auto-generate GitHub Actions, GitLab CI, etc.
-
-See [roadmap.md](spec/roadmap.md) for details.
+See [roadmap.md](https://gitlab.com/cascascade/bam/-/blob/main/spec/roadmap.md) for details.
 
 ## 🤝 Contributing
 
@@ -428,24 +392,24 @@ Development setup instructions in the [Development](#development) section above.
 
 ## 📝 License
 
-MIT License - see [LICENSE](LICENSE) for details.
+MIT License - see [LICENSE](https://gitlab.com/cascascade/bam/-/blob/main/LICENSE) for details.
 
 ## 🔗 Links
 
 **Documentation:**
-- [Concept Document](docs/concept.md) - Core concepts and technology stack
-- [CLI Reference](docs/cli.md) - Command documentation
-- [Configuration Guide](docs/configuration.md) - YAML reference
+- [Concept Document](https://gitlab.com/cascascade/bam/-/blob/main/docs/concept.md) - Core concepts and technology stack
+- [CLI Reference](https://gitlab.com/cascascade/bam/-/blob/main/docs/cli.md) - Command documentation
+- [Configuration Guide](https://gitlab.com/cascascade/bam/-/blob/main/docs/configuration.md) - YAML reference
 
 **Specifications:**
-- [Architecture](spec/architecture.md) - System design
-- [Testing Strategy](spec/testing.md) - Test practices
-- [Design Document](spec/design.md) - Philosophy
-- [Roadmap](spec/roadmap.md) - Implementation plan
+- [Architecture](https://gitlab.com/cascascade/bam/-/blob/main/spec/architecture.md) - System design
+- [Testing Strategy](https://gitlab.com/cascascade/bam/-/blob/main/spec/testing.md) - Test practices
+- [Design Document](https://gitlab.com/cascascade/bam/-/blob/main/spec/design.md) - Philosophy
+- [Roadmap](https://gitlab.com/cascascade/bam/-/blob/main/spec/roadmap.md) - Implementation plan
 
 **Examples:**
-- [examples/](examples/) - Sample projects
+- [examples/](https://gitlab.com/cascascade/bam/-/tree/main/examples/) - Sample projects
 
 ---
 
-**Built with:** Python 3.13+ • uv • Typer • Rich • NetworkX • Pydantic
+**Built with:** Python 3.13+ • uv • Typer • Rich • NetworkX • Pydantic • cascache_lib

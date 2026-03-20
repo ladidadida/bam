@@ -1,98 +1,134 @@
 # Bam CLI Reference
 
-Complete command-line interface documentation for Bam.
+Complete command-line interface documentation for bam.
 
 ## Installation
 
 ```bash
 # Using uv (recommended)
-uv pip install bam
+uv pip install bam-tool
 
 # Using pip
-pip install bam
+pip install bam-tool
 ```
 
-## Global Options
+## Overview
 
-All commands support these global options:
+bam uses a **flat command interface**. Tasks defined in `bam.yaml` are run
+directly as `bam <task>`. Management operations are flags on the same command.
 
-- `--help` - Show help message and exit
-- `--version` - Show version and exit
+```
+bam [OPTIONS] [TASK]
+```
 
-## Commands
+Quick reference:
 
-### `bam run`
+| What you want | Command |
+|---|---|
+| Run a task | `bam <task>` |
+| List tasks | `bam --list` |
+| Validate config | `bam --validate` |
+| Show dependency graph | `bam --graph` |
+| Export DOT graph | `bam --graph-dot` |
+| Generate CI pipeline | `bam --ci` |
+| Clean cache | `bam --clean` |
+| Show version | `bam --version` |
 
-Execute one or more tasks with their dependencies.
+---
 
-**Usage:**
+## Running Tasks
+
 ```bash
-bam run [OPTIONS] TASK [TASK...]
+bam <task> [OPTIONS]
 ```
 
-**Arguments:**
-- `TASK` - One or more task names to execute (required)
+Tasks are resolved from the `tasks:` section of `bam.yaml`. All dependencies
+are executed automatically in topological order.
 
 **Options:**
-- `--config PATH` - Path to bam.yaml configuration file
-  - Default: Searches for `bam.yaml` or `.bam.yaml` in current directory and parents
-- `--dry-run` - Show what would be executed without running anything
-- `--quiet, -q` - Suppress command output (only show results)
-- `--no-cache` - Disable cache reads and writes for this run
+
+| Flag | Default | Description |
+|---|---|---|
+| `--jobs N` / `--jobs auto` | `auto` | Number of parallel workers |
+| `--dry-run` | `false` | Print execution plan without running |
+| `--no-cache` | `false` | Disable cache reads and writes |
+| `--quiet`, `-q` | `false` | Suppress command output |
+| `--plain` | `false` | Use plain output (no rich UI) |
+| `--config PATH` | auto-discover | Path to `bam.yaml` |
 
 **Examples:**
 
 ```bash
-# Run single task
-bam run build
+# Run a single task
+bam build
 
-# Run multiple tasks
-bam run lint test build
+# Run with explicit parallelism
+bam build --jobs 4
+bam build --jobs auto   # detect CPU count
+bam build --jobs 1      # sequential
 
-# Dry run to see execution plan
-bam run --dry-run deploy
+# Dry run — show what would run
+bam build --dry-run
 
-# Run with specific config
-bam run --config path/to/config.yaml test
+# Disable caching for this run
+bam build --no-cache
 
-# Run without caching
-bam run --no-cache build
+# Quiet (only show pass/fail, not command output)
+bam build -q
 
-# Quiet mode (minimal output)
-bam run -q test
+# Force plain output (useful in scripts)
+bam build --plain
+
+# Use a different config file
+bam build --config path/to/bam.yaml
 ```
 
 **Behavior:**
 - Automatically runs all dependencies in topological order
+- Independent tasks run in parallel (controlled by `--jobs`)
 - Uses cached outputs when available (unless `--no-cache`)
-- Fails fast on first task error
+- Fails fast: the first failed task stops dependent tasks
 - Returns exit code 0 on success, 1 on failure
+
+**Interactive Tree View** (TTY only, auto-detected):
+
+```
+📦 Tasks
+├── ✓ lint               ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100%
+├── ✓ typecheck          ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100%
+│   └── ✓ test           ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100%
+│       └── ✓ build      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100%
+
+✓ Successfully executed 4 task(s)
+```
+
+**Error Context:**
+
+```
+✗ Task failed: test
+  Dependency chain:
+    ├─ lint
+    ├─ typecheck
+    └─ test
+
+⊘ Skipped 1 task(s) due to failure:
+  • build
+```
 
 ---
 
-### `bam list`
+## Management Flags
+
+### `--list`
 
 Display all configured tasks and their dependencies.
 
-**Usage:**
 ```bash
-bam list [OPTIONS]
+bam --list
+bam --list --config examples/hello-world/bam.yaml
 ```
 
-**Options:**
-- `--config PATH` - Path to bam.yaml configuration file
-
-**Examples:**
-
-```bash
-# List all tasks
-bam list
-
-# List with specific config
-bam list --config examples/hello-world/bam.yaml
-```
-
-**Output Format:**
+**Output:**
 ```
 Available tasks:
   • build
@@ -103,37 +139,47 @@ Available tasks:
 
 ---
 
-### `bam graph`
+### `--validate`
+
+Validate configuration file syntax and dependency graph.
+
+```bash
+bam --validate
+bam --validate --config path/to/bam.yaml
+```
+
+**Checks performed:**
+✅ Valid YAML syntax
+✅ Required fields present
+✅ No cyclic dependencies
+✅ All `depends_on` tasks are defined
+✅ Runner configuration is valid
+
+**Output:**
+```
+Configuration is valid: /path/to/bam.yaml
+Discovered 8 task(s).
+```
+
+---
+
+### `--graph` / `--graph-dot`
 
 Visualize the task dependency graph.
 
-**Usage:**
 ```bash
-bam graph [OPTIONS]
-```
+# ASCII tree (default)
+bam --graph
 
-**Options:**
-- `--config PATH` - Path to bam.yaml configuration file
-- `--format FORMAT` - Output format: `ascii` or `dot`
-  - Default: `ascii`
-  - `ascii` - Tree-style Unicode box drawing
-  - `dot` - GraphViz DOT format for rendering
-
-**Examples:**
-
-```bash
-# Show ASCII graph
-bam graph
-
-# Generate DOT format for GraphViz
-bam graph --format dot > graph.dot
+# DOT format for Graphviz
+bam --graph-dot > graph.dot
 dot -Tpng graph.dot -o graph.png
 
 # With specific config
-bam graph --config path/to/config.yaml
+bam --graph --config path/to/bam.yaml
 ```
 
-**ASCII Output Example:**
+**ASCII Output:**
 ```
 ┌─ Roots (no dependencies)
 │  ├─ setup-database
@@ -143,15 +189,11 @@ bam graph --config path/to/config.yaml
 │  ├─ lint-python
 │  └─ lint-js
 │
-├─ Layer 2
-│  ├─ test-unit
-│  └─ test-integration
-│
-└─ Final layer
-   └─ deploy
+└─ Layer 2
+   └─ test
 ```
 
-**DOT Output Example:**
+**DOT Output:**
 ```dot
 digraph TaskGraph {
   rankdir=LR;
@@ -163,221 +205,141 @@ digraph TaskGraph {
 
 ---
 
-### `bam validate`
+### `--clean` / `--clean-force`
 
-Validate configuration file syntax and dependency graph.
-
-**Usage:**
-```bash
-bam validate [OPTIONS]
-```
-
-**Options:**
-- `--config PATH` - Path to bam.yaml configuration file
-
-**Examples:**
+Remove cached artifacts from the local cache directory.
 
 ```bash
-# Validate default config
-bam validate
+# Prompt for confirmation before cleaning
+bam --clean
 
-# Validate specific config
-bam validate --config path/to/config.yaml
+# Skip confirmation
+bam --clean-force
+
+# Custom cache directory
+bam --clean-force --cache-dir /path/to/cache
 ```
 
-**Checks:**
-✅ Valid YAML syntax  
-✅ Required fields present  
-✅ No cyclic dependencies  
-✅ All dependencies defined  
-✅ No duplicate task names
+| Flag | Description |
+|---|---|
+| `--clean` | Clean with interactive confirmation prompt |
+| `--clean-force` | Clean without confirmation |
+| `--cache-dir PATH` | Cache directory (default: `.bam/cache`) |
 
-**Output:**
-```
-Configuration is valid: /path/to/bam.yaml
-Discovered 12 task(s).
+---
+
+### `--ci` / `--ci-dry-run`
+
+Generate a CI pipeline file from the task graph.
+
+```bash
+# Write pipeline file (path determined by provider)
+bam --ci
+
+# Preview without writing
+bam --ci-dry-run
+
+# Write to a custom path
+bam --ci --ci-output .github/workflows/ci.yml
 ```
 
-**Error Example:**
+Provider is configured in the `ci:` section of `bam.yaml`:
+
+```yaml
+ci:
+  provider: github-actions   # or gitlab-ci
+  runner: ubuntu-latest
+  python_version: "3.13"
 ```
-Error: Cyclic dependency detected in task graph:
-  a -> b -> c -> a
+
+Each bam task becomes one CI job that calls `$BAM_TOOL <task>`, with
+job dependencies wired from `depends_on`.
+
+---
+
+### `--version`
+
+```bash
+bam --version
 ```
 
 ---
 
-### `bam clean`
+## Global Options
 
-Clean local cache artifacts.
-
-**Usage:**
-```bash
-bam clean [OPTIONS]
-```
-
-**Options:**
-- `--cache-dir PATH` - Cache directory to clean
-  - Default: `.bam/cache`
-- `--force, -f` - Skip confirmation prompt
-
-**Examples:**
-
-```bash
-# Clean default cache (with confirmation)
-bam clean
-
-# Force clean without confirmation
-bam clean --force
-
-# Clean custom cache directory
-bam clean --cache-dir /path/to/cache
-```
-
-**Interactive Mode:**
-```
-Cache directory: .bam/cache
-Cache size: 142.35 MB
-Delete all cached artifacts? [y/N]: 
-```
-
-**Force Mode:**
-```
-✓ Cache cleared
-```
+| Option | Description |
+|---|---|
+| `--config PATH` | Path to `bam.yaml` (default: auto-discover upwards from cwd) |
+| `--help` | Show help and exit |
+| `--version` | Show version and exit |
 
 ---
 
-## Environment Variables
+## Shell Tab Completion
 
-Configure bam behavior via environment variables:
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `BAM_CONFIG` | Path to configuration file | `./bam.yaml` |
-| `BAM_CACHE_DIR` | Local cache directory | `./.bam/cache` |
-| `BAM_CACHE_TYPE` | Cache backend type | `local` |
-| `BAM_LOG_LEVEL` | Logging verbosity | `INFO` |
-
-**Examples:**
+bam supports shell tab completion for task names. Install it once per shell:
 
 ```bash
-# Use custom config location
-export BAM_CONFIG=~/.config/bam.yaml
-bam run build
+# bash
+bam --install-completion bash
 
-# Use different cache directory
-export BAM_CACHE_DIR=/tmp/bam-cache
-bam run test
+# zsh
+bam --install-completion zsh
 
-# Debug mode
-export BAM_LOG_LEVEL=DEBUG
-bam run --dry-run deploy
+# fish
+bam --install-completion fish
 ```
 
----
-
-## Configuration File Discovery
-
-Bam searches for configuration files in this order:
-
-1. `--config` CLI argument
-2. `BAM_CONFIG` environment variable
-3. `./bam.yaml` in current directory
-4. `./.bam.yaml` (hidden file) in current directory
-5. Walk up directory tree looking for either file
-
-**Example:**
-
-```
-/home/user/project/src/
-  └─ No config here, searches parent...
-/home/user/project/
-  └─ bam.yaml ✓ Found!
-```
+After installation, `bam <TAB>` completes task names from `bam.yaml`.
 
 ---
 
 ## Exit Codes
 
 | Code | Meaning |
-|------|---------|
-| 0 | Success |
-| 1 | Task failure, configuration error, or validation error |
-| 130 | Interrupted (Ctrl+C) |
+|---|---|
+| `0` | Success |
+| `1` | Task failed or configuration error |
+| `2` | Invalid CLI usage (bad flag, missing argument) |
 
 ---
 
-## Tips & Tricks
+## Common Patterns
 
-### 1. Quick Task Status
+### CI/CD — plain output, no cache
 
 ```bash
-# See what will run
-bam run --dry-run build | grep "Would execute"
+bam --plain --no-cache ci-checks
 ```
 
-### 2. Cache Debugging
+### Dry run before deploy
 
 ```bash
-# Run without cache to force rebuild
-bam run --no-cache build
-
-# Check cache status
-bam clean  # Shows size before confirming
+bam deploy --dry-run
 ```
 
-### 3. Configuration Validation
+### Regenerate CI after updating bam.yaml
 
 ```bash
-# Always validate after config changes
-bam validate && echo "Config OK" || echo "Config ERROR"
+bam --ci && git add .gitlab/generated.gitlab-ci.yml && git commit -m "update CI"
 ```
 
-### 4. Complex Workflows
+### Validate before running
 
 ```bash
-# Run multiple independent targets
-bam run test-frontend test-backend
-
-# Combine with shell scripts
-bam run build && docker build -t myapp .
-```
-
-### 5. Visual Debugging
-
-```bash
-# Generate dependency graph
-bam graph --format dot | dot -Tsvg > graph.svg
-```
-
-### 6. Integration with CI/CD
-
-```bash
-# GitLab CI example
-script:
-  - bam validate
-  - bam run test
-  - bam run build
-  - bam run deploy
-
-# GitHub Actions example
-- name: Run tests
-  run: bam run test
+bam --validate && bam build
 ```
 
 ---
 
 ## Getting Help
 
-For more information:
-
 - **Quick help:** `bam --help`
-- **Command help:** `bam run --help`
 - **Documentation:** https://gitlab.com/cascascade/bam
 - **Issues:** https://gitlab.com/cascascade/bam/-/issues
 - **Examples:** See `examples/` directory
 
 ---
 
-**Version:** 0.1.0  
+**Version:** 0.3.0  
 **License:** MIT

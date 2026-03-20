@@ -218,17 +218,6 @@ tasks:
 - Used in cache key computation
 - Supports variable expansion: `${VAR}`
 
-**Variable Expansion:**
-
-```yaml
-tasks:
-  build:
-    command: echo "$BUILD_ID"
-    env:
-      BUILD_ID: "${CI_PIPELINE_ID:-local}"   # Default value
-      PROJECT: "${CI_PROJECT_NAME}"           # From CI
-```
-
 **Cache Impact:**
 Only env vars defined in the task config affect the cache key:
 
@@ -241,7 +230,106 @@ tasks:
     # System $PATH is NOT in cache key
 ```
 
-## Cache Configuration
+---
+
+### `runner`
+
+**Type:** Object  
+**Required:** No  
+**Default:** `null` (shell)
+**Description:** Controls *how* the task command is executed.
+
+When omitted, the command runs in a local shell — the same as `type: shell`.
+
+#### Runner types
+
+**`shell`** (default)
+
+Runs the command in a local shell. Equivalent to no `runner:` key.
+
+```yaml
+tasks:
+  lint:
+    command: ruff check src/
+```
+
+---
+
+**`docker`**
+
+Runs the command inside a Docker container.  The current working directory is
+bind-mounted so relative paths work as expected.
+
+**Required field:** `image`
+
+```yaml
+tasks:
+  lint-in-container:
+    runner:
+      type: docker
+      image: python:3.13-slim
+    command: pip install ruff && ruff check src/
+
+  build-java:
+    runner:
+      type: docker
+      image: maven:3.9-eclipse-temurin-21
+    command: mvn package -DskipTests
+    inputs:
+      - "src/**/*.java"
+      - "pom.xml"
+    outputs:
+      - "target/*.jar"
+```
+
+**Notes:**
+- Requires `docker` on `PATH`; a clear error is raised if it is missing.
+- The image is pulled automatically by Docker if not cached locally.
+- The cache key includes the image name so different images never share a cache hit.
+
+---
+
+**`python-uv`**
+
+Treats the `command` field as an **inline Python script** and executes it with
+`uv run python`. Useful for short analysis or reporting tasks without a
+dedicated script file.
+
+```yaml
+tasks:
+  count-files:
+    runner:
+      type: python-uv
+    command: |
+      import pathlib
+      files = list(pathlib.Path("src").rglob("*.py"))
+      print(f"{len(files)} Python source files")
+
+  check-version:
+    runner:
+      type: python-uv
+    command: |
+      import tomllib, pathlib
+      data = tomllib.loads(pathlib.Path("pyproject.toml").read_text())
+      print(data["project"]["name"], data["project"].get("version", "(dynamic)"))
+```
+
+**Notes:**
+- Requires `uv` on `PATH`; a clear error is raised if it is missing.
+- The script is written to a temporary `.py` file and cleaned up after execution.
+- The cache key includes the full script body.
+
+---
+
+**Runner error handling**
+
+If the required tool (`docker` or `uv`) is not on `PATH`, bam raises a
+`RunnerNotFoundError` **before** spawning any subprocess, with a message like:
+
+```
+Runner 'docker' requires 'docker' but it was not found on PATH.
+Install docker and make sure it is available before running this task.
+```
 
 ### `cache.type`
 
@@ -564,6 +652,6 @@ tasks:
 
 ---
 
-**Version:** 0.1.0  
+**Version:** 0.3.0  
 **Schema Version:** 1  
-**Last Updated:** 2026-02-12
+**Last Updated:** 2026-03-20
