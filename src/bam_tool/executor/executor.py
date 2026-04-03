@@ -7,7 +7,9 @@ import contextlib
 import os
 import shlex
 import shutil
+import signal
 import tempfile
+import time
 from collections.abc import AsyncGenerator, Awaitable, Callable
 from dataclasses import dataclass
 from enum import StrEnum
@@ -222,10 +224,15 @@ class TaskExecutor:
 
         cwd = working_dir.resolve() if working_dir else Path.cwd()
 
-        # Show task start (unless buffering output)
-        if not self.quiet and not self.buffer_output:
-            self.console.print(f"[cyan]Running:[/cyan] {task_name}")
-            self.console.print(f"[dim]Command:[/dim] {command}")
+        # Show task start
+        if not self.quiet:
+            if self.buffer_output:
+                _fill = "─" * max(0, 72 - len(task_name) - 4)
+                self.console.print(f"\n── {task_name} {_fill}")
+            else:
+                self.console.print(f"[cyan]Running:[/cyan] {task_name}")
+                self.console.print(f"[dim]Command:[/dim] {command}")
+        task_start = time.monotonic()
 
         try:
             async with _resolve_command(command, runner, cwd) as actual_command:
@@ -236,6 +243,7 @@ class TaskExecutor:
                     env=merged_env,
                     stdout=asyncio.subprocess.PIPE,
                     stderr=asyncio.subprocess.PIPE,
+                    start_new_session=True,
                 )
 
                 # Wait for process to complete, with optional timeout loop.
@@ -258,7 +266,10 @@ class TaskExecutor:
                             if on_timeout is not None:
                                 abort = await on_timeout()
                             if abort:
-                                process.kill()
+                                try:
+                                    os.killpg(os.getpgid(process.pid), signal.SIGKILL)
+                                except ProcessLookupError:
+                                    process.kill()
                                 await comm_future
                                 raise TaskExecutionError(
                                     task_name,
@@ -275,14 +286,13 @@ class TaskExecutor:
                 # Display output based on mode
                 if not self.quiet:
                     if self.buffer_output:
-                        # Buffered mode: Show task header with output
-                        self.console.print(f"\n[cyan]→[/cyan] {task_name}")
+                        # Buffered mode: start ruler already printed; flush output
                         if stdout:
                             self.console.print(stdout, end="")
                         if stderr:
                             self.console.print(f"[yellow]{stderr}[/yellow]", end="")
                     else:
-                        # Streaming mode: Output already shown above, just print it
+                        # Streaming mode: output already shown above, just print it
                         if stdout:
                             self.console.print(stdout, end="")
                         if stderr:
@@ -293,13 +303,23 @@ class TaskExecutor:
 
                 if exit_code != 0:
                     if not self.quiet:
-                        status_msg = f"[red]✗[/red] {task_name} (exit {exit_code})"
-                        self.console.print(status_msg)
+                        if self.buffer_output:
+                            _elapsed = time.monotonic() - task_start
+                            _label = f"── ✗ {task_name}  exit {exit_code}  {_elapsed:.1f}s "
+                            _fill = "─" * max(0, 72 - len(_label))
+                            self.console.print(f"[red]{_label}{_fill}[/]")
+                        else:
+                            self.console.print(f"[red]✗[/red] {task_name} (exit {exit_code})")
                     raise TaskExecutionError(task_name, command, exit_code, stdout, stderr)
 
                 if not self.quiet:
-                    status_msg = f"[green]✓[/green] {task_name}"
-                    self.console.print(status_msg)
+                    if self.buffer_output:
+                        _elapsed = time.monotonic() - task_start
+                        _label = f"── ✓ {task_name}  {_elapsed:.1f}s "
+                        _fill = "─" * max(0, 72 - len(_label))
+                        self.console.print(f"[green]{_label}{_fill}[/]")
+                    else:
+                        self.console.print(f"[green]✓[/green] {task_name}")
 
                 # Store outputs in cache if enabled
                 if self.cache:
@@ -318,7 +338,9 @@ class TaskExecutor:
                     stderr=stderr,
                 )
 
-        except TaskExecutionError, RunnerNotFoundError:
+        except TaskExecutionError:
+            raise
+        except RunnerNotFoundError:
             # Re-raise as-is — callers handle these explicitly
             raise
         except Exception as exc:

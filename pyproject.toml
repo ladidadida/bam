@@ -75,6 +75,7 @@ packages = ["src/bam_tool"]
 
 [tool.pytest.ini_options]
 addopts = "--strict-markers"
+console_output_style = "classic"
 markers = [
   "component: marks tests as component-level (integration, CLI, fixtures)",
   "cascache: marks tests requiring real cascache server (integration-cascache)",
