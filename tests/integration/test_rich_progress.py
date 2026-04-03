@@ -41,9 +41,9 @@ tasks:
     )
 
     assert result.returncode == 0
-    # Plain mode should show sectioned output with ruler markers
-    assert "── task1" in result.stdout or "── task2" in result.stdout
-    assert "✓ task3" in result.stdout
+    # Plain mode: start messages shown immediately, output fenced on completion
+    assert "──> started:" in result.stdout
+    assert "PASSED: task3" in result.stdout
 
 
 def test_rich_progress_in_interactive_mode_completes() -> None:
@@ -82,8 +82,8 @@ def test_rich_progress_disabled_in_non_tty() -> None:
     )
 
     assert result.returncode == 0
-    # Non-TTY should automatically use buffered output with ruler markers
-    assert "── lint" in result.stdout or "✓ lint" in result.stdout
+    # Non-TTY should automatically use buffered output with start messages
+    assert "──> started:" in result.stdout or "PASSED: lint" in result.stdout
 
 
 def test_sequential_execution_uses_streaming_output(tmp_path: Path) -> None:

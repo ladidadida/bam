@@ -63,7 +63,7 @@ def test_run_command_with_failing_task() -> None:
         result = runner.invoke(app, ["fail"])
 
     assert result.exit_code == 1
-    assert "✗ fail" in result.stdout or "Execution stopped" in result.stdout
+    assert "FAILED: fail" in result.stdout or "Execution stopped" in result.stdout
 
 
 def test_run_dry_run_shows_execution_plan() -> None:

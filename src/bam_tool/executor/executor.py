@@ -227,8 +227,7 @@ class TaskExecutor:
         # Show task start
         if not self.quiet:
             if self.buffer_output:
-                _fill = "─" * max(0, 72 - len(task_name) - 4)
-                self.console.print(f"\n── {task_name} {_fill}")
+                self.console.print(f"\n──> started: {task_name}")
             else:
                 self.console.print(f"[cyan]Running:[/cyan] {task_name}")
                 self.console.print(f"[dim]Command:[/dim] {command}")
@@ -286,7 +285,9 @@ class TaskExecutor:
                 # Display output based on mode
                 if not self.quiet:
                     if self.buffer_output:
-                        # Buffered mode: start ruler already printed; flush output
+                        # Buffered mode: open fence, flush output
+                        _fill = "─" * max(0, 72 - len(task_name) - 5)
+                        self.console.print(f"\n─── {task_name} {_fill}")
                         if stdout:
                             self.console.print(stdout, end="")
                         if stderr:
@@ -305,7 +306,7 @@ class TaskExecutor:
                     if not self.quiet:
                         if self.buffer_output:
                             _elapsed = time.monotonic() - task_start
-                            _label = f"── ✗ {task_name}  exit {exit_code}  {_elapsed:.1f}s "
+                            _label = f"──── FAILED: {task_name}  exit {exit_code}  {_elapsed:.1f}s "
                             _fill = "─" * max(0, 72 - len(_label))
                             self.console.print(f"[red]{_label}{_fill}[/]")
                         else:
@@ -315,7 +316,7 @@ class TaskExecutor:
                 if not self.quiet:
                     if self.buffer_output:
                         _elapsed = time.monotonic() - task_start
-                        _label = f"── ✓ {task_name}  {_elapsed:.1f}s "
+                        _label = f"──── PASSED: {task_name}  {_elapsed:.1f}s "
                         _fill = "─" * max(0, 72 - len(_label))
                         self.console.print(f"[green]{_label}{_fill}[/]")
                     else:
