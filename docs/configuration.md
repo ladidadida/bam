@@ -652,6 +652,6 @@ tasks:
 
 ---
 
-**Version:** 0.4.0  
+**Version:** 0.4.1  
 **Schema Version:** 1  
-**Last Updated:** 2026-03-20
+**Last Updated:** 2026-04-03

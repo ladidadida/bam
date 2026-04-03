@@ -340,4 +340,4 @@ and on PyPI is derived directly from it — no manual version file edits needed.
 4. **Log extensively** — `DEBUG` for troubleshooting, `INFO` for user feedback
 5. **Test before optimizing** — correctness first
 
-**Last Updated:** 2026-03-20
+**Last Updated:** 2026-04-03
