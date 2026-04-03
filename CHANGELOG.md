@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.2] - 2026-04-03
+
+### Changed
+
+- **Python 3.11–3.14 support** — `requires-python` broadened from `>=3.14` to `>=3.11`; removed the `cascache_server` optional dependency group (blocked older Pythons); lockfile updated with required 3.11 backport packages
+- **GitLab CI matrix** — test jobs (`test-unit`, `test-integration`, `test-component`) now run across all four supported Python versions (3.11, 3.12, 3.13, 3.14) via `parallel: matrix`; `build` job `needs` updated to reference all 12 expanded matrix job names
+
 ## [0.5.1] - 2026-04-03
 
 ### Changed

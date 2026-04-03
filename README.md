@@ -20,7 +20,7 @@ bam utilizes its partner projects [cascache_lib](https://gitlab.com/cascascade/c
 - **� Runner Support** - Run tasks in Docker containers or as inline Python scripts
 - **🤖 CI Generation** - Auto-generate GitHub Actions and GitLab CI pipelines
 - **🛡️ Type Safe** - Full type hints with pyright validation
-- **🧪 Well Tested** - 137 passing tests
+- **🧪 Well Tested** - 149 passing tests
 - **📚 Documented** - Complete CLI and configuration references
 
 ## 🚀 Quick Start
@@ -300,7 +300,7 @@ uv run pytest --cov=bam_tool --cov-report=html
 ```
 
 **Current Status:**
-- 137 passing tests
+- 149 passing tests
 - Unit, integration, and component test levels
 - Optional: cascache integration tests with Docker Compose
 
