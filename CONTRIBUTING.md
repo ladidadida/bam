@@ -4,7 +4,7 @@ Thanks for contributing to bam.
 
 ## Prerequisites
 
-- Python 3.13+
+- Python 3.14+
 - [uv](https://docs.astral.sh/uv/)
 
 ## Setup

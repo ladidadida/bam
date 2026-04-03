@@ -24,7 +24,7 @@ tasks:
       - "dist/"
     command: uv build
     env:
-      PYTHON_VERSION: "3.13"
+      PYTHON_VERSION: "3.14"
 
   test:
     inputs:

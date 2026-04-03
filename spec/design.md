@@ -1,7 +1,7 @@
 # Bam - Workflow Orchestration Tool - Design Document
 
 **Project Name:** Bam 
-**Tagline:** "Flow naturally through your build pipeline"  
+**Tagline:** "Fast builds, no fluff."  
 **Status:** Living Document  
 **Date:** 2026-02-12  
 **Integration:** Python CAS Server for artifact caching  
@@ -499,7 +499,7 @@ Tasks with no dependencies run in parallel:
 
 ### 8.2 Technology Stack
 
-**Language:** Python 3.13+  
+**Language:** Python 3.14+  
 **Reasons:**
 - Fast development
 - Rich ecosystem (YAML, subprocess, asyncio)
@@ -1054,7 +1054,7 @@ tasks:
     command: pytest tests/
     inputs: ["src/**", "tests/**"]
     docker:
-      image: python:3.13-slim
+      image: python:3.14-slim
       volumes:
         - src:/workspace/src
         - tests:/workspace/tests
@@ -1170,7 +1170,7 @@ tasks:
 
 ## 15. Technical Decisions & Trade-offs
 
-### Language: Python 3.13+
+### Language: Python 3.14+
 
 **✅ Pros:**
 - Fast development iteration
@@ -1216,7 +1216,7 @@ Can add containerized execution as advanced feature.
 **Decision: asyncio** (Phase 3)
 - Better async I/O for subprocess
 - Lower memory per task
-- Python 3.13+ has excellent async support
+- Python 3.14+ has excellent async support
 - Easier to reason about
 
 Threading possible for CPU-bound tasks if needed.

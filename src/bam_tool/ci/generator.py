@@ -105,7 +105,7 @@ _GITLAB_CI_HEADER = """\
 #
 #   lint:
 #     extends: .lint             # <-- template name
-#     image: python:3.13         # <-- your image
+#     image: python:3.14         # <-- your image
 #     before_script:             # <-- your setup
 #       - pip install uv
 #       - uv sync --dev --frozen

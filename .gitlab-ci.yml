@@ -18,7 +18,7 @@ stages:
 .uv_dev:
   image: python:${PYTHON_VERSION}
   variables:
-    PYTHON_VERSION: "3.13"
+    PYTHON_VERSION: "3.14"
   cache:
     key:
       files:
@@ -35,7 +35,7 @@ stages:
 .uv_release:
   image: python:${PYTHON_VERSION}
   variables:
-    PYTHON_VERSION: "3.13"
+    PYTHON_VERSION: "3.14"
   cache: []
   before_script:
     - pip install uv

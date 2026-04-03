@@ -249,7 +249,7 @@ Provider is configured in the `ci:` section of `bam.yaml`:
 ci:
   provider: github-actions   # or gitlab-ci
   runner: ubuntu-latest
-  python_version: "3.13"
+  python_version: "3.14"
 ```
 
 Each bam task becomes one CI job that calls `$BAM_TOOL <task>`, with

@@ -10,11 +10,11 @@ content-addressable storage (CAS) to everyday development workflows. It bridges 
 between simple task runners (like Make/Just) and complex build systems (like Bazel),
 providing intelligent caching without forcing teams to restructure their projects.
 
-**Tagline:** Flow naturally through your build pipeline 🌊
+**Tagline:** Fast builds, no fluff.
 
 **⚠️ Project Status:** Concept/Experimental — NOT production-ready  
 **Development Status:** Phase 1 ✅ | Phase 2 ✅ | Phase 3 🔄 Planned  
-**Target:** Python 3.13+ (uv package manager)  
+**Target:** Python 3.14+ (uv package manager)  
 **Cache Backend:** `cascache_lib` (local/hybrid cache client) + `cascache_server` (remote CAS)
 
 ---
@@ -100,7 +100,7 @@ bam/
 
 ## Code Style & Conventions
 
-- **Type hints everywhere** — Python 3.13+ features, checked with pyright
+- **Type hints everywhere** — Python 3.14+ features, checked with pyright
 - **Pathlib** for all file operations (never `os.path`)
 - **Dataclasses** for data structures
 - **`async def`** for all I/O-bound operations; use `asyncio.create_subprocess_exec`

@@ -139,7 +139,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Technical Details
 
-- Python 3.13+ required
+- Python 3.14+ required
 - Uses `typer` for CLI framework
 - Uses `networkx` for dependency graphs
 - Uses `rich` for terminal output

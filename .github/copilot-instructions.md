@@ -6,7 +6,7 @@
 
 ## TL;DR for Copilot
 
-**What is bam?** A content-addressed workflow orchestration tool (Python 3.13+, uv).
+**What is bam?** A content-addressed workflow orchestration tool (Python 3.14+, uv).
 Bridges Make/Just and Bazel. YAML config → task graph → parallel async execution → CAS caching.
 
 **Stack:** typer · pydantic · networkx · rich · asyncio · cascache_lib (gRPC)

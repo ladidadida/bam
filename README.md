@@ -8,7 +8,7 @@
 >
 > See [docs/concept.md](https://gitlab.com/cascascade/bam/-/blob/main/docs/concept.md) for more details about the concept and technologies used.
 
-**Flow naturally through your build pipeline**
+**Fast builds, no fluff.**
 
 bam is a content-addressed workflow orchestration tool that brings the power of content-addressable storage to everyday development workflows. It bridges the gap between simple task runners (like Make/Just) and complex build systems (like Bazel), providing intelligent caching without forcing teams to restructure their projects.
 
@@ -412,4 +412,4 @@ MIT License - see [LICENSE](https://gitlab.com/cascascade/bam/-/blob/main/LICENS
 
 ---
 
-**Built with:** Python 3.13+ • uv • Typer • Rich • NetworkX • Pydantic • cascache_lib
+**Built with:** Python 3.14+ • uv • Typer • Rich • NetworkX • Pydantic • cascache_lib

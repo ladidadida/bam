@@ -256,7 +256,7 @@ def test_runner_cache_keys_differ_by_runner_type() -> None:
 
     shell_prefix = _runner_cache_prefix(None)
     uv_prefix = _runner_cache_prefix(RunnerConfig(type="python-uv"))
-    docker_prefix = _runner_cache_prefix(RunnerConfig(type="docker", image="python:3.13"))
+    docker_prefix = _runner_cache_prefix(RunnerConfig(type="docker", image="python:3.14"))
 
     command = "echo hello"
     assert shell_prefix + command != uv_prefix + command
@@ -269,8 +269,8 @@ def test_runner_cache_key_includes_docker_image() -> None:
     from bam_tool.config.schema import RunnerConfig
     from bam_tool.executor.executor import _runner_cache_prefix
 
-    prefix_a = _runner_cache_prefix(RunnerConfig(type="docker", image="python:3.12"))
-    prefix_b = _runner_cache_prefix(RunnerConfig(type="docker", image="python:3.13"))
+    prefix_a = _runner_cache_prefix(RunnerConfig(type="docker", image="python:3.13"))
+    prefix_b = _runner_cache_prefix(RunnerConfig(type="docker", image="python:3.14"))
     assert prefix_a != prefix_b
 
 
@@ -295,7 +295,7 @@ async def test_docker_runner_raises_when_docker_missing(
         await executor.execute_task(
             task_name="docker-missing",
             command="echo hi",
-            runner=RunnerConfig(type="docker", image="python:3.13-slim"),
+            runner=RunnerConfig(type="docker", image="python:3.14-slim"),
         )
 
     assert exc_info.value.tool == "docker"

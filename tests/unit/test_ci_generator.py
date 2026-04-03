@@ -89,13 +89,13 @@ def test_github_actions_needs_wired():
 
 
 def test_github_actions_python_version_step():
-    config = _make_config({"lint": {"command": "ruff ."}}, python_version="3.13")
+    config = _make_config({"lint": {"command": "ruff ."}}, python_version="3.14")
     _, content = generate_pipeline(config)
     data = yaml.safe_load(content)
     steps = data["jobs"]["lint"]["steps"]
     setup_py = [s for s in steps if "setup-python" in str(s.get("uses", ""))]
     assert setup_py, "setup-python step missing"
-    assert setup_py[0]["with"]["python-version"] == "3.13"
+    assert setup_py[0]["with"]["python-version"] == "3.14"
 
 
 def test_github_actions_no_python_step_when_not_set():

@@ -138,7 +138,7 @@ Bam is built with modern Python technologies, prioritizing developer experience 
 
 ### Core Technologies
 
-#### Python 3.13+
+#### Python 3.14+
 - **Website:** https://www.python.org/
 - **Why:** Latest async features, improved error messages, better type system
 - **Features Used:**

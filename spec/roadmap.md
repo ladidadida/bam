@@ -39,7 +39,7 @@ Week 7+:  Advanced        ━━━━━━━━━━━━━━━━━━
 - [x] Initialize with uv package manager (`uv init`)
 - [x] Define project structure (src/, tests/, docs/, examples/)
 - [x] Configure pyproject.toml
-  - Python 3.13+ requirement
+  - Python 3.14+ requirement
   - Core dependencies: click/typer, pyyaml, networkx, rich
   - Dev dependencies: pytest, pytest-asyncio, pyright, ruff
 - [x] Set up testing infrastructure
@@ -1311,7 +1311,7 @@ tasks:
     command: pytest tests/
     inputs: ["src/**", "tests/**"]
     docker:
-      image: python:3.13-slim
+      image: python:3.14-slim
       volumes:
         - src:/workspace/src
         - tests:/workspace/tests
@@ -1432,7 +1432,7 @@ tasks:
   - Document cascache deployment for teams
 
 ### External Dependencies
-- Python 3.13+ (released October 2024)
+- Python 3.14+ (released October 2024)
 - gRPC and protobuf
 - networkx for graph algorithms
 - Rich for terminal UI

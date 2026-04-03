@@ -364,7 +364,7 @@ bam/
 
 | Component | Technology | Version | Purpose |
 |-----------|-----------|---------|---------|
-| Language | Python | 3.13+ | Main language |
+| Language | Python | 3.14+ | Main language |
 | Package Manager | uv | Latest | Fast dependency management |
 | CLI Framework | Typer | 0.12+ | Type-safe CLI |
 | Terminal UI | Rich | 13+ | Colored output, progress |
@@ -442,7 +442,7 @@ bam/
 ```
 $ bam run test
 ============================= test session starts ==============================
-platform linux -- Python 3.13.0, pytest-9.0.0
+platform linux -- Python 3.14.0, pytest-9.0.0
 collected 60 items
 
 tests/unit/test_config.py ........                                       [ 13%]

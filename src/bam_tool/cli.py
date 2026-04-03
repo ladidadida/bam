@@ -703,7 +703,7 @@ def _main_callback(  # noqa: C901, PLR0912, PLR0913, PLR0915
         typer.Option("--config", help="Path to a bam configuration file."),
     ] = None,
 ) -> None:
-    """Flow naturally through your build pipeline 🌊
+    """Fast builds, no fluff.
 
     bam is a content-addressed workflow orchestration tool that brings
     CAS-style caching to existing development workflows.

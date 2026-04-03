@@ -17,7 +17,7 @@ def test_main_no_args_shows_help() -> None:
     result = runner.invoke(app, [])
     assert result.exit_code in (0, 2)
     output = (result.stdout or "") + (result.stderr or "")
-    assert "Flow naturally through your build pipeline" in output or "Usage:" in output
+    assert "Fast builds, no fluff." in output or "Usage:" in output
 
 
 def test_help_lists_skeleton_commands() -> None:

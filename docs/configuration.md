@@ -267,7 +267,7 @@ tasks:
   lint-in-container:
     runner:
       type: docker
-      image: python:3.13-slim
+      image: python:3.14-slim
     command: pip install ruff && ruff check src/
 
   build-java:

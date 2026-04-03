@@ -287,7 +287,7 @@ class TaskExecutor:
                     stderr=stderr,
                 )
 
-        except (TaskExecutionError, RunnerNotFoundError):
+        except TaskExecutionError, RunnerNotFoundError:
             # Re-raise as-is — callers handle these explicitly
             raise
         except Exception as exc:

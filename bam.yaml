@@ -111,7 +111,7 @@ tasks:
 
 ci:
   provider: gitlab-ci
-  python_version: "3.13"
+  python_version: "3.14"
   triggers:
     push:
       branches: [main]

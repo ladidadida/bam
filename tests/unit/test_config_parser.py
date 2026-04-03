@@ -126,9 +126,9 @@ def test_runner_config_docker_valid() -> None:
     """Docker runner with image passes validation."""
     from bam_tool.config.schema import RunnerConfig
 
-    runner = RunnerConfig(type="docker", image="python:3.13-slim")
+    runner = RunnerConfig(type="docker", image="python:3.14-slim")
     assert runner.type == "docker"
-    assert runner.image == "python:3.13-slim"
+    assert runner.image == "python:3.14-slim"
 
 
 def test_runner_config_python_uv_valid() -> None:

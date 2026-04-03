@@ -1,6 +1,6 @@
 services:
   cascache:
-    image: python:3.13-slim
+    image: python:3.14-slim
     container_name: bam-test-cascache
     command: >
       bash -c '
@@ -24,7 +24,7 @@ services:
       start_period: 5s
 
   bam-client:
-    image: python:3.13-slim
+    image: python:3.14-slim
     container_name: bam-test-client
     depends_on:
       cascache:
