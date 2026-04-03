@@ -73,14 +73,6 @@ tasks:
     outputs:
       - .reports/junit-component.xml
 
-  test:
-    command: echo "✓ All tests passed"
-    stage: test
-    depends_on:
-      - test-unit
-      - test-integration
-      - test-component
-
   # ── Build ─────────────────────────────────────────────────────────────────────
 
   build:
@@ -96,7 +88,9 @@ tasks:
     depends_on:
       - lint
       - typecheck
-      - test
+      - test-unit
+      - test-integration
+      - test-component
 
   # ── Aggregate CI ──────────────────────────────────────────────────────────────
 
@@ -107,7 +101,9 @@ tasks:
       - lint
       - format-check
       - typecheck
-      - test
+      - test-unit
+      - test-integration
+      - test-component
 
 ci:
   provider: gitlab-ci

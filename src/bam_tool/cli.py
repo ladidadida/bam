@@ -56,6 +56,16 @@ def _complete_task_name(incomplete: str) -> list[str]:
         return []
 
 
+def _complete_stage_name(incomplete: str) -> list[str]:
+    """Return stage names from bam.yaml that start with *incomplete*."""
+    try:
+        _, loaded_config = load_config()
+        stages = {c.stage for c in loaded_config.tasks.values() if c.stage is not None}
+        return [s for s in sorted(stages) if s.startswith(incomplete)]
+    except Exception:  # noqa: BLE001
+        return []
+
+
 def _parse_jobs_value(jobs: str | None) -> int:
     """Parse --jobs flag value into max_workers count.
 
@@ -634,7 +644,8 @@ def _display_execution_errors(
 
 
 async def _run_task_async(
-    task: str,
+    task: str | None,
+    stage: str | None,
     dry_run: bool,
     quiet: bool,
     no_cache: bool,
@@ -648,6 +659,8 @@ async def _run_task_async(
         task: Target task or stage name to execute.  When a stage name is given
             (not matching any task directly), all tasks belonging to that stage
             are executed.
+        stage: Explicit stage name (from --stage/-s).  When provided, all tasks
+            belonging to this stage are executed regardless of task names.
         dry_run: Show execution plan without running.
         quiet: Suppress output.
         no_cache: Disable caching.
@@ -658,13 +671,23 @@ async def _run_task_async(
     try:
         _, loaded_config = load_config(config_path=config)
         graph = build_task_graph(loaded_config.tasks)
-        # Resolve stage name → list of task names when the target is not a
-        # direct task name.  Task names always take precedence.
-        if task not in loaded_config.tasks:
-            stage_tasks = [n for n, c in loaded_config.tasks.items() if c.stage == task]
-            targets = stage_tasks if stage_tasks else [task]
+        if stage is not None:
+            # Explicit --stage flag: run all tasks belonging to this stage.
+            stage_tasks = [n for n, c in loaded_config.tasks.items() if c.stage == stage]
+            if not stage_tasks:
+                typer.secho(f"No tasks found in stage '{stage}'.", fg=typer.colors.RED, err=True)
+                raise typer.Exit(code=1)
+            targets = stage_tasks
+        elif task is not None:
+            # Resolve stage name → list of task names when the target is not a
+            # direct task name.  Task names always take precedence.
+            if task not in loaded_config.tasks:
+                stage_tasks = [n for n, c in loaded_config.tasks.items() if c.stage == task]
+                targets = stage_tasks if stage_tasks else [task]
+            else:
+                targets = [task]
         else:
-            targets = [task]
+            targets = []
         execution_order = execution_order_for_targets(graph, targets)
     except (ConfigurationError, MissingTaskError, CyclicDependencyError) as exc:
         typer.secho(str(exc), fg=typer.colors.RED, err=True)
@@ -800,6 +823,15 @@ def _main_callback(  # noqa: C901, PLR0912, PLR0913, PLR0915
         bool,
         typer.Option("--plain", help="Use plain output mode (auto-detected for non-TTY)."),
     ] = False,
+    stage: Annotated[
+        str | None,
+        typer.Option(
+            "--stage",
+            "-s",
+            autocompletion=_complete_stage_name,
+            help="Run all tasks belonging to this stage.",
+        ),
+    ] = None,
     config: Annotated[
         Path | None,
         typer.Option("--config", help="Path to a bam configuration file."),
@@ -810,11 +842,12 @@ def _main_callback(  # noqa: C901, PLR0912, PLR0913, PLR0915
     bam is a content-addressed workflow orchestration tool that brings
     CAS-style caching to existing development workflows.
 
-    Run a task:   bam <task>\n
-    List tasks:   bam --list\n
-    Show graph:   bam --graph\n
-    Validate:     bam --validate\n
-    Generate CI:  bam --ci\n
+    Run a task:    bam <task>\n
+    Run a stage:   bam --stage <stage>\n
+    List tasks:    bam --list\n
+    Show graph:    bam --graph\n
+    Validate:      bam --validate\n
+    Generate CI:   bam --ci\n
     Clean cache:  bam --clean
     """
     # ── --list ────────────────────────────────────────────────────────────
@@ -899,11 +932,18 @@ def _main_callback(  # noqa: C901, PLR0912, PLR0913, PLR0915
         typer.secho(f"✓ Generated {out_path}", fg=typer.colors.GREEN)
         return
 
-    # ── task execution ─────────────────────────────────────────────────────
-    if task:
+    # ── task / stage execution ─────────────────────────────────────────────
+    if task and stage:
+        typer.secho(
+            "Cannot specify both a task argument and --stage.", fg=typer.colors.RED, err=True
+        )
+        raise typer.Exit(code=1)
+    if task or stage:
         max_workers = _parse_jobs_value(jobs)
         use_plain = plain or not sys.stdout.isatty()
-        asyncio.run(_run_task_async(task, dry_run, quiet, no_cache, config, max_workers, use_plain))
+        asyncio.run(
+            _run_task_async(task, stage, dry_run, quiet, no_cache, config, max_workers, use_plain)
+        )
         return
 
     # No task and no management flag: show help.

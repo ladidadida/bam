@@ -252,3 +252,81 @@ def test_dry_run_with_jobs_shows_parallel_info() -> None:
     assert result.exit_code == 0
     assert "Dry-run execution order:" in result.stdout
     assert "Parallel execution: 4 workers" in result.stdout
+
+
+# ── --stage / -s tests ────────────────────────────────────────────────────────
+
+_STAGE_CONFIG = (
+    "version: 1\n\n"
+    "tasks:\n"
+    "  test-unit:\n"
+    "    command: echo unit\n"
+    "    stage: test\n"
+    "  test-integration:\n"
+    "    command: echo integration\n"
+    "    stage: test\n"
+    "  lint:\n"
+    "    command: echo lint\n"
+    "    stage: lint\n"
+)
+
+
+def test_stage_flag_runs_all_tasks_in_stage() -> None:
+    """--stage runs all tasks belonging to the given stage."""
+    with runner.isolated_filesystem():
+        with open("bam.yaml", "w", encoding="utf-8") as f:
+            f.write(_STAGE_CONFIG)
+
+        result = runner.invoke(app, ["--stage", "test"])
+
+    assert result.exit_code == 0
+    assert "unit" in result.stdout or "Successfully executed" in result.stdout
+
+
+def test_stage_short_flag() -> None:
+    """-s short form is equivalent to --stage."""
+    with runner.isolated_filesystem():
+        with open("bam.yaml", "w", encoding="utf-8") as f:
+            f.write(_STAGE_CONFIG)
+
+        result = runner.invoke(app, ["-s", "lint"])
+
+    assert result.exit_code == 0
+
+
+def test_stage_flag_dry_run() -> None:
+    """--stage with --dry-run shows tasks in that stage."""
+    with runner.isolated_filesystem():
+        with open("bam.yaml", "w", encoding="utf-8") as f:
+            f.write(_STAGE_CONFIG)
+
+        result = runner.invoke(app, ["--stage", "test", "--dry-run"])
+
+    assert result.exit_code == 0
+    assert "Dry-run execution order:" in result.stdout
+    assert "test-unit" in result.stdout
+    assert "test-integration" in result.stdout
+    assert "lint" not in result.stdout
+
+
+def test_stage_flag_unknown_stage_exits_nonzero() -> None:
+    """--stage with a nonexistent stage name exits with code 1."""
+    with runner.isolated_filesystem():
+        with open("bam.yaml", "w", encoding="utf-8") as f:
+            f.write(_STAGE_CONFIG)
+
+        result = runner.invoke(app, ["--stage", "nonexistent"])
+
+    assert result.exit_code == 1
+    assert "nonexistent" in (result.stdout + (result.stderr or ""))
+
+
+def test_stage_and_task_together_exits_nonzero() -> None:
+    """Providing both a task argument and --stage exits with code 1."""
+    with runner.isolated_filesystem():
+        with open("bam.yaml", "w", encoding="utf-8") as f:
+            f.write(_STAGE_CONFIG)
+
+        result = runner.invoke(app, ["lint", "--stage", "test"])
+
+    assert result.exit_code == 1

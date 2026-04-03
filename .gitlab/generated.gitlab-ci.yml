@@ -90,26 +90,15 @@ variables:
     - if: $CI_COMMIT_BRANCH
     - if: $CI_COMMIT_TAG
 
-.test:
-  stage: test
-  needs:
-    - test-unit
-    - test-integration
-    - test-component
-  script:
-    - $BAM_TOOL test
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-    - if: $CI_COMMIT_BRANCH
-    - if: $CI_COMMIT_TAG
-
 # ─── build ────────────────────────────────────────────────────────────────────
 .build:
   stage: build
   needs:
     - lint
     - typecheck
-    - test
+    - test-unit
+    - test-integration
+    - test-component
   script:
     - $BAM_TOOL build
   artifacts:
@@ -127,7 +116,9 @@ variables:
     - lint
     - format-check
     - typecheck
-    - test
+    - test-unit
+    - test-integration
+    - test-component
   script:
     - $BAM_TOOL ci-checks
   rules:

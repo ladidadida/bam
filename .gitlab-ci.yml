@@ -81,12 +81,6 @@ test-component:
     - .uv_dev
   stage: test
 
-test:
-  extends:
-    - .test
-    - .uv_dev
-  stage: test
-
 # ── Build ───────────────────────────────────────────────────────────────────
 
 build:
