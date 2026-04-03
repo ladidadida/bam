@@ -90,6 +90,42 @@ test-component:
     matrix:
       - PYTHON_VERSION: ["3.11", "3.12", "3.13", "3.14"]
 
+# ── Free-threaded (GIL-less) smoke tests — allowed to fail ──────────────────
+# These jobs verify bam works on free-threaded Python builds (3.13t / 3.14t).
+# allow_failure: true because C-extension dependencies (grpcio, pydantic-core)
+# may not yet ship free-threaded wheels; the failure would be in uv sync, not
+# in bam itself.
+
+test-unit:freethreaded:
+  extends:
+    - .test-unit
+    - .uv_dev
+  stage: test
+  allow_failure: true
+  parallel:
+    matrix:
+      - PYTHON_VERSION: ["3.13t", "3.14t"]
+
+test-integration:freethreaded:
+  extends:
+    - .test-integration
+    - .uv_dev
+  stage: test
+  allow_failure: true
+  parallel:
+    matrix:
+      - PYTHON_VERSION: ["3.13t", "3.14t"]
+
+test-component:freethreaded:
+  extends:
+    - .test-component
+    - .uv_dev
+  stage: test
+  allow_failure: true
+  parallel:
+    matrix:
+      - PYTHON_VERSION: ["3.13t", "3.14t"]
+
 # ── Build ───────────────────────────────────────────────────────────────────
 
 build:
