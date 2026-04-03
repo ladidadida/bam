@@ -17,6 +17,9 @@ classifiers = [
   "Intended Audience :: Developers",
   "License :: OSI Approved :: MIT License",
   "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
   "Programming Language :: Python :: 3.14",
 ]
 dependencies = [
@@ -47,12 +50,6 @@ dev = [
   "twine>=4.0",
   "grpcio-tools>=1.64.0",
 ]
-# Optional: cascache integration tests (requires Docker or local cascache)
-# Install with: uv sync --group cascache
-cascache_server = [
-  "cascache_server @ git+https://gitlab.com/cascascade/cascache_server@main",
-]
-
 [project.scripts]
 bam = "bam_tool.cli:main"
 
@@ -87,6 +84,7 @@ typeCheckingMode = "basic"
 pythonVersion = "3.14"
 include = ["src", "tests"]
 exclude = [
+  "**/.*",
   "**/node_modules",
   "**/__pycache__",
   ".venv",

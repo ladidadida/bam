@@ -68,18 +68,27 @@ test-unit:
     - .test-unit
     - .uv_dev
   stage: test
+  parallel:
+    matrix:
+      - PYTHON_VERSION: ["3.11", "3.12", "3.13", "3.14"]
 
 test-integration:
   extends:
     - .test-integration
     - .uv_dev
   stage: test
+  parallel:
+    matrix:
+      - PYTHON_VERSION: ["3.11", "3.12", "3.13", "3.14"]
 
 test-component:
   extends:
     - .test-component
     - .uv_dev
   stage: test
+  parallel:
+    matrix:
+      - PYTHON_VERSION: ["3.11", "3.12", "3.13", "3.14"]
 
 # ── Build ───────────────────────────────────────────────────────────────────
 
@@ -88,6 +97,22 @@ build:
     - .build
     - .uv_dev
   stage: build
+  needs:
+    - lint
+    - format-check
+    - typecheck
+    - job: "test-unit: [3.11]"
+    - job: "test-unit: [3.12]"
+    - job: "test-unit: [3.13]"
+    - job: "test-unit: [3.14]"
+    - job: "test-integration: [3.11]"
+    - job: "test-integration: [3.12]"
+    - job: "test-integration: [3.13]"
+    - job: "test-integration: [3.14]"
+    - job: "test-component: [3.11]"
+    - job: "test-component: [3.12]"
+    - job: "test-component: [3.13]"
+    - job: "test-component: [3.14]"
   rules:
     - if: $CI_COMMIT_TAG
     - if: $CI_COMMIT_BRANCH == "main"
