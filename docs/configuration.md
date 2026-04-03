@@ -19,6 +19,7 @@ tasks:               # Required: Task definitions
     outputs: []      # Optional: Output file paths
     depends_on: []   # Optional: Task dependencies
     env: {}          # Optional: Environment variables
+    timeout: 300     # Optional: Timeout in seconds (null = no limit)
 ```
 
 ## Required Fields
@@ -229,6 +230,34 @@ tasks:
       OPTIMIZATION: "2"      # This IS in cache key
     # System $PATH is NOT in cache key
 ```
+
+---
+
+### `timeout`
+
+**Type:** Integer  
+**Required:** No  
+**Default:** `null` (no timeout)  
+**Description:** Maximum number of seconds a task may run before bam intervenes.
+
+```yaml
+tasks:
+  long-test:
+    command: pytest tests/ --timeout=60
+    timeout: 120   # Fail after 2 minutes if still running
+
+  deploy:
+    command: ./deploy.sh
+    timeout: 300   # Prompt after 5 minutes in interactive mode
+```
+
+**Behavior:**
+- **Interactive mode (TTY):** When the timeout expires bam pauses the progress
+  display and asks: *"⏱ 'task' has been running for Xs. Continue waiting?"*
+  - Press **Enter** (default Yes) to reset the timer and wait another `timeout`
+    seconds.
+  - Answer **No** to kill the task immediately and mark it failed.
+- **CI / non-TTY mode:** The task is killed and marked failed without prompting.
 
 ---
 

@@ -43,6 +43,7 @@ class TaskConfig(BaseModel):
     depends_on: list[str] = Field(default_factory=list)
     env: dict[str, str] = Field(default_factory=dict)
     stage: str | None = None
+    timeout: int | None = None
 
 
 class CiConfig(BaseModel):

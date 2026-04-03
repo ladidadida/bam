@@ -8,7 +8,7 @@ import os
 import shlex
 import shutil
 import tempfile
-from collections.abc import AsyncGenerator
+from collections.abc import AsyncGenerator, Awaitable, Callable
 from dataclasses import dataclass
 from enum import StrEnum
 from pathlib import Path
@@ -173,6 +173,8 @@ class TaskExecutor:
         env: dict[str, str] | None = None,
         working_dir: Path | None = None,
         runner: RunnerConfig | None = None,
+        timeout: float | None = None,
+        on_timeout: Callable[[], Awaitable[bool]] | None = None,
     ) -> TaskResult:
         """Execute a task command via subprocess asynchronously.
 
@@ -236,8 +238,37 @@ class TaskExecutor:
                     stderr=asyncio.subprocess.PIPE,
                 )
 
-                # Wait for process to complete and capture output
-                stdout_bytes, stderr_bytes = await process.communicate()
+                # Wait for process to complete, with optional timeout loop.
+                # asyncio.shield prevents cancellation of the underlying future
+                # so we can keep waiting after a timeout when the user chooses to.
+                if timeout is None:
+                    stdout_bytes, stderr_bytes = await process.communicate()
+                else:
+                    comm_future: asyncio.Future[tuple[bytes, bytes]] = asyncio.ensure_future(
+                        process.communicate()
+                    )
+                    while True:
+                        try:
+                            stdout_bytes, stderr_bytes = await asyncio.wait_for(
+                                asyncio.shield(comm_future), timeout=timeout
+                            )
+                            break
+                        except TimeoutError:
+                            abort = True
+                            if on_timeout is not None:
+                                abort = await on_timeout()
+                            if abort:
+                                process.kill()
+                                await comm_future
+                                raise TaskExecutionError(
+                                    task_name,
+                                    command,
+                                    -1,
+                                    "",
+                                    f"Task timed out after {timeout:.0f}s",
+                                )
+                            # User chose to continue — reset the timer by looping
+
                 stdout = stdout_bytes.decode("utf-8", errors="replace")
                 stderr = stderr_bytes.decode("utf-8", errors="replace")
 

@@ -6,6 +6,8 @@ import asyncio
 import os
 import shutil
 import sys
+import time
+from collections.abc import Awaitable, Callable
 from pathlib import Path
 from typing import Annotated
 
@@ -34,6 +36,8 @@ app = typer.Typer(
     no_args_is_help=False,
     context_settings={"allow_interspersed_args": True},
 )
+
+_SPINNER_FRAMES = "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"
 
 
 def version_callback(value: bool) -> None:
@@ -107,7 +111,12 @@ def _get_dependency_chain(graph: nx.DiGraph, task_name: str) -> list[str]:
 
 
 def _format_task_label(
-    task_name: str, state: str, progress: int, nesting: int = 0, name_col: int = 24
+    task_name: str,
+    state: str,
+    progress: int,
+    nesting: int = 0,
+    name_col: int = 24,
+    start_time_mono: float | None = None,
 ) -> str:
     """Format a task label with icon, name, progress bar, and percentage.
 
@@ -120,6 +129,8 @@ def _format_task_label(
             from the name width to keep the bar column fixed.
         name_col: Total name-column width allocated at nesting 0. Shared across
             all labels in the tree so bars always start at the same column.
+        start_time_mono: ``time.monotonic()`` value recorded when the task
+            started running; used to display elapsed seconds.
 
     Returns:
         Formatted label string with Rich markup.
@@ -132,14 +143,20 @@ def _format_task_label(
         icon = "[green]✓[/]"
         bar = "━" * 30
         return f"{icon} {task_name:{name_width}} {bar} 100%"
+    elif state == "cached":
+        icon = "[dim green]↩[/]"
+        bar = "━" * 30
+        return f"{icon} {task_name:{name_width}} {bar} [dim]cached[/]"
     elif state == "failed":
         icon = "[red]✗[/]"
         bar = "━" * 30
         return f"{icon} {task_name:{name_width}} {bar} {progress:3}%"
     elif state == "running":
-        filled = int(progress * 30 / 100)
-        bar = "━" * filled + "╸" + " " * (29 - filled)
-        return f"[cyan]⠿[/] {task_name:{name_width}} {bar} {progress:3}%"
+        spinner_char = _SPINNER_FRAMES[int(time.monotonic() * 8) % len(_SPINNER_FRAMES)]
+        elapsed = int(time.monotonic() - start_time_mono) if start_time_mono is not None else 0
+        elapsed_str = f"[dim]{elapsed:3}s[/dim]"
+        bar = "╸" + " " * 29
+        return f"[cyan]{spinner_char}[/] {task_name:{name_width}} {elapsed_str} {bar}"
     else:  # pending
         bar = " " * 30
         return f"[dim]○ {task_name:{name_width}} {bar}   0%[/]"
@@ -186,6 +203,7 @@ def _add_dep_children(
     task_progress: dict[str, int],
     visited: set[str],
     name_col: int,
+    task_start_times: dict[str, float] | None = None,
 ) -> None:
     """Recursively add dependency children of task_name to a Rich Tree node."""
     for pred in sorted(
@@ -196,7 +214,10 @@ def _add_dep_children(
             visited.add(pred)
             state = task_states.get(pred, "pending")
             progress = task_progress.get(pred, 0)
-            child = rich_node.add(_format_task_label(pred, state, progress, nesting, name_col))
+            start_time = task_start_times.get(pred) if task_start_times else None
+            child = rich_node.add(
+                _format_task_label(pred, state, progress, nesting, name_col, start_time)
+            )
             _add_dep_children(
                 child,
                 pred,
@@ -208,6 +229,7 @@ def _add_dep_children(
                 task_progress,
                 visited,
                 name_col,
+                task_start_times,
             )
 
 
@@ -217,6 +239,7 @@ def _build_task_tree(
     task_states: dict[str, str],
     task_progress: dict[str, int],
     target_tasks: list[str] | None = None,
+    task_start_times: dict[str, float] | None = None,
 ) -> Tree:
     """Build a Rich tree rooted at the target task(s) with dependencies as children.
 
@@ -238,6 +261,8 @@ def _build_task_tree(
         task_progress: Task progress percentages (0-100).
         target_tasks: Explicitly requested tasks.  They form the tree root(s).
             Falls back to tasks with no successors in the execution set.
+        task_start_times: Mapping of task name to ``time.monotonic()`` start
+            time, used to display per-task elapsed seconds for running tasks.
 
     Returns:
         Rich Tree object rooted at the target task(s).
@@ -273,6 +298,7 @@ def _build_task_tree(
             task_progress,
             visited,
             name_col,
+            task_start_times,
         )
 
     if len(roots) == 1:
@@ -280,7 +306,8 @@ def _build_task_tree(
         visited.add(root_task)
         state = task_states.get(root_task, "pending")
         progress = task_progress.get(root_task, 0)
-        tree = Tree(_format_task_label(root_task, state, progress, 0, name_col))
+        start_time = task_start_times.get(root_task) if task_start_times else None
+        tree = Tree(_format_task_label(root_task, state, progress, 0, name_col, start_time))
         _add(tree, root_task, 1)
     else:
         tree = Tree("📦 Tasks")
@@ -289,7 +316,10 @@ def _build_task_tree(
                 visited.add(root_task)
                 state = task_states.get(root_task, "pending")
                 progress = task_progress.get(root_task, 0)
-                child = tree.add(_format_task_label(root_task, state, progress, 1, name_col))
+                start_time = task_start_times.get(root_task) if task_start_times else None
+                child = tree.add(
+                    _format_task_label(root_task, state, progress, 1, name_col, start_time)
+                )
                 _add(child, root_task, 2)
 
     # Safety net: disconnected tasks not reached by DFS above.
@@ -297,7 +327,8 @@ def _build_task_tree(
         if task_name not in visited:
             state = task_states.get(task_name, "pending")
             progress = task_progress.get(task_name, 0)
-            tree.add(_format_task_label(task_name, state, progress, 0, name_col))
+            start_time = task_start_times.get(task_name) if task_start_times else None
+            tree.add(_format_task_label(task_name, state, progress, 0, name_col, start_time))
     return tree
 
 
@@ -305,13 +336,19 @@ async def _execute_single_task(
     task_name: str,
     loaded_config: BamConfig,
     executor: TaskExecutor,
-) -> None:
+    timeout: float | None = None,
+    on_timeout: Callable[[], Awaitable[bool]] | None = None,
+) -> bool:
     """Execute a single task with its configuration.
 
     Args:
         task_name: Name of the task to execute.
         loaded_config: Loaded bam configuration.
         executor: Task executor instance.
+        timeout: Optional timeout in seconds; None means no timeout.
+        on_timeout: Async callback invoked on each timeout expiry.  Returns
+            ``True`` to abort the task, ``False`` to reset the timer and
+            continue waiting.  When ``None`` the task is aborted immediately.
 
     Raises:
         TaskExecutionError: If task execution fails.
@@ -322,14 +359,17 @@ async def _execute_single_task(
     input_paths = expand_globs(task_config.inputs) if task_config.inputs else []
     output_paths = [Path(p) for p in task_config.outputs] if task_config.outputs else []
 
-    await executor.execute_task(
+    result = await executor.execute_task(
         task_name=task_name,
         command=task_config.command,
         inputs=input_paths,
         outputs=output_paths,
         env=task_config.env,
         runner=task_config.runner,
+        timeout=timeout,
+        on_timeout=on_timeout,
     )
+    return result.cache_hit
 
 
 async def _execute_tasks_parallel(  # noqa: C901
@@ -340,7 +380,8 @@ async def _execute_tasks_parallel(  # noqa: C901
     max_workers: int,
     use_rich: bool = False,
     target_tasks: list[str] | None = None,
-) -> tuple[list[str], list[str], dict[str, tuple[str, str]]]:
+    is_interactive: bool = False,
+) -> tuple[list[str], list[str], dict[str, tuple[str, str]]]:  # noqa: C901
     """Execute tasks in parallel respecting dependencies.
 
     Args:
@@ -351,6 +392,7 @@ async def _execute_tasks_parallel(  # noqa: C901
         max_workers: Maximum number of concurrent tasks.
         use_rich: Whether to use rich progress display.
         target_tasks: Explicitly requested tasks (used to root the progress tree).
+        is_interactive: Whether to show interactive timeout prompts.
 
     Returns:
         Tuple of (failed_tasks, skipped_tasks, failed_outputs) where
@@ -368,19 +410,61 @@ async def _execute_tasks_parallel(  # noqa: C901
     # Task state tracking for tree view
     task_states: dict[str, str] = {task: "pending" for task in execution_order}
     task_progress_pct: dict[str, int] = {task: 0 for task in execution_order}
+    task_start_times: dict[str, float] = {}
     console = Console()
+
+    # Mutable ref so run_with_semaphore can access the Live object for timeout prompts
+    _live_ref: list[Live] = []
 
     async def run_with_semaphore(task_name: str) -> tuple[str, bool]:
         """Run a task with semaphore limiting concurrency."""
+        task_config = loaded_config.tasks[task_name]
+        task_timeout = float(task_config.timeout) if task_config.timeout else None
+
+        # Build timeout callback for interactive mode
+        on_timeout: Callable[[], Awaitable[bool]] | None = None
+        if task_timeout is not None and is_interactive:
+            _name = task_name  # explicit capture for the closure
+            _secs = task_timeout
+
+            async def _prompt_timeout() -> bool:
+                live = _live_ref[0] if _live_ref else None
+                if live:
+                    live.stop()
+                try:
+                    loop = asyncio.get_event_loop()
+                    return await loop.run_in_executor(
+                        None,
+                        lambda: (
+                            not typer.confirm(
+                                f"\n⏱  '{_name}' has been running for {int(_secs)}s."
+                                " Continue waiting?",
+                                default=True,
+                            )
+                        ),
+                    )
+                finally:
+                    if live:
+                        live.start(refresh=True)
+
+            on_timeout = _prompt_timeout
+
         async with semaphore:
             # Update state when starting
             task_states[task_name] = "running"
             task_progress_pct[task_name] = 0
+            task_start_times[task_name] = time.monotonic()
 
             try:
-                await _execute_single_task(task_name, loaded_config, executor)
-                # Mark as completed
-                task_states[task_name] = "completed"
+                cache_hit = await _execute_single_task(
+                    task_name,
+                    loaded_config,
+                    executor,
+                    timeout=task_timeout,
+                    on_timeout=on_timeout,
+                )
+                # Mark as completed or cached
+                task_states[task_name] = "cached" if cache_hit else "completed"
                 task_progress_pct[task_name] = 100
                 return task_name, True
             except TaskExecutionError as exc:
@@ -447,16 +531,27 @@ async def _execute_tasks_parallel(  # noqa: C901
         # Use Live display with tree view
         async def execute_with_tree() -> tuple[list[str], list[str], dict[str, tuple[str, str]]]:
             tree = _build_task_tree(
-                graph, execution_order, task_states, task_progress_pct, target_tasks
+                graph,
+                execution_order,
+                task_states,
+                task_progress_pct,
+                target_tasks,
+                task_start_times,
             )
             with Live(tree, console=console, refresh_per_second=4) as live:
+                _live_ref.append(live)
                 # Start execution
                 loop_task = asyncio.create_task(execute_loop())
 
                 # Update tree periodically
                 while not loop_task.done():
                     tree = _build_task_tree(
-                        graph, execution_order, task_states, task_progress_pct, target_tasks
+                        graph,
+                        execution_order,
+                        task_states,
+                        task_progress_pct,
+                        target_tasks,
+                        task_start_times,
                     )
                     live.update(tree)
                     await asyncio.sleep(0.25)
@@ -464,9 +559,15 @@ async def _execute_tasks_parallel(  # noqa: C901
                 # Final update
                 result = await loop_task
                 tree = _build_task_tree(
-                    graph, execution_order, task_states, task_progress_pct, target_tasks
+                    graph,
+                    execution_order,
+                    task_states,
+                    task_progress_pct,
+                    target_tasks,
+                    task_start_times,
                 )
                 live.update(tree)
+                _live_ref.clear()
                 return result
 
         return await execute_with_tree()
@@ -602,6 +703,7 @@ async def _run_task_async(
         max_workers,
         use_rich_progress,
         target_tasks=targets,
+        is_interactive=is_interactive,
     )
 
     if failed_tasks:
