@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - 2026-04-03
+
+### Added
+
+- **Animated spinner with elapsed time** — running tasks in the rich progress tree now show a braille spinner and elapsed seconds (e.g. `⧦ lint   5s ╻`)
+- **Configurable task timeout** — tasks accept a `timeout: <seconds>` field; on expiry the task is killed (CI) or the user is prompted to continue waiting (interactive)
+- **Cache-hit indicator** — tasks restored from cache show `↩ cached` in the progress tree instead of the regular completion bar
+- **Buffered plain-mode output structure** — parallel plain/CI output now has clear per-task fences:
+  - `──> started: task-name` printed immediately when a task begins
+  - `─── task-name ────` opens the output block when the task finishes
+  - `──── PASSED: task-name  Xs ────` / `──── FAILED: task-name  exit N  Xs ────` closes it
+- **Timeout integration tests** — 4 new tests in `tests/integration/test_executor_timeout.py` verifying kill-on-timeout and callback behaviour
+
+### Changed
+
+- **Process-group kill on timeout** — subprocess now started with `start_new_session=True`; timeout uses `os.killpg` so child processes (e.g. `sleep` launched by the shell) are also killed immediately
+- **pytest output style** — `console_output_style = "classic"` in `pyproject.toml` removes the `[ 77%]` progress column from pytest output
+- **Timeout tests moved to integration** — the 4 executor timeout tests were moved from `tests/unit/` to `tests/integration/test_executor_timeout.py`; unit suite now runs in < 2 s
+- **`except` clause syntax** — fixed Python 2-style `except Foo, Bar:` in `executor.py` to two separate `except` blocks (in Python 3 the comma form silently binds rather than catching both types)
+
 ## [0.4.1] - 2026-04-03
 
 ### Added
