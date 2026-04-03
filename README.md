@@ -1,12 +1,4 @@
-# bam 🌊
-
-> **⚠️ PROOF OF CONCEPT - NOT PRODUCTION READY**
->
-> This is a **conceptual implementation** for research and development purposes.
-> While it demonstrates core CAS functionality and includes comprehensive testing,
-> it is **not intended for production use**. Use at your own risk.
->
-> See [docs/concept.md](https://gitlab.com/cascascade/bam/-/blob/main/docs/concept.md) for more details about the concept and technologies used.
+# bam
 
 **Fast builds, no fluff.**
 
@@ -18,13 +10,13 @@ bam utilizes its partner projects [cascache_lib](https://gitlab.com/cascascade/c
 
 ## ✨ Features
 
-- **🎯 Smart Caching** - Content-addressed caching with SHA256 for instant rebuilds
-- **🌐 Distributed Cache** - Share cache across team with automatic retry and fallback
 - **⚡ Parallel Execution** - Auto-detect CPU cores and run independent tasks concurrently
 - **🌳 Interactive Tree View** - Dagger-style dependency visualization with live progress
 - **📊 Dependency Graphs** - Automatic topological sorting and cycle detection
 - **🔍 Rich CLI** - Beautiful tree views, error context, and progress tracking
 - **⚙️ Simple Config** - Clean YAML syntax with glob patterns and env vars
+- **🎯 Smart Caching** - Content-addressed caching with SHA256 for instant rebuilds
+- **🌐 Distributed Cache** - Share cache across team with automatic retry and fallback
 - **� Runner Support** - Run tasks in Docker containers or as inline Python scripts
 - **🤖 CI Generation** - Auto-generate GitHub Actions and GitLab CI pipelines
 - **🛡️ Type Safe** - Full type hints with pyright validation
