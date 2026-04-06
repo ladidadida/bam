@@ -643,7 +643,44 @@ def _display_execution_errors(
             typer.echo(f"  • {skipped}", err=True)
 
 
-async def _run_task_async(
+def _validate_interactive_task(
+    execution_order: list[str],
+    loaded_config: BamConfig,
+) -> str | None:
+    """Return the name of the interactive foreground task (if any), or None.
+
+    Raises ``typer.Exit`` when the configuration is invalid — e.g. an
+    interactive task is not the last step in the execution order.
+    """
+    interactive_tasks = [t for t in execution_order if loaded_config.tasks[t].interactive]
+    if not interactive_tasks:
+        return None
+
+    # At most one interactive task may appear in the execution order, and it
+    # must be the very last step — nothing can depend on a foreground process.
+    for bad in interactive_tasks[:-1]:
+        typer.secho(
+            f"Task '{bad}' is marked interactive but other tasks in the execution "
+            "order depend on it. Interactive tasks must be leaf nodes (no dependents).",
+            fg=typer.colors.RED,
+            err=True,
+        )
+        raise typer.Exit(code=1)
+
+    last_interactive = interactive_tasks[-1]
+    if execution_order[-1] != last_interactive:
+        typer.secho(
+            f"Task '{last_interactive}' is marked interactive but other tasks must "
+            "run after it. Interactive tasks must be the final step.",
+            fg=typer.colors.RED,
+            err=True,
+        )
+        raise typer.Exit(code=1)
+
+    return last_interactive
+
+
+async def _run_task_async(  # noqa: C901
     task: str | None,
     stage: str | None,
     dry_run: bool,
@@ -696,18 +733,29 @@ async def _run_task_async(
     if dry_run:
         typer.secho("Dry-run execution order:", fg=typer.colors.CYAN)
         for index, task_name in enumerate(execution_order, start=1):
-            typer.echo(f"{index}. {task_name}")
+            cfg = loaded_config.tasks[task_name]
+            suffix = " [live]" if cfg.interactive else ""
+            typer.echo(f"{index}. {task_name}{suffix}")
         if max_workers > 1:
             typer.echo(f"\nParallel execution: {max_workers} workers")
         return
+
+    # Detect interactive (foreground) tasks.
+    # An interactive task must be the very last step in the execution order
+    # because it never terminates on its own; nothing can depend on its output.
+    foreground_task = _validate_interactive_task(execution_order, loaded_config)
+
+    # Split execution: all tasks before the interactive one run normally.
+    normal_order = execution_order[:-1] if foreground_task else execution_order
+    normal_order = execution_order[:-1] if foreground_task else execution_order
 
     # Initialize cache
     cache = None if no_cache else create_cache(loaded_config.cache)
 
     # Determine display mode
-    is_interactive = sys.stdout.isatty() and not plain
+    is_tty = sys.stdout.isatty() and not plain
     # Use rich progress by default in interactive mode
-    use_rich_progress = is_interactive
+    use_rich_progress = is_tty
     # Buffer output only in parallel plain mode
     use_buffered = max_workers > 1 and not use_rich_progress
     # Quiet mode when using rich progress (progress display handles feedback)
@@ -716,23 +764,46 @@ async def _run_task_async(
     # Execute tasks
     executor = TaskExecutor(quiet=use_quiet, cache=cache, buffer_output=use_buffered)
 
-    # Use parallel execution path for both sequential and parallel
-    # (provides tree view and better progress tracking)
-    failed_tasks, skipped_tasks, failed_outputs = await _execute_tasks_parallel(
-        graph,
-        execution_order,
-        loaded_config,
-        executor,
-        max_workers,
-        use_rich_progress,
-        target_tasks=targets,
-        is_interactive=is_interactive,
-    )
+    if normal_order:
+        # Use parallel execution path for both sequential and parallel
+        # (provides tree view and better progress tracking)
+        normal_targets = targets if not foreground_task else [t for t in targets if t != foreground_task]
+        failed_tasks, skipped_tasks, failed_outputs = await _execute_tasks_parallel(
+            graph,
+            normal_order,
+            loaded_config,
+            executor,
+            max_workers,
+            use_rich_progress,
+            target_tasks=normal_targets or None,
+            is_interactive=is_tty,
+        )
 
-    if failed_tasks:
-        # Display detailed error information
-        _display_execution_errors(graph, failed_tasks, skipped_tasks, failed_outputs)
-        raise typer.Exit(code=1)
+        if failed_tasks:
+            # Display detailed error information
+            _display_execution_errors(graph, failed_tasks, skipped_tasks, failed_outputs)
+            raise typer.Exit(code=1)
+
+    if foreground_task:
+        # Hand off to the interactive foreground runner.
+        fg_config = loaded_config.tasks[foreground_task]
+        try:
+            await executor.execute_interactive_task(
+                task_name=foreground_task,
+                command=fg_config.command,
+                env=fg_config.env or None,
+                runner=fg_config.runner,
+            )
+        except TaskExecutionError as exc:
+            typer.secho(
+                f"\n✗ {foreground_task} exited with code {exc.exit_code}",
+                fg=typer.colors.RED,
+                err=True,
+            )
+            raise typer.Exit(code=exc.exit_code) from exc
+        except asyncio.CancelledError:
+            pass  # user pressed Ctrl-C — exit cleanly
+        return
 
     typer.secho(
         f"\n✓ Successfully executed {len(execution_order)} task(s)",
@@ -862,7 +933,8 @@ def _main_callback(  # noqa: C901, PLR0912, PLR0913, PLR0915
             return
         typer.secho("Available tasks:", fg=typer.colors.CYAN)
         for name, cfg in sorted(loaded_config.tasks.items()):
-            typer.echo(f"  • {name}")
+            badge = " [live]" if cfg.interactive else ""
+            typer.echo(f"  • {name}{badge}")
             if cfg.depends_on:
                 typer.echo(f"    depends on: {', '.join(cfg.depends_on)}")
         return

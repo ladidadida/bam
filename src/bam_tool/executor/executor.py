@@ -349,3 +349,95 @@ class TaskExecutor:
             if not self.quiet:
                 self.console.print(f"[red]✗[/red] Task '{task_name}' failed: {exc}")
             raise TaskExecutionError(task_name, command, -1, "", str(exc)) from exc
+
+    async def execute_interactive_task(
+        self,
+        task_name: str,
+        command: str,
+        env: dict[str, str] | None = None,
+        working_dir: Path | None = None,
+        runner: RunnerConfig | None = None,
+    ) -> TaskResult:
+        """Run a long-running, interactive task in the foreground.
+
+        Unlike ``execute_task``, this method:
+        * Inherits stdin / stdout / stderr from the parent process so the user
+          can interact with the child directly (e.g. a dev server, REPL, watcher).
+        * Never consults or writes the cache.
+        * Has no timeout — it runs until the process exits or the user interrupts
+          it with Ctrl-C, which sends SIGINT to the process naturally (same process
+          group) and is treated as a clean exit.
+        * Exits with a non-zero ``TaskResult`` only when the process returns a
+          non-zero, non-signal exit code.
+
+        Args:
+            task_name: Name of the task (used for display only).
+            command: Shell command to execute.
+            env: Additional environment variables merged with the system env.
+            working_dir: Working directory; defaults to ``Path.cwd()``.
+            runner: Runner configuration (shell / docker / python-uv).
+
+        Returns:
+            TaskResult reflecting the process exit code.
+
+        Raises:
+            TaskExecutionError: If the process exits with a non-zero code that
+                is not explained by a user interrupt (SIGINT / SIGTERM).
+        """
+        merged_env = os.environ.copy()
+        if env:
+            merged_env.update(env)
+
+        cwd = working_dir.resolve() if working_dir else Path.cwd()
+
+        if not self.quiet:
+            self.console.print(f"[cyan]Starting:[/cyan] {task_name} [dim](interactive)[/dim]")
+            self.console.print(f"[dim]Command:[/dim]  {command}")
+            self.console.print("[dim]Press Ctrl-C to stop.[/dim]")
+
+        try:
+            async with _resolve_command(command, runner, cwd) as actual_command:
+                # No start_new_session — we want Ctrl-C (SIGINT) to reach the
+                # child naturally through the shared terminal process group.
+                process = await asyncio.create_subprocess_shell(
+                    actual_command,
+                    cwd=cwd,
+                    env=merged_env,
+                    stdin=None,   # inherit terminal stdin
+                    stdout=None,  # inherit terminal stdout
+                    stderr=None,  # inherit terminal stderr
+                )
+
+                try:
+                    exit_code = await process.wait()
+                except asyncio.CancelledError:
+                    # Graceful shutdown: give the process a moment to handle SIGINT
+                    # (which it already received as part of the process group), then
+                    # escalate to SIGTERM and finally SIGKILL if necessary.
+                    with contextlib.suppress(ProcessLookupError):
+                        process.terminate()
+                    with contextlib.suppress(TimeoutError):
+                        await asyncio.wait_for(process.wait(), timeout=5.0)
+                    if process.returncode is None:
+                        with contextlib.suppress(ProcessLookupError):
+                            process.kill()
+                        await process.wait()
+                    raise
+
+        except RunnerNotFoundError:
+            raise
+        except asyncio.CancelledError:
+            raise
+        except Exception as exc:
+            raise TaskExecutionError(task_name, command, -1, "", str(exc)) from exc
+
+        # Treat SIGINT (-2) and SIGTERM (-15) as clean exits — the user stopped it.
+        clean_signals = {-signal.SIGINT, -signal.SIGTERM}
+        if exit_code != 0 and exit_code not in clean_signals:
+            raise TaskExecutionError(task_name, command, exit_code)
+
+        return TaskResult(
+            task_name=task_name,
+            state=TaskState.COMPLETED,
+            exit_code=exit_code,
+        )

@@ -44,6 +44,7 @@ class TaskConfig(BaseModel):
     env: dict[str, str] = Field(default_factory=dict)
     stage: str | None = None
     timeout: int | None = None
+    interactive: bool = False
 
 
 class CiConfig(BaseModel):
