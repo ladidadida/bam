@@ -131,14 +131,8 @@ test-component:freethreaded:
 build:
   extends:
     - .build
-    - .uv_dev
+    - .uv_release
   stage: build
-  variables:
-    # hatch-vcs uses `git describe` to derive the version from annotated tags.
-    # A shallow clone (GIT_DEPTH > 0) omits tag objects and produces a dev
-    # version instead of the real release version.  GIT_DEPTH: 0 forces a full
-    # unshallow clone so the tag is always present when uv build runs.
-    GIT_DEPTH: "0"
   needs:
     - lint
     - format-check
