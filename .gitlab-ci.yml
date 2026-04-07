@@ -36,6 +36,7 @@ stages:
   image: python:${PYTHON_VERSION}
   variables:
     PYTHON_VERSION: "3.14"
+    fetch_depth: 0
   cache: []
   before_script:
     - pip install uv
