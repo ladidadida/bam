@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.4] - 2026-04-07
+
+### Fixed
+
+- **`requires-python` corrected to `>=3.11`** — the package metadata incorrectly advertised `>=3.14`, preventing installation on Python 3.11–3.13 even though those versions are fully tested and supported.
+
 ## [0.5.3] - 2026-04-07
 
 ### Added

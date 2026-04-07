@@ -11,7 +11,7 @@ license = { text = "MIT" }
 authors = [
   { name = "ladidadida", email = "stefan@dalada.de" },
 ]
-requires-python = ">=3.14"
+requires-python = ">=3.11"
 classifiers = [
   "Development Status :: 3 - Alpha",
   "Intended Audience :: Developers",

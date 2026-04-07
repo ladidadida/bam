@@ -750,6 +750,6 @@ tasks:
 
 ---
 
-**Version:** 0.5.3  
+**Version:** 0.5.4  
 **Schema Version:** 1  
 **Last Updated:** 2026-04-06
