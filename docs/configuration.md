@@ -20,6 +20,7 @@ tasks:               # Required: Task definitions
     depends_on: []   # Optional: Task dependencies
     env: {}          # Optional: Environment variables
     timeout: 300     # Optional: Timeout in seconds (null = no limit)
+    interactive: false  # Optional: Run as a foreground process (dev servers, REPLs)
 ```
 
 ## Required Fields
@@ -258,6 +259,51 @@ tasks:
     seconds.
   - Answer **No** to kill the task immediately and mark it failed.
 - **CI / non-TTY mode:** The task is killed and marked failed without prompting.
+
+---
+
+### `interactive`
+
+**Type:** Boolean  
+**Required:** No  
+**Default:** `false`  
+**Description:** Run the task as a long-running foreground process — e.g. a development
+server, file watcher, or REPL — instead of a captured subprocess.
+
+When `interactive: true` the task:
+- **Inherits the terminal** — stdin, stdout, and stderr are passed through directly, so colour output, progress bars, and user prompts work exactly as they would when you run the command yourself.
+- **Is never cached** — there are no outputs to store.
+- **Has no timeout** — it runs until the process exits or you press Ctrl-C.
+- **Receives Ctrl-C naturally** — the signal is delivered to the child process through the shared terminal process group, giving it a chance to shut down gracefully.
+
+```yaml
+tasks:
+  install:
+    command: npm ci
+    inputs: ["package.json", "package-lock.json"]
+    outputs: ["node_modules/"]
+
+  serve:
+    command: npm run dev
+    interactive: true
+    depends_on: [install]   # install runs first (cached), then the server starts
+```
+
+**Rules:**
+- An interactive task must be a **leaf node**: no other task may `depends_on` it.
+- Only the **last task** in the execution order may be interactive. Dependencies run
+  normally (with caching and the parallel scheduler) before the foreground process starts.
+- `interactive: true` is mutually exclusive with `outputs` — declaring outputs has no
+  effect and is silently ignored.
+- Ctrl-C (SIGINT) and SIGTERM exit codes are treated as clean, not as failures.
+
+**Exit behaviour:**
+
+| Exit code | Treated as |
+|---|---|
+| 0 | Success |
+| SIGINT (-2) / SIGTERM (-15) | Clean stop (exit 0) |
+| Any other non-zero | Failure — printed and bam exits with that code |
 
 ---
 
@@ -511,6 +557,29 @@ tasks:
       - test
 ```
 
+### Development Server (interactive)
+
+```yaml
+version: 1
+
+tasks:
+  install:
+    command: npm ci
+    inputs:
+      - "package.json"
+      - "package-lock.json"
+    outputs:
+      - "node_modules/"
+
+  serve:
+    command: npm run dev
+    interactive: true       # Full terminal access, no timeout, never cached
+    depends_on: [install]   # Restore node_modules from cache first
+```
+
+Running `bam serve` installs dependencies (restored from cache when unchanged) and
+then hands the terminal over to the dev server. Press Ctrl-C to stop.
+
 ### With Environment Variables
 
 ```yaml
@@ -681,6 +750,6 @@ tasks:
 
 ---
 
-**Version:** 0.5.2  
+**Version:** 0.5.3  
 **Schema Version:** 1  
-**Last Updated:** 2026-04-03
+**Last Updated:** 2026-04-06

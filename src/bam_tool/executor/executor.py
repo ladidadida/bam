@@ -403,7 +403,7 @@ class TaskExecutor:
                     actual_command,
                     cwd=cwd,
                     env=merged_env,
-                    stdin=None,   # inherit terminal stdin
+                    stdin=None,  # inherit terminal stdin
                     stdout=None,  # inherit terminal stdout
                     stderr=None,  # inherit terminal stderr
                 )

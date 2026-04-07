@@ -767,7 +767,9 @@ async def _run_task_async(  # noqa: C901
     if normal_order:
         # Use parallel execution path for both sequential and parallel
         # (provides tree view and better progress tracking)
-        normal_targets = targets if not foreground_task else [t for t in targets if t != foreground_task]
+        normal_targets = (
+            targets if not foreground_task else [t for t in targets if t != foreground_task]
+        )
         failed_tasks, skipped_tasks, failed_outputs = await _execute_tasks_parallel(
             graph,
             normal_order,

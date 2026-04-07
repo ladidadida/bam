@@ -102,6 +102,21 @@ bam build --config path/to/bam.yaml
 ✓ Successfully executed 4 task(s)
 ```
 
+**Interactive tasks** (`interactive: true`) are automatically detected and run in
+foreground mode after all dependencies finish. The Rich tree view is shown for the
+dependency phase; then the terminal is handed directly to the foreground process:
+
+```bash
+bam serve
+# ✓ install  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ cached
+# Starting: serve (interactive)
+# Command:  npm run dev
+# Press Ctrl-C to stop.
+#
+#   VITE v5.0.0  ready in 312 ms
+#   ➜  Local:   http://localhost:5173/
+```
+
 **Error Context:**
 
 ```
@@ -134,8 +149,12 @@ Available tasks:
   • build
     depends on: lint, test
   • lint
+  • serve [live]
   • test
 ```
+
+Tasks marked with `[live]` are interactive foreground tasks (see `interactive` in the
+configuration reference).
 
 ---
 
@@ -265,6 +284,38 @@ bam --version
 
 ---
 
+## Interactive (foreground) Tasks
+
+Tasks with `interactive: true` in `bam.yaml` run as long-lived foreground processes.
+bam handles them differently from normal tasks:
+
+| Behaviour | Normal task | Interactive task |
+|---|---|---|
+| stdin / stdout / stderr | captured | **inherited from terminal** |
+| Caching | yes | **never cached** |
+| Timeout | configurable | none |
+| Ctrl-C | kills process group | **forwarded to child** (clean shutdown) |
+| Shown in `--list` | `• name` | `• name [live]` |
+
+**Dry-run output** also marks interactive tasks:
+
+```bash
+bam serve --dry-run
+# Dry-run execution order:
+# 1. install
+# 2. serve [live]
+```
+
+**Rules:**
+- An interactive task must be the **last step** — nothing can `depends_on` a server
+  that never exits.
+- All dependency tasks run with normal caching and the parallel scheduler before the
+  foreground process starts.
+- SIGINT / SIGTERM exits are treated as clean (exit 0); any other non-zero code is
+  reported as a failure.
+
+---
+
 ## Global Options
 
 | Option | Description |
@@ -341,5 +392,5 @@ bam --validate && bam build
 
 ---
 
-**Version:** 0.5.2  
+**Version:** 0.5.3  
 **License:** MIT
