@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import os
 import shutil
+import signal
 import sys
 import time
 from collections.abc import Awaitable, Callable
@@ -22,6 +24,7 @@ from .cache import LocalCache, create_cache, expand_globs
 from .ci import generate_pipeline
 from .config import BamConfig, ConfigurationError, load_config
 from .executor import TaskExecutionError, TaskExecutor
+from .executor.executor import _active_pgids
 from .graph import (
     CyclicDependencyError,
     MissingTaskError,
@@ -38,6 +41,45 @@ app = typer.Typer(
 )
 
 _SPINNER_FRAMES = "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"
+
+
+def _install_signal_handlers() -> None:
+    """Install SIGTSTP / SIGCONT handlers so child process groups are
+    suspended and resumed in lock-step with the bam process.
+
+    When the user presses Ctrl-Z:
+    1. Every active child process group is sent SIGSTOP (paused).
+    2. The SIGTSTP handler resets itself to SIG_DFL and re-raises SIGTSTP,
+       which suspends bam itself.
+
+    When the user runs ``fg`` (SIGCONT arrives):
+    1. Every active child process group is sent SIGCONT (resumed).
+    2. The SIGTSTP handler is re-installed for the next Ctrl-Z.
+    """
+
+    def _stop_children() -> None:
+        for pgid in list(_active_pgids):
+            with contextlib.suppress(ProcessLookupError, PermissionError, OSError):
+                os.killpg(pgid, signal.SIGSTOP)
+
+    def _resume_children() -> None:
+        for pgid in list(_active_pgids):
+            with contextlib.suppress(ProcessLookupError, PermissionError, OSError):
+                os.killpg(pgid, signal.SIGCONT)
+
+    def _tstp_handler(signum: int, frame: object) -> None:
+        _stop_children()
+        # Reset to default and re-raise so the kernel actually suspends bam.
+        signal.signal(signal.SIGTSTP, signal.SIG_DFL)
+        os.kill(os.getpid(), signal.SIGTSTP)
+
+    def _cont_handler(signum: int, frame: object) -> None:
+        _resume_children()
+        # Re-install our handler ready for the next Ctrl-Z.
+        signal.signal(signal.SIGTSTP, _tstp_handler)
+
+    signal.signal(signal.SIGTSTP, _tstp_handler)
+    signal.signal(signal.SIGCONT, _cont_handler)
 
 
 def version_callback(value: bool) -> None:
@@ -1015,6 +1057,7 @@ def _main_callback(  # noqa: C901, PLR0912, PLR0913, PLR0915
     if task or stage:
         max_workers = _parse_jobs_value(jobs)
         use_plain = plain or not sys.stdout.isatty()
+        _install_signal_handlers()
         asyncio.run(
             _run_task_async(task, stage, dry_run, quiet, no_cache, config, max_workers, use_plain)
         )

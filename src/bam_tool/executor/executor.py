@@ -39,6 +39,12 @@ def _check_tool(name: str, runner_type: str) -> None:
         raise RunnerNotFoundError(name, runner_type)
 
 
+# Module-level registry of active subprocess process-group IDs.
+# Updated by execute_task; read by the SIGTSTP/SIGCONT handlers in cli.py so
+# that suspending / resuming bam also suspends / resumes all child processes.
+_active_pgids: set[int] = set()
+
+
 def _runner_cache_prefix(runner: RunnerConfig | None) -> str:
     """Return a stable string that uniquely identifies the runner configuration.
 
@@ -245,39 +251,68 @@ class TaskExecutor:
                     start_new_session=True,
                 )
 
+                # Register process group so SIGTSTP/SIGCONT handlers can
+                # suspend/resume it alongside bam, and CancelledError cleanup
+                # can terminate it on Ctrl-C or parallel-failure cancellation.
+                _pgid: int | None = None
+                with contextlib.suppress(ProcessLookupError):
+                    _pgid = os.getpgid(process.pid)
+                if _pgid is not None:
+                    _active_pgids.add(_pgid)
+
                 # Wait for process to complete, with optional timeout loop.
                 # asyncio.shield prevents cancellation of the underlying future
                 # so we can keep waiting after a timeout when the user chooses to.
-                if timeout is None:
-                    stdout_bytes, stderr_bytes = await process.communicate()
-                else:
-                    comm_future: asyncio.Future[tuple[bytes, bytes]] = asyncio.ensure_future(
-                        process.communicate()
-                    )
-                    while True:
-                        try:
-                            stdout_bytes, stderr_bytes = await asyncio.wait_for(
-                                asyncio.shield(comm_future), timeout=timeout
-                            )
-                            break
-                        except TimeoutError:
-                            abort = True
-                            if on_timeout is not None:
-                                abort = await on_timeout()
-                            if abort:
-                                try:
-                                    os.killpg(os.getpgid(process.pid), signal.SIGKILL)
-                                except ProcessLookupError:
-                                    process.kill()
-                                await comm_future
-                                raise TaskExecutionError(
-                                    task_name,
-                                    command,
-                                    -1,
-                                    "",
-                                    f"Task timed out after {timeout:.0f}s",
+                _comm_future: asyncio.Future[tuple[bytes, bytes]] | None = None
+                try:
+                    if timeout is None:
+                        stdout_bytes, stderr_bytes = await process.communicate()
+                    else:
+                        _comm_future = asyncio.ensure_future(process.communicate())
+                        while True:
+                            try:
+                                stdout_bytes, stderr_bytes = await asyncio.wait_for(
+                                    asyncio.shield(_comm_future), timeout=timeout
                                 )
-                            # User chose to continue — reset the timer by looping
+                                break
+                            except TimeoutError:
+                                abort = True
+                                if on_timeout is not None:
+                                    abort = await on_timeout()
+                                if abort:
+                                    try:
+                                        os.killpg(os.getpgid(process.pid), signal.SIGKILL)
+                                    except ProcessLookupError:
+                                        process.kill()
+                                    await _comm_future
+                                    raise TaskExecutionError(
+                                        task_name,
+                                        command,
+                                        -1,
+                                        "",
+                                        f"Task timed out after {timeout:.0f}s",
+                                    )
+                                # User chose to continue — reset the timer by looping
+                except asyncio.CancelledError:
+                    # Kill subprocess process group, then clean up the comm future
+                    # before re-raising so no orphan processes are left behind.
+                    with contextlib.suppress(ProcessLookupError, OSError):
+                        os.killpg(os.getpgid(process.pid), signal.SIGTERM)
+                    with contextlib.suppress(Exception):
+                        await asyncio.wait_for(process.wait(), timeout=5.0)
+                    if process.returncode is None:
+                        with contextlib.suppress(ProcessLookupError, OSError):
+                            os.killpg(os.getpgid(process.pid), signal.SIGKILL)
+                        with contextlib.suppress(Exception):
+                            await process.wait()
+                    if _comm_future is not None and not _comm_future.done():
+                        _comm_future.cancel()
+                        with contextlib.suppress(Exception):
+                            await _comm_future
+                    raise
+                finally:
+                    if _pgid is not None:
+                        _active_pgids.discard(_pgid)
 
                 stdout = stdout_bytes.decode("utf-8", errors="replace")
                 stderr = stderr_bytes.decode("utf-8", errors="replace")
