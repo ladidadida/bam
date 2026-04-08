@@ -813,29 +813,35 @@ Task output should dominate the terminal. Users run `bam run test` to see test r
 
 **Goal:** Make daily development smooth and fast
 
-**Status:** ⏳ PLANNED
+**Status:** 🔄 IN PROGRESS
 
-### Day 1-3: Watch Mode
+### Day 1-3: Watch Mode ✅
+
+**Status:** ✅ COMPLETE (2026-04-08)
 
 **Tasks:**
-- [ ] File watching (watchdog)
-  - Watch input file patterns
-  - Detect file changes
-  - Filter ignored files
-- [ ] Auto-run tasks on changes
-  - Debouncing (avoid rapid re-runs)
-  - Smart task selection (minimal rebuild)
-  - Interrupt and restart on new change
-- [ ] Filtered patterns
-  - `--pattern` flag for watch
-  - Ignore patterns (.git, __pycache__)
-- [ ] `bam watch` command
-  - `bam watch test` - watch and re-run
-  - `bam watch --pattern 'src/**/*.py' -- lint test`
+- [x] File watching (`watchdog>=3.0`)
+  - Watch input file patterns per task
+  - Detect file modifications and creations
+  - Filter to only files declared as inputs
+- [x] Auto-run tasks on changes
+  - Debouncing (default 0.3 s — coalesces rapid editor saves)  
+  - Restart observer with fresh watch set after each run
+  - Config reloaded on every iteration (picks up bam.yaml edits)
+- [x] Cancel-safe Ctrl-C handling
+  - `KeyboardInterrupt` caught at top level; exits cleanly
+- [x] `bam -w <task>` / `bam --watch <task>` flag
+  - Prints watched directories at startup
+  - `--debounce` option to tune the quiet period
+  - `--jobs`, `--no-cache`, `--quiet`, `--plain` all pass through
+  - Initial run before entering the watch loop
 
 **Deliverables:**
-- Watch mode implementation
-- Fast feedback loop for development
+- ✅ `src/bam_tool/watcher.py` — `compute_watch_dirs`, `wait_for_change`
+- ✅ `--watch`/`-w` and `--debounce` flags on main command
+- ✅ `watchdog>=3.0.0` added to dependencies
+- ✅ 9 unit tests in `tests/unit/test_watcher.py` (all passing)
+- ✅ 158 total tests passing
 
 ---
 
@@ -957,6 +963,14 @@ Task output should dominate the terminal. Users run `bam run test` to see test r
   - Load variables from .env
   - Merge with system env
   - Precedence rules
+- [ ] Per-task `env_file:` field
+  - Load a task-specific env file (e.g. `env_file: .env.test`)
+  - Expand variables into task environment
+  - Support multiple env files per task
+- [ ] `secrets:` list on `TaskConfig`
+  - Declare which env var names contain secrets
+  - Automatically redact declared values from all log output
+  - Never write secret values to cache metadata
 
 **Deliverables:**
 - Flexible environment handling
@@ -987,6 +1001,9 @@ Task output should dominate the terminal. Users run `bam run test` to see test r
   - Tags: `[build, test, deploy]`
   - `bam run --tag test`
   - `bam run --exclude deploy`
+- [ ] Glob output post-run validation
+  - Warn (or fail in `--strict` mode) when declared `outputs:` globs match nothing after a task completes
+  - Catches misconfigured output paths early before they silently produce cache misses
 
 **Deliverables:**
 - Advanced task control
@@ -1017,6 +1034,18 @@ Task output should dominate the terminal. Users run `bam run test` to see test r
   - Time savings report
   - Cache hit rates
   - Upload as CI artifacts
+- [ ] Task matrix support
+  - `matrix:` key on `TaskConfig` for multi-dimensional builds
+  - Expand one task definition into N parallel, cache-keyed variants (e.g. multiple Python versions)
+  - Each matrix cell gets a unique cache key combining the base hash and matrix parameters
+  - Example:
+    ```yaml
+    tasks:
+      test:
+        command: pytest
+        matrix:
+          python: ["3.11", "3.12", "3.13"]
+    ```
 
 **Deliverables:**
 - CI integration guides
@@ -1048,6 +1077,11 @@ Task output should dominate the terminal. Users run `bam run test` to see test r
   - Check config validity
   - Check cache connectivity
   - Check CAS server reachability
+- [ ] Age-based cache eviction
+  - `bam clean --older-than 7d` to prune stale local cache entries
+  - LRU eviction with optional `--max-size` cap (e.g. `--max-size 2G`)
+  - Prevents unbounded `.bam/cache/` growth in long-lived dev environments
+  - Preview mode: `bam clean --older-than 7d --dry-run` shows what would be deleted
 
 **Deliverables:**
 - Production-grade reliability
@@ -1489,6 +1523,66 @@ Decision needed: Week 3
 - Secret management integration
 - Multi-repository project support
 - Plugin architecture details
+
+---
+
+---
+
+## Deferred: Remote Cache Hardening
+
+> These items are deliberately kept separate and deprioritised because testing
+> a running `cascache_server` locally is inconvenient. Revisit when the local
+> dev setup pain is resolved (e.g. a one-command Docker bootstrap).
+
+### Streaming for Large Artifacts
+
+- [ ] **Streaming upload/download**: For artifacts >1MB switch from `BatchUpdateBlobs` /
+  `BatchReadBlobs` to the streaming API to avoid memory spikes and gRPC message-size limits
+- [ ] **Chunked transfer**: Split large artifacts into configurable chunk sizes
+- [ ] **Progress callbacks**: Report upload/download progress to the Rich UI
+
+### Background Remote Upload
+
+- [ ] Fire-and-forget remote upload after a task completes instead of awaiting it inline
+  - Use a bounded `asyncio` task queue so in-flight uploads don't overwhelm the connection
+  - `bam run` exits only after all background uploads finish (or a `--no-wait-upload` flag)
+  - Reduces per-task wall-clock latency, especially on slow network links
+
+### Per-Task Upload Control
+
+- [ ] Allow individual tasks to opt out of remote upload:
+  ```yaml
+  tasks:
+    deploy:
+      command: kubectl apply ...
+      cache:
+        remote_upload: false   # side-effectful, never push to remote
+  ```
+- [ ] Global upload policy in `cache.remote`:
+  ```yaml
+  cache:
+    remote:
+      upload_policy: always | on-success | manual
+  ```
+- [ ] CLI override: `bam run --no-remote-upload`
+
+### ActionCache Support
+
+- [ ] Implement the REAPI ActionCache client (cache entire command results, not just blobs)
+- [ ] Action result serialisation and fingerprinting
+- [ ] Version negotiation with `cascache_server`
+
+### Multi-Remote Support
+
+- [ ] Support multiple remote caches in a fallback chain (e.g. team cache → CI cache → local)
+- [ ] Smart routing: choose which artifacts go to which remote
+- [ ] Per-task remote affinity
+
+### Monitoring & Observability
+
+- [ ] Prometheus-compatible metrics endpoint for cache hit/miss rates, latency, bandwidth
+- [ ] `bam cache stats` command with breakdown by task and local vs. remote
+- [ ] Connection failure rate tracking and alerting threshold
 
 ---
 

@@ -33,6 +33,7 @@ from .graph import (
     render_ascii_graph,
     render_dot_graph,
 )
+from .watcher import compute_watch_dirs, wait_for_change
 
 app = typer.Typer(
     name="bam",
@@ -855,6 +856,75 @@ async def _run_task_async(  # noqa: C901
     )
 
 
+async def _watch_async(
+    task: str,
+    no_cache: bool,
+    debounce: float,
+    config: Path | None,
+    jobs: str | None,
+    quiet: bool,
+    plain: bool,
+) -> None:
+    """Internal async implementation of the watch command."""
+    console = Console()
+
+    def _load() -> tuple[Path, BamConfig, list[str]]:
+        cfg_path, lc = load_config(config_path=config)
+        g = build_task_graph(lc.tasks)
+        order = execution_order_for_targets(g, [task])
+        return cfg_path, lc, order
+
+    try:
+        config_file, loaded_config, execution_order = _load()
+    except (ConfigurationError, MissingTaskError, CyclicDependencyError) as exc:
+        typer.secho(str(exc), fg=typer.colors.RED, err=True)
+        raise typer.Exit(code=1) from exc
+
+    max_workers = _parse_jobs_value(jobs)
+    use_plain = plain or not sys.stdout.isatty()
+
+    # Print startup header and watched directories.
+    watch_dirs = compute_watch_dirs(loaded_config, execution_order, config_file)
+    console.print(f"[bold cyan]bam watch[/] — [bold]{task}[/]  (Ctrl+C to stop)")
+    for d, recursive in sorted(watch_dirs.items()):
+        try:
+            rel: Path | str = d.relative_to(Path.cwd())
+        except ValueError:
+            rel = d
+        flag = "[dim] (recursive)[/dim]" if recursive else ""
+        console.print(f"  [dim]•[/dim] {rel}{flag}")
+    console.print()
+
+    # Initial run.
+    try:
+        await _run_task_async(task, None, False, quiet, no_cache, config, max_workers, use_plain)
+    except (typer.Exit, SystemExit):
+        pass
+
+    # Watch loop — run until the user presses Ctrl-C.
+    while True:
+        watch_dirs = compute_watch_dirs(loaded_config, execution_order, config_file)
+        changed = await wait_for_change(watch_dirs, debounce)
+
+        # Attempt to reload config (the user may have edited bam.yaml).
+        try:
+            config_file, loaded_config, execution_order = _load()
+        except (ConfigurationError, MissingTaskError, CyclicDependencyError) as exc:
+            console.print(f"[red]Config error:[/] {exc}  (fix it and save to retry)")
+            continue
+
+        try:
+            rel_changed: Path | str = changed.relative_to(Path.cwd())
+        except ValueError:
+            rel_changed = changed
+        console.print(f"\n[cyan]↻[/] [bold]{rel_changed}[/] changed — re-running…\n")
+
+        try:
+            await _run_task_async(task, None, False, quiet, no_cache, config, max_workers, use_plain)
+        except (typer.Exit, SystemExit):
+            pass
+
+
 @app.callback(invoke_without_command=True)
 def _main_callback(  # noqa: C901, PLR0912, PLR0913, PLR0915
     ctx: typer.Context,
@@ -947,6 +1017,21 @@ def _main_callback(  # noqa: C901, PLR0912, PLR0913, PLR0915
             help="Run all tasks belonging to this stage.",
         ),
     ] = None,
+    watch: Annotated[
+        bool,
+        typer.Option(
+            "--watch",
+            "-w",
+            help="Watch input files and re-run the task on every change.",
+        ),
+    ] = False,
+    debounce: Annotated[
+        float,
+        typer.Option(
+            "--debounce",
+            help="Watch mode: quiet period in seconds before re-running (default: 0.3).",
+        ),
+    ] = 0.3,
     config: Annotated[
         Path | None,
         typer.Option("--config", help="Path to a bam configuration file."),
@@ -958,6 +1043,7 @@ def _main_callback(  # noqa: C901, PLR0912, PLR0913, PLR0915
     CAS-style caching to existing development workflows.
 
     Run a task:    bam <task>\n
+    Watch a task:  bam -w <task>\n
     Run a stage:   bam --stage <stage>\n
     List tasks:    bam --list\n
     Show graph:    bam --graph\n
@@ -1054,13 +1140,29 @@ def _main_callback(  # noqa: C901, PLR0912, PLR0913, PLR0915
             "Cannot specify both a task argument and --stage.", fg=typer.colors.RED, err=True
         )
         raise typer.Exit(code=1)
+    if watch and not task:
+        typer.secho(
+            "--watch requires a task argument: bam -w <task>", fg=typer.colors.RED, err=True
+        )
+        raise typer.Exit(code=1)
+    if watch and stage:
+        typer.secho("--watch is not supported with --stage.", fg=typer.colors.RED, err=True)
+        raise typer.Exit(code=1)
     if task or stage:
         max_workers = _parse_jobs_value(jobs)
         use_plain = plain or not sys.stdout.isatty()
         _install_signal_handlers()
-        asyncio.run(
-            _run_task_async(task, stage, dry_run, quiet, no_cache, config, max_workers, use_plain)
-        )
+        if watch:
+            try:
+                asyncio.run(
+                    _watch_async(task, no_cache, debounce, config, jobs, quiet, use_plain)  # type: ignore[arg-type]
+                )
+            except KeyboardInterrupt:
+                typer.echo("\nwatch stopped.")
+        else:
+            asyncio.run(
+                _run_task_async(task, stage, dry_run, quiet, no_cache, config, max_workers, use_plain)
+            )
         return
 
     # No task and no management flag: show help.

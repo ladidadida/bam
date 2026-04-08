@@ -26,6 +26,7 @@ Quick reference:
 | What you want | Command |
 |---|---|
 | Run a task | `bam <task>` |
+| Watch a task | `bam -w <task>` |
 | List tasks | `bam --list` |
 | Validate config | `bam --validate` |
 | Show dependency graph | `bam --graph` |
@@ -54,6 +55,8 @@ are executed automatically in topological order.
 | `--no-cache` | `false` | Disable cache reads and writes |
 | `--quiet`, `-q` | `false` | Suppress command output |
 | `--plain` | `false` | Use plain output (no rich UI) |
+| `--watch`, `-w` | `false` | Re-run whenever input files change |
+| `--debounce FLOAT` | `0.3` | Watch mode: quiet period in seconds before re-running |
 | `--config PATH` | auto-discover | Path to `bam.yaml` |
 
 **Examples:**
@@ -129,6 +132,89 @@ bam serve
 ⊘ Skipped 1 task(s) due to failure:
   • build
 ```
+
+---
+
+## Watch Mode
+
+Watch mode re-runs a task (and all its dependencies) whenever any of its **input
+files** change. No extra configuration is needed — bam derives the watched paths
+directly from each task's `inputs:` patterns.
+
+```bash
+bam -w <task>
+bam --watch <task>
+```
+
+**Options:**
+
+| Flag | Default | Description |
+|---|---|---|
+| `--watch`, `-w` | `false` | Enable watch mode |
+| `--debounce FLOAT` | `0.3` | Quiet period in seconds after the last change before re-running |
+| `--jobs N` | `auto` | Parallel workers (passed through to each run) |
+| `--no-cache` | `false` | Disable caching for every run |
+| `--quiet`, `-q` | `false` | Suppress command output |
+
+**Examples:**
+
+```bash
+# Re-run tests whenever source files change
+bam -w test
+
+# Watch with explicit parallelism
+bam -w test --jobs 4
+
+# Increase debounce — useful for editors that write many files at once
+bam -w build --debounce 0.5
+
+# Watch without cache (always run from scratch)
+bam -w lint --no-cache
+```
+
+**Startup output:**
+
+```
+bam watch — test  (Ctrl+C to stop)
+  • src
+  • tests
+  • src  (recursive)
+
+# … initial run shown here …
+```
+
+bam prints the directories it is watching at startup, including whether each one is
+watched recursively (triggered by `**` glob patterns).
+
+**How watched paths are derived:**
+
+| Input pattern | Watch root | Recursive? |
+|---|---|---|
+| `src/**/*.py` | `src/` | yes |
+| `tests/*.py` | `tests/` | no |
+| `pyproject.toml` | `.` (config dir) | no |
+| *(any pattern)* | config file directory | no (always) |
+
+The config file itself (`bam.yaml`) is always watched — so editing it takes
+effect on the next triggered run.
+
+**Behaviour:**
+
+- An initial run is performed immediately when watch mode starts.
+- After each file-system event bam waits for the debounce period, drains any
+  further queued events (coalescing rapid saves), then re-runs.
+- If `bam.yaml` was edited, the config is reloaded before the next run. A
+  config parse error is printed but bam keeps watching — fix the file and save
+  to retry.
+- Press **Ctrl-C** at any time to exit cleanly.
+- All normal flags (`--jobs`, `--no-cache`, `--plain`) pass through to every run.
+
+**Limitations:**
+
+- Watch mode requires at least one `inputs:` pattern on the target task (or its
+  dependencies); without declared inputs only `bam.yaml` changes trigger a re-run.
+- `--stage` is not supported with `--watch`.
+- Tasks with `interactive: true` cannot be the target of `--watch`.
 
 ---
 

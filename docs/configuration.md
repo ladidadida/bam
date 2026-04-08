@@ -748,6 +748,29 @@ tasks:
     outputs: ["release-*.tar.gz"]  # Glob matches dynamic name
 ```
 
+### Watch Mode Pattern
+
+Declare precise `inputs:` globs so watch mode only triggers on relevant files:
+
+```yaml
+tasks:
+  test:
+    command: pytest tests/
+    inputs:
+      - "src/**/*.py"   # re-run when source changes
+      - "tests/**/*.py" # re-run when tests change
+      - "pyproject.toml"
+```
+
+Then start the feedback loop:
+
+```bash
+bam -w test          # watches src/, tests/, and pyproject.toml
+bam -w test --no-cache --debounce 0.5
+```
+
+See [cli.md](cli.md) for the full watch mode reference.
+
 ---
 
 **Version:** 0.5.4  
