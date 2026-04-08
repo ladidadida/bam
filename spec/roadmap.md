@@ -900,11 +900,13 @@ Task output should dominate the terminal. Users run `bam run test` to see test r
 ### Day 7: Developer Tooling
 
 **Tasks:**
-- [ ] `bam init` wizard
-  - Interactive project setup
-  - Choose project type (Python, Go, etc.)
-  - Generate starter bam.yaml
-  - Install shell completions
+- [x] `bam --init` wizard ✅ COMPLETE (2026-04-08)
+  - Auto-detects project type from files in cwd (pyproject.toml, uv.lock, package.json, go.mod, Cargo.toml, Makefile)
+  - Lists all available templates with detected type highlighted
+  - User selects template via numbered prompt
+  - Writes a ready-to-edit `bam.yaml` to cwd
+  - 7 templates: Python (uv), Python (pip), Node.js, Go, Rust, Makefile, Generic
+  - 41 unit tests in `tests/unit/test_init.py`
 - [ ] Configuration validation
   - `bam validate --strict`
   - Warn about best practice violations
@@ -913,9 +915,6 @@ Task output should dominate the terminal. Users run `bam run test` to see test r
   - Reusable task definitions
   - Template variables
   - Built-in templates (test, build, deploy)
-- [ ] Example project scaffolding
-  - `bam init --example python`
-  - Pre-configured example projects
 
 **Deliverables:**
 - Onboarding workflow

@@ -33,6 +33,12 @@ from .graph import (
     render_ascii_graph,
     render_dot_graph,
 )
+from .init import (
+    all_project_types,
+    detect_project,
+    generate_config,
+    label_for,
+)
 from .watcher import compute_watch_dirs, wait_for_change
 
 app = typer.Typer(
@@ -898,7 +904,7 @@ async def _watch_async(
     # Initial run.
     try:
         await _run_task_async(task, None, False, quiet, no_cache, config, max_workers, use_plain)
-    except (typer.Exit, SystemExit):
+    except typer.Exit, SystemExit:
         pass
 
     # Watch loop — run until the user presses Ctrl-C.
@@ -920,8 +926,10 @@ async def _watch_async(
         console.print(f"\n[cyan]↻[/] [bold]{rel_changed}[/] changed — re-running…\n")
 
         try:
-            await _run_task_async(task, None, False, quiet, no_cache, config, max_workers, use_plain)
-        except (typer.Exit, SystemExit):
+            await _run_task_async(
+                task, None, False, quiet, no_cache, config, max_workers, use_plain
+            )
+        except typer.Exit, SystemExit:
             pass
 
 
@@ -987,6 +995,10 @@ def _main_callback(  # noqa: C901, PLR0912, PLR0913, PLR0915
         bool,
         typer.Option("--ci-dry-run", help="Print CI YAML to stdout without writing a file."),
     ] = False,
+    init: Annotated[
+        bool,
+        typer.Option("--init", help="Interactively create a bam.yaml in the current directory."),
+    ] = False,
     # ── Task run options ──────────────────────────────────────────────────
     dry_run: Annotated[
         bool,
@@ -1044,6 +1056,7 @@ def _main_callback(  # noqa: C901, PLR0912, PLR0913, PLR0915
 
     Run a task:    bam <task>\n
     Watch a task:  bam -w <task>\n
+    Init project:  bam --init\n
     Run a stage:   bam --stage <stage>\n
     List tasks:    bam --list\n
     Show graph:    bam --graph\n
@@ -1051,6 +1064,61 @@ def _main_callback(  # noqa: C901, PLR0912, PLR0913, PLR0915
     Generate CI:   bam --ci\n
     Clean cache:  bam --clean
     """
+    # ── --init ─────────────────────────────────────────────────────────────
+    if init:
+        target = Path("bam.yaml")
+        if target.exists():
+            typer.secho(
+                f"{target} already exists. Delete it first or use --config to point at a different path.",
+                fg=typer.colors.RED,
+                err=True,
+            )
+            raise typer.Exit(code=1)
+
+        detection = detect_project(Path.cwd())
+        detected_label = label_for(detection.project_type)
+
+        if detection.indicators:
+            typer.secho(
+                f"Detected project type: {detected_label} (found: {', '.join(detection.indicators)})",
+                fg=typer.colors.CYAN,
+            )
+        else:
+            typer.secho("Could not detect project type automatically.", fg=typer.colors.YELLOW)
+
+        # Let the user confirm or pick a different type.
+        types = all_project_types()
+        default_idx = types.index(detection.project_type) + 1
+        typer.echo("\nAvailable templates:")
+        for i, pt in enumerate(types, 1):
+            marker = " (detected)" if pt == detection.project_type else ""
+            typer.echo(f"  {i}. {label_for(pt)}{marker}")
+
+        raw = typer.prompt(
+            "Select a template",
+            default=str(default_idx),
+        )
+        try:
+            choice = int(raw)
+            if not 1 <= choice <= len(types):
+                raise ValueError
+            chosen_type = types[choice - 1]
+        except ValueError:
+            typer.secho("Invalid selection.", fg=typer.colors.RED, err=True)
+            raise typer.Exit(code=1)
+
+        content = generate_config(chosen_type)
+        target.write_text(content)
+        typer.secho(
+            f"\n✓ Created {target} ({label_for(chosen_type)} template)", fg=typer.colors.GREEN
+        )
+        typer.echo("\nNext steps:")
+        typer.echo("  1. Edit bam.yaml to match your project's commands")
+        typer.echo("  2. Run ‘bam --list’ to verify tasks")
+        typer.echo("  3. Run ‘bam --validate’ to check configuration")
+        typer.echo("  4. Run ‘bam <task>’ to execute a task")
+        return
+
     # ── --list ────────────────────────────────────────────────────────────
     if list_tasks:
         try:
@@ -1161,7 +1229,9 @@ def _main_callback(  # noqa: C901, PLR0912, PLR0913, PLR0915
                 typer.echo("\nwatch stopped.")
         else:
             asyncio.run(
-                _run_task_async(task, stage, dry_run, quiet, no_cache, config, max_workers, use_plain)
+                _run_task_async(
+                    task, stage, dry_run, quiet, no_cache, config, max_workers, use_plain
+                )
             )
         return
 

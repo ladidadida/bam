@@ -84,7 +84,7 @@ def test_recursive_flag_upgrades_existing_entry(tmp_path: Path) -> None:
     src = tmp_path / "src"
     src.mkdir()
     loaded = _config(
-        ("a", ["src/*.py"]),   # non-recursive
+        ("a", ["src/*.py"]),  # non-recursive
         ("b", ["src/**/*.py"]),  # recursive
     )
     dirs = compute_watch_dirs(loaded, ["a", "b"], config_file)

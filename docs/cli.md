@@ -27,6 +27,7 @@ Quick reference:
 |---|---|
 | Run a task | `bam <task>` |
 | Watch a task | `bam -w <task>` |
+| Bootstrap a new project | `bam --init` |
 | List tasks | `bam --list` |
 | Validate config | `bam --validate` |
 | Show dependency graph | `bam --graph` |
@@ -367,6 +368,61 @@ job dependencies wired from `depends_on`.
 ```bash
 bam --version
 ```
+
+---
+
+### `--init`
+
+Interactively create a `bam.yaml` in the current directory.
+
+```bash
+bam --init
+```
+
+bam inspects the current directory, guesses the project type, and walks you
+through picking a template:
+
+```
+Detected project type: Python (uv) (found: pyproject.toml, uv.lock)
+
+Available templates:
+  1. Python (uv) (detected)
+  2. Python (pip)
+  3. Node.js
+  4. Go
+  5. Rust
+  6. Makefile
+  7. Generic
+
+Select a template [1]:
+
+✓ Created bam.yaml (Python (uv) template)
+
+Next steps:
+  1. Edit bam.yaml to match your project's commands
+  2. Run 'bam --list' to verify tasks
+  3. Run 'bam --validate' to check configuration
+  4. Run 'bam <task>' to execute a task
+```
+
+**Detection logic** (first match wins):
+
+| Files found | Detected type |
+|---|---|
+| `pyproject.toml` + `uv.lock` | Python (uv) |
+| `pyproject.toml` | Python (uv) |
+| `requirements.txt` + `setup.py` | Python (pip) |
+| `requirements.txt` | Python (pip) |
+| `package.json` + `package-lock.json` | Node.js |
+| `package.json` + `yarn.lock` | Node.js |
+| `package.json` | Node.js |
+| `go.mod` | Go |
+| `Cargo.toml` | Rust |
+| `Makefile` | Makefile |
+| *(nothing matched)* | Generic |
+
+**Error:** fails gracefully if `bam.yaml` already exists in the current
+directory — it will not overwrite existing configuration.
 
 ---
 
