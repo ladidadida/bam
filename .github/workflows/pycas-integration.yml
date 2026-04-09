@@ -22,7 +22,7 @@ jobs:
     - name: Run cascache integration tests
       run: |
         cd tests/integration-cascache
-        docker compose up --abort-on-container-exit --exit-code-from bam
+        docker compose up --abort-on-container-exit --exit-code-from bam-client
       
     - name: Clean up
       if: always()
