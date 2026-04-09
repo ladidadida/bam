@@ -8,92 +8,6 @@ bam utilizes its partner projects [cascache_lib](https://gitlab.com/cascascade/c
 
 **Warning**: Large parts of this tool were generated with the help of AI. Special thanks to Claude Sonnet for the excellent support!
 
----
-
-### Bootstrap a new project in seconds
-
-`bam --init` detects your project type and generates a ready-to-run `bam.yaml`:
-
-![bam --init wizard](docs/demo/init.gif)
-
-The initial configuraition includes sensible defaults for common languages and frameworks, with clear instructions for customization. The example above would generate a `bam.yaml`as follows:
-
-```yaml
-version: 1
-
-cache:
-  local:
-    path: .bam/cache
-
-tasks:
-  install:
-    command: npm ci
-    inputs:
-      - package.json
-      - package-lock.json
-    outputs:
-      - node_modules/
-
-  lint:
-    command: npm run lint
-    inputs:
-      - "src/**/*"
-    depends_on:
-      - install
-
-  test:
-    command: npm test
-    inputs:
-      - "src/**/*"
-      - "tests/**/*"
-    depends_on:
-      - lint
-
-  build:
-    command: npm run build
-    inputs:
-      - "src/**/*"
-    outputs:
-      - dist/
-    depends_on:
-      - test
-```
-
----
-
-### Understand your task graph at a glance
-
-`bam --graph` shows the full dependency tree — layers, roots, and what depends on what:
-
-![bam --graph](docs/demo/graph.gif)
-
----
-
-### Run your pipeline in parallel
-
-Independent tasks run concurrently. bam shows live progress as a dependency tree:
-
-![parallel execution](docs/demo/parallel.gif)
-
----
-
-### Instant rebuilds with content-addressed caching
-
-Unchanged inputs → cached outputs. The second run completes in milliseconds:
-
-![cache hit](docs/demo/cache.gif)
-
----
-
-### Interactive tasks — dev servers, REPLs, watchers
-
-Mark a task `interactive: true` and bam hands the terminal directly to your process.
-Dependencies are restored from cache first, then your server starts immediately:
-
-![interactive dev server](docs/demo/serve.gif)
-
----
-
 ## ✨ Features
 
 - **⚡ Parallel Execution** - Auto-detect CPU cores and run independent tasks concurrently
@@ -119,60 +33,68 @@ uv pip install bam-tool
 
 # Using pip
 pip install bam-tool
-
-# From source
-git clone https://gitlab.com/cascascade/bam.git
-cd bam
-uv sync
 ```
 
 ### Your First Workflow
 
-Create `bam.yaml` in your project:
+Run `bam --init` in any project directory. bam detects your stack and writes a ready-to-run `bam.yaml`:
+
+![bam --init wizard](docs/demo/init.gif)
+
+The generated config includes sensible defaults — inputs, outputs, caching, and dependencies all wired up. Here's what it produces for a Node.js project:
 
 ```yaml
 version: 1
 
+cache:
+  local:
+    path: .bam/cache
+
 tasks:
-  build:
-    command: npm run build
-    inputs:
-      - "src/**/*.ts"
-      - "package.json"
-    outputs:
-      - "dist/"
-  
+  install:
+    command: npm ci
+    inputs: [package.json, package-lock.json]
+    outputs: [node_modules/]
+
+  lint:
+    command: npm run lint
+    inputs: ["src/**/*"]
+    depends_on: [install]
+
   test:
     command: npm test
-    inputs:
-      - "src/**/*.ts"
-      - "tests/**/*.ts"
-    depends_on:
-      - build
+    inputs: ["src/**/*", "tests/**/*"]
+    depends_on: [lint]
+
+  build:
+    command: npm run build
+    inputs: ["src/**/*"]
+    outputs: [dist/]
+    depends_on: [test]
 ```
 
-Run your tasks:
+Use `bam --graph` to visualise the dependency tree before running anything:
 
-```bash
-# Execute a task (and all its dependencies)
-bam test
+![bam --graph](docs/demo/graph.gif)
 
-# Parallel execution (auto-detect CPUs)
-bam test                 # parallel by default
-bam test --jobs 4        # use 4 workers
-bam test --jobs 1        # sequential
+Then run the pipeline. Independent tasks execute in parallel automatically — bam shows live progress as a dependency tree:
 
-# Plain output for CI/CD
-bam test --plain
+![parallel execution](docs/demo/parallel.gif)
 
-# List available tasks
-bam --list
+Run it again. Nothing changed, so every task restores from cache instantly:
 
-# Visualize dependency graph
-bam --graph
+![cache hit](docs/demo/cache.gif)
 
-# Validate configuration
-bam --validate
+For long-running processes like dev servers, mark the task `interactive: true`. bam restores all dependencies from cache first, then hands the terminal directly to your process:
+
+![interactive dev server](docs/demo/serve.gif)
+
+```yaml
+tasks:
+  serve:
+    command: npm run dev
+    interactive: true
+    depends_on: [build]
 ```
 
 ### Distributed Caching
@@ -186,21 +108,17 @@ cache:
     path: .bam/cache
   remote:
     enabled: true
-    type: cas
     url: grpc://cas.example.com:50051
     token_file: ~/.bam/cas-token
     timeout: 30.0
-    max_retries: 3  # Automatic retry on transient errors
+    max_retries: 3
 ```
 
-**Features:**
 - 🔄 Automatic retry with exponential backoff
-- 🔌 Connection pooling for low latency
-- ⚡ Local-first strategy (check local → remote → miss)
+- ⚡ Local-first (check local → remote → miss)
 - 🛡️ Graceful fallback to local on network errors
-- 📊 Statistics tracking (future: `bam cache stats`)
 
-See [examples/remote-cache/](https://gitlab.com/cascascade/bam/-/tree/main/examples/remote-cache/) for complete setup guide.
+See [examples/remote-cache/](examples/remote-cache/) for a complete setup guide.
 
 ## 📖 Documentation
 
