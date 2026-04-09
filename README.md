@@ -16,6 +16,8 @@ bam utilizes its partner projects [cascache_lib](https://gitlab.com/cascascade/c
 
 ![bam --init wizard](docs/demo/init.gif)
 
+The initial configuraition includes sensible defaults for common languages and frameworks, with clear instructions for customization. The example above would generate a `bam.yaml`as follows:
+
 ```yaml
 version: 1
 
