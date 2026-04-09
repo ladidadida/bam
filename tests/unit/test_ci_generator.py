@@ -15,6 +15,7 @@ def _make_config(
     provider: Literal["github-actions", "gitlab-ci"] = "github-actions",
     python_version: str | None = None,
     env: dict | None = None,
+    exclude: list | None = None,
 ) -> BamConfig:
     return BamConfig(
         tasks={name: TaskConfig(**spec) for name, spec in tasks.items()},
@@ -22,6 +23,7 @@ def _make_config(
             provider=provider,
             python_version=python_version,
             env=env or {},
+            exclude=exclude or [],
         ),
     )
 
@@ -230,3 +232,63 @@ def test_gitlab_ci_variables():
     data = yaml.safe_load(content)
     assert data["variables"]["MY_VAR"] == "hello"
     assert data["variables"]["BAM_TOOL"] == "bam"
+
+
+# ---------------------------------------------------------------------------
+# ci.exclude — task filtering
+# ---------------------------------------------------------------------------
+
+
+def test_github_actions_exclude_removes_job():
+    config = _make_config(
+        {
+            "lint": {"command": "ruff ."},
+            "format": {"command": "ruff format ."},
+            "ci-checks": {"command": "echo done"},
+        },
+        exclude=["format", "ci-checks"],
+    )
+    _, content = generate_pipeline(config)
+    data = yaml.safe_load(content)
+    assert "lint" in data["jobs"]
+    assert "format" not in data["jobs"]
+    assert "ci-checks" not in data["jobs"]
+
+
+def test_github_actions_exclude_empty_keeps_all():
+    config = _make_config({"lint": {"command": "ruff ."}, "test": {"command": "pytest"}})
+    _, content = generate_pipeline(config)
+    data = yaml.safe_load(content)
+    assert "lint" in data["jobs"]
+    assert "test" in data["jobs"]
+
+
+def test_gitlab_ci_exclude_removes_template():
+    config = _make_config(
+        {
+            "lint": {"command": "ruff .", "stage": "lint"},
+            "ci-checks": {"command": "echo done", "stage": "lint"},
+        },
+        provider="gitlab-ci",
+        exclude=["ci-checks"],
+    )
+    _, content = generate_pipeline(config)
+    data = yaml.safe_load(content)
+    assert ".lint" in data
+    assert ".ci-checks" not in data
+
+
+def test_gitlab_ci_exclude_drops_orphaned_stages():
+    """A stage that becomes empty after exclusion must not appear in stages:."""
+    config = _make_config(
+        {
+            "lint": {"command": "ruff .", "stage": "lint"},
+            "local": {"command": "echo hi", "stage": "local-only"},
+        },
+        provider="gitlab-ci",
+        exclude=["local"],
+    )
+    _, content = generate_pipeline(config)
+    data = yaml.safe_load(content)
+    assert data["stages"] == ["lint"]
+    assert "local-only" not in data["stages"]

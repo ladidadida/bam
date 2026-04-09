@@ -85,7 +85,10 @@ def _generate_github_actions(config: BamConfig) -> str:
     workflow["env"] = {"BAM_TOOL": "bam", **(ci.env or {})}
 
     jobs: dict[str, Any] = {}
+    excluded = set(ci.exclude)
     for task_name, task in config.tasks.items():
+        if task_name in excluded:
+            continue
         jobs[_job_name(task_name)] = _github_job(task_name, task.depends_on, ci)
 
     workflow["jobs"] = jobs
@@ -179,10 +182,13 @@ def _generate_gitlab_ci(config: BamConfig) -> str:
 
     parts: list[str] = [_GITLAB_CI_HEADER]
 
+    excluded = set(ci.exclude)
+    ci_tasks = {name: task for name, task in config.tasks.items() if name not in excluded}
+
     # Collect stages in declaration order (first-seen wins).
     stages: list[str] = []
     seen_stages: set[str] = set()
-    for task in config.tasks.values():
+    for task in ci_tasks.values():
         if task.stage and task.stage not in seen_stages:
             stages.append(task.stage)
             seen_stages.add(task.stage)
@@ -195,7 +201,7 @@ def _generate_gitlab_ci(config: BamConfig) -> str:
 
     # Emit templates grouped by stage; tasks without a stage appear last.
     by_stage: dict[str | None, list[tuple[str, TaskConfig]]] = {}
-    for task_name, task in config.tasks.items():
+    for task_name, task in ci_tasks.items():
         by_stage.setdefault(task.stage, []).append((task_name, task))
 
     for stage in [*stages, None]:

@@ -1,0 +1,113 @@
+name: CI
+'on':
+  push:
+    branches:
+    - main
+  pull_request: null
+env:
+  BAM_TOOL: bam
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.14'
+    - uses: astral-sh/setup-uv@v5
+      with:
+        enable-cache: 'true'
+    - name: Install bam
+      run: uv tool install bam-tool
+    - name: Run lint
+      run: $BAM_TOOL lint
+  format-check:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.14'
+    - uses: astral-sh/setup-uv@v5
+      with:
+        enable-cache: 'true'
+    - name: Install bam
+      run: uv tool install bam-tool
+    - name: Run format-check
+      run: $BAM_TOOL format-check
+  typecheck:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.14'
+    - uses: astral-sh/setup-uv@v5
+      with:
+        enable-cache: 'true'
+    - name: Install bam
+      run: uv tool install bam-tool
+    - name: Run typecheck
+      run: $BAM_TOOL typecheck
+  test-unit:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.14'
+    - uses: astral-sh/setup-uv@v5
+      with:
+        enable-cache: 'true'
+    - name: Install bam
+      run: uv tool install bam-tool
+    - name: Run test-unit
+      run: $BAM_TOOL test-unit
+  test-integration:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.14'
+    - uses: astral-sh/setup-uv@v5
+      with:
+        enable-cache: 'true'
+    - name: Install bam
+      run: uv tool install bam-tool
+    - name: Run test-integration
+      run: $BAM_TOOL test-integration
+  test-component:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.14'
+    - uses: astral-sh/setup-uv@v5
+      with:
+        enable-cache: 'true'
+    - name: Install bam
+      run: uv tool install bam-tool
+    - name: Run test-component
+      run: $BAM_TOOL test-component
+  build:
+    runs-on: ubuntu-latest
+    needs:
+    - lint
+    - typecheck
+    - test-unit
+    - test-integration
+    - test-component
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.14'
+    - uses: astral-sh/setup-uv@v5
+      with:
+        enable-cache: 'true'
+    - name: Install bam
+      run: uv tool install bam-tool
+    - name: Run build
+      run: $BAM_TOOL build
