@@ -2,10 +2,16 @@
 
 from __future__ import annotations
 
+import re
 import subprocess
 import sys
 
 import pytest
+
+
+def _strip_ansi(text: str) -> str:
+    """Remove ANSI escape sequences from text."""
+    return re.sub(r"\x1b\[[0-9;]*[mK]", "", text)
 
 
 @pytest.mark.component
@@ -18,8 +24,9 @@ def test_cli_entrypoint() -> None:
         check=False,
     )
     assert result.returncode == 0
-    assert "Usage:" in result.stdout
-    assert "--list" in result.stdout
+    stdout = _strip_ansi(result.stdout)
+    assert "Usage:" in stdout
+    assert "--list" in stdout
 
 
 @pytest.mark.component
@@ -32,8 +39,9 @@ def test_cli_module_invocation() -> None:
         check=False,
     )
     assert result.returncode == 0
-    assert "Usage:" in result.stdout
-    assert "--graph" in result.stdout
+    stdout = _strip_ansi(result.stdout)
+    assert "Usage:" in stdout
+    assert "--graph" in stdout
 
 
 @pytest.mark.component
