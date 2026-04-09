@@ -36,6 +36,7 @@ services:
     environment:
       - BAM_CAS_URL=grpc://cascache:50051
       - UV_PROJECT_ENVIRONMENT=/tmp/.venv  # Use container-specific venv location
+      - SETUPTOOLS_SCM_PRETEND_VERSION=0.0.0  # No git in container; skip VCS version detection
     command: >
       bash -c '
         pip install uv &&
