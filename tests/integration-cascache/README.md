@@ -49,8 +49,8 @@ If you have cascache installed locally:
 
 ```bash
 # Terminal 1: Start cascache server
-pip install cascache
-python -m cascache
+pip install cascache_server
+python -m cascache_server
 
 # Terminal 2: Run tests
 BAM_CAS_URL=grpc://localhost:50051 uv run pytest tests/integration-cascache/test_cascache_integration.py -v

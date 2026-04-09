@@ -4,8 +4,8 @@ services:
     container_name: bam-test-cascache
     command: >
       bash -c '
-        pip install cascache &&
-        python -m cascache
+        pip install cascache_server &&
+        python -m cascache_server
       '
     environment:
       - CAS_HOST=0.0.0.0
