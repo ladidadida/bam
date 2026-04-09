@@ -514,6 +514,10 @@ bam deploy --dry-run
 ### Regenerate CI after updating bam.yaml
 
 ```bash
+# GitHub Actions (default)
+bam --ci && git add .github/workflows/ci.yml && git commit -m "update CI"
+
+# GitLab CI
 bam --ci && git add .gitlab/generated.gitlab-ci.yml && git commit -m "update CI"
 ```
 
@@ -528,8 +532,8 @@ bam --validate && bam build
 ## Getting Help
 
 - **Quick help:** `bam --help`
-- **Documentation:** https://gitlab.com/cascascade/bam
-- **Issues:** https://gitlab.com/cascascade/bam/-/issues
+- **GitHub:** https://github.com/ladidadida/bam
+- **Issues:** https://github.com/ladidadida/bam/issues
 - **Examples:** See `examples/` directory
 
 ---

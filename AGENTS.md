@@ -13,7 +13,7 @@ providing intelligent caching without forcing teams to restructure their project
 **Tagline:** Fast builds, no fluff.
 
 **⚠️ Project Status:** Concept/Experimental — NOT production-ready  
-**Development Status:** Phase 1 ✅ | Phase 2 ✅ | Phase 3 🔄 Planned  
+**Development Status:** Phase 1 ✅ | Phase 2 ✅ | Phase 3 ✅ | Phase 4 🔄 In Progress  
 **Target:** Python 3.14+ (uv package manager)  
 **Cache Backend:** `cascache_lib` (local/hybrid cache client) + `cascache_server` (remote CAS)
 
@@ -65,6 +65,9 @@ providing intelligent caching without forcing teams to restructure their project
 | `src/bam_tool/graph/builder.py` | networkx graph, topological sort, cycle detection |
 | `src/bam_tool/executor/executor.py` | asyncio subprocess execution, parallel scheduling |
 | `src/bam_tool/cache/__init__.py` | Compatibility exports; implementations from `cascache_lib` |
+| `src/bam_tool/ci/generator.py` | GitHub Actions + GitLab CI YAML generation from task graph |
+| `src/bam_tool/watcher.py` | File-system watching for `--watch` mode (watchdog) |
+| `src/bam_tool/init.py` | `--init` wizard: project type detection + bam.yaml templates |
 
 ---
 
@@ -77,11 +80,14 @@ bam/
 ├── src/
 │   └── bam_tool/
 │       ├── cli.py
+│       ├── watcher.py      # --watch mode (watchdog)
+│       ├── init.py         # --init wizard
 │       ├── config/
 │       ├── tasks/
 │       ├── graph/
 │       ├── executor/
-│       └── cache/
+│       ├── cache/
+│       └── ci/             # CI pipeline generator
 ├── tests/
 │   ├── unit/
 │   ├── integration/
@@ -91,9 +97,12 @@ bam/
 ├── spec/
 │   ├── roadmap.md          # ← Single source of truth for phase progress
 │   └── design.md
-└── docs/
-    ├── configuration.md
-    └── cli.md
+├── docs/
+│   ├── configuration.md
+│   ├── cli.md
+│   └── demo/               # asciinema scripts + casts
+└── .github/
+    └── workflows/          # CI (ci.yml, release.yml, pycas-integration.yml)
 ```
 
 ---
@@ -183,10 +192,11 @@ Cache errors should **log warnings** and fall back gracefully — never fail the
 |-------|--------|------|
 | Phase 1 | ✅ Complete | Local task runner with caching |
 | Phase 2 | ✅ Complete | Parallel execution + interactive tree view |
-| Phase 3 | 🔄 Next | Remote cache hardening (cascache_lib integration) |
+| Phase 3 | ✅ Complete | Remote cache hardening (cascache_lib integration) |
+| Phase 4 | 🔄 In Progress | Developer experience: watch mode, init wizard, Rich CLI |
 
-Phase 3 targets: CacheBackend abstraction, retry/backoff tuning, metrics/observability,
-token handling, failure-mode fallback.
+Phase 3 delivered: `CacheBackend` abstraction, `CacheManager` (local+remote), retry/backoff, token auth, graceful fallback.
+Phase 4 delivered so far: `--watch`/`-w` mode (watchdog), `--init` wizard (7 templates, auto-detect).
 
 ---
 
@@ -340,4 +350,4 @@ and on PyPI is derived directly from it — no manual version file edits needed.
 4. **Log extensively** — `DEBUG` for troubleshooting, `INFO` for user feedback
 5. **Test before optimizing** — correctness first
 
-**Last Updated:** 2026-04-07 (v0.5.4)
+**Last Updated:** 2026-04-09 (v0.5.4)

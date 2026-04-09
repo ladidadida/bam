@@ -8,9 +8,13 @@ Complete guide to `bam.yaml` configuration syntax and options.
 version: 1           # Required: Configuration schema version
 
 cache:               # Optional: Cache backend settings
-  type: local        # Cache type: "local" or "cas"
-  url: null          # CAS server URL (for type: cas)
-  local_fallback: true  # Fall back to local on CAS failure
+  local:
+    enabled: true    # Enable local filesystem cache
+    path: .bam/cache # Cache directory
+  remote:
+    enabled: false   # Enable remote CAS cache
+    url: grpc://localhost:50051
+    token_file: null # Path to auth token file
 
 tasks:               # Required: Task definitions
   task-name:         # Unique task identifier
@@ -19,8 +23,15 @@ tasks:               # Required: Task definitions
     outputs: []      # Optional: Output file paths
     depends_on: []   # Optional: Task dependencies
     env: {}          # Optional: Environment variables
+    stage: null      # Optional: Stage label (for --stage grouping / CI)
     timeout: 300     # Optional: Timeout in seconds (null = no limit)
     interactive: false  # Optional: Run as a foreground process (dev servers, REPLs)
+
+ci:                  # Optional: CI pipeline generation settings
+  provider: github-actions   # "github-actions" or "gitlab-ci"
+  python_version: "3.14"
+  exclude: []                # Tasks to omit from CI (local-only tasks)
+  install_command: null      # Override default install step
 ```
 
 ## Required Fields
@@ -234,6 +245,39 @@ tasks:
 
 ---
 
+### `stage`
+
+**Type:** String  
+**Required:** No  
+**Default:** `null`  
+**Description:** Assigns the task to a named stage. Stages group tasks for
+`bam --stage <name>` execution and become stage labels in generated CI pipelines.
+
+```yaml
+tasks:
+  lint:
+    command: ruff check src/
+    stage: lint
+
+  test:
+    command: pytest
+    stage: test
+    depends_on: [lint]
+
+  build:
+    command: python -m build
+    stage: build
+    depends_on: [test]
+```
+
+Run an entire stage:
+
+```bash
+bam --stage test   # runs lint and test (and their dependencies)
+```
+
+---
+
 ### `timeout`
 
 **Type:** Integer  
@@ -408,29 +452,14 @@ Install docker and make sure it is available before running this task.
 
 ### `cache.type`
 
-**Type:** String  
-**Required:** No  
-**Default:** `"local"`  
-**Values:** `"local"` or `"cas"`
+> **Note:** The old `cache.type / cache.url / cache.local_fallback` flat schema is
+> superseded. Use the nested `cache.local` / `cache.remote` structure below.
 
-```yaml
-cache:
-  type: local    # Use local filesystem cache
-```
+---
 
-### `cache.url`
+## Cache Configuration
 
-**Type:** String or null  
-**Required:** Only for `type: cas`  
-**Default:** `null`
-
-```yaml
-cache:
-  type: cas
-  url: grpc://localhost:50051    # CAS server address
-```
-
-### `cache.local_fallback`
+### `cache.local.enabled`
 
 **Type:** Boolean  
 **Required:** No  
@@ -438,10 +467,179 @@ cache:
 
 ```yaml
 cache:
-  type: cas
-  url: grpc://cache-server:50051
-  local_fallback: true    # Use local cache if CAS unavailable
+  local:
+    enabled: true
 ```
+
+### `cache.local.path`
+
+**Type:** String  
+**Required:** No  
+**Default:** `".cache"`
+
+```yaml
+cache:
+  local:
+    path: .bam/cache
+```
+
+### `cache.remote.enabled`
+
+**Type:** Boolean  
+**Required:** No  
+**Default:** `false`
+
+```yaml
+cache:
+  remote:
+    enabled: true
+    url: grpc://cache-server:50051
+```
+
+### `cache.remote.url`
+
+**Type:** String  
+**Required:** No  
+**Default:** `"grpc://localhost:50051"`  
+**Description:** CAS server URL. Only used when `cache.remote.enabled: true`.
+
+### `cache.remote.token_file`
+
+**Type:** String or null  
+**Required:** No  
+**Default:** `null`  
+**Description:** Path to a file containing a Bearer auth token for the CAS server.
+
+```yaml
+cache:
+  remote:
+    enabled: true
+    url: grpc://cache-server:50051
+    token_file: ~/.config/bam/token
+```
+
+### `cache.remote.upload` / `cache.remote.download`
+
+**Type:** Boolean  
+**Required:** No  
+**Default:** `true` for both  
+**Description:** Control whether bam pushes artifacts to and/or pulls from the remote cache independently.
+
+```yaml
+cache:
+  remote:
+    enabled: true
+    upload: true     # push on cache miss
+    download: true   # restore from remote on hit
+```
+
+### `cache.remote.timeout`
+
+**Type:** Float  
+**Required:** No  
+**Default:** `30.0`  
+**Description:** gRPC request timeout in seconds. On timeout bam falls back to the local cache.
+
+### `cache.remote.max_retries` / `cache.remote.initial_backoff`
+
+**Type:** Integer / Float  
+**Required:** No  
+**Default:** `3` / `0.1`  
+**Description:** Retry policy for transient gRPC errors (UNAVAILABLE, DEADLINE_EXCEEDED,
+RESOURCE_EXHAUSTED). Backoff doubles on each attempt up to 5 s.
+
+```yaml
+cache:
+  remote:
+    max_retries: 3
+    initial_backoff: 0.1
+```
+
+---
+
+## CI Configuration (`ci:`)
+
+Controls the output of `bam --ci`. Each bam task becomes one CI job that calls
+`bam <task>`, with job dependencies wired from `depends_on`.
+
+```yaml
+ci:
+  provider: github-actions
+  runner: ubuntu-latest
+  python_version: "3.14"
+  install_command: null    # default: "uv tool install bam-tool"
+  exclude:
+    - format               # local-only tasks to omit from CI
+  triggers:
+    push:
+      branches: [main]
+    pull_request:
+  env:
+    MY_CI_VAR: value
+```
+
+### `ci.provider`
+
+**Type:** String  
+**Required:** No  
+**Default:** `"github-actions"`  
+**Values:** `"github-actions"` | `"gitlab-ci"`
+
+### `ci.runner`
+
+**Type:** String  
+**Required:** No  
+**Default:** `"ubuntu-latest"`  
+**Description:** CI runner image. For GitHub Actions this is the `runs-on` value.
+
+### `ci.python_version`
+
+**Type:** String or null  
+**Required:** No  
+**Default:** `null`  
+**Description:** Python version to set up in CI (e.g. `"3.14"`). If null, no setup-python step is added.
+
+### `ci.install_command`
+
+**Type:** String or null  
+**Required:** No  
+**Default:** `null` (falls back to `uv tool install bam-tool`)  
+**Description:** Override the step that installs bam in CI. Useful for installing from
+source during development:
+
+```yaml
+ci:
+  install_command: "uv tool install ."
+```
+
+### `ci.exclude`
+
+**Type:** List of strings  
+**Required:** No  
+**Default:** `[]`  
+**Description:** Task names to omit from the generated CI pipeline. Use this for
+tasks that only make sense locally (e.g. `format`, aggregate aliases).
+
+```yaml
+ci:
+  exclude:
+    - format      # auto-formats code — not a CI check
+    - ci-checks   # local dev convenience alias
+```
+
+### `ci.triggers`
+
+**Type:** Dictionary  
+**Required:** No  
+**Default:** `{push: {branches: [main]}, pull_request: null}`  
+**Description:** CI event triggers. Structure mirrors the provider's trigger syntax.
+
+### `ci.env`
+
+**Type:** Dictionary  
+**Required:** No  
+**Default:** `{}`  
+**Description:** Environment variables injected into every CI job.
 
 ## Complete Examples
 
@@ -775,4 +973,4 @@ See [cli.md](cli.md) for the full watch mode reference.
 
 **Version:** 0.5.4  
 **Schema Version:** 1  
-**Last Updated:** 2026-04-06
+**Last Updated:** 2026-04-09
