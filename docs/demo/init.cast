@@ -15,5 +15,5 @@
 [2.026466, "o", "\u001b[36mDetected project type: Node.js (found: package.json)\u001b[0m\r\r\n\r\r\nAvailable templates:\r\r\n  1. Python (uv)\r\r\n  2. Python (pip)\r\r\n  3. Node.js (detected)\r\r\n  4. Go\r\r\n  5. Rust\r\r\n  6. Makefile\r\r\n  7. Generic\r\r\n"]
 [2.026676, "o", "Select a template [3]: "]
 [3.87743, "o", "3\r\r\n"]
-[2.878076, "o", "\u001b[32m\r\r\n✓ Created bam.yaml (Node.js template)\u001b[0m\r\r\n\r\r\nNext steps:\r\r\n  1. Edit bam.yaml to match your project's commands\r\r\n"]
-[2.878573, "o", "  2. Run ‘bam --list’ to verify tasks\r\r\n  3. Run ‘bam --validate’ to check configuration\r\r\n  4. Run ‘bam <task>’ to execute a task\r\r\n"]
+[3.878076, "o", "\u001b[32m\r\r\n✓ Created bam.yaml (Node.js template)\u001b[0m\r\r\n\r\r\nNext steps:\r\r\n  1. Edit bam.yaml to match your project's commands\r\r\n"]
+[3.878573, "o", "  2. Run ‘bam --list’ to verify tasks\r\r\n  3. Run ‘bam --validate’ to check configuration\r\r\n  4. Run ‘bam <task>’ to execute a task\r\r\n"]
