@@ -8,6 +8,49 @@ bam utilizes its partner projects [cascache_lib](https://gitlab.com/cascascade/c
 
 **Warning**: Large parts of this tool were generated with the help of AI. Special thanks to Claude Sonnet for the excellent support!
 
+---
+
+### Bootstrap a new project in seconds
+
+`bam --init` detects your project type and generates a ready-to-run `bam.yaml`:
+
+![bam --init wizard](docs/demo/init.gif)
+
+---
+
+### Understand your task graph at a glance
+
+`bam --graph` shows the full dependency tree — layers, roots, and what depends on what:
+
+![bam --graph](docs/demo/graph.gif)
+
+---
+
+### Run your pipeline in parallel
+
+Independent tasks run concurrently. bam shows live progress as a dependency tree:
+
+![parallel execution](docs/demo/parallel.gif)
+
+---
+
+### Instant rebuilds with content-addressed caching
+
+Unchanged inputs → cached outputs. The second run completes in milliseconds:
+
+![cache hit](docs/demo/cache.gif)
+
+---
+
+### Interactive tasks — dev servers, REPLs, watchers
+
+Mark a task `interactive: true` and bam hands the terminal directly to your process.
+Dependencies are restored from cache first, then your server starts immediately:
+
+![interactive dev server](docs/demo/serve.gif)
+
+---
+
 ## ✨ Features
 
 - **⚡ Parallel Execution** - Auto-detect CPU cores and run independent tasks concurrently

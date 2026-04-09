@@ -1,0 +1,57 @@
+version: 1
+
+cache:
+  local:
+    path: .bam/cache
+
+tasks:
+
+  install:
+    command: echo "Installing dependencies..." && sleep 0.5 && echo "✓ 312 packages installed"
+    inputs:
+      - package.json
+    outputs:
+      - node_modules/
+
+  lint:
+    command: echo "Linting source files..." && sleep 0.4 && echo "✓ No issues found"
+    inputs:
+      - "src/**/*.ts"
+    depends_on:
+      - install
+
+  typecheck:
+    command: echo "Type checking..." && sleep 0.6 && echo "✓ No type errors"
+    inputs:
+      - "src/**/*.ts"
+    depends_on:
+      - install
+
+  test:
+    command: echo "Running tests..." && sleep 0.8 && echo "✓ 42 tests passed"
+    inputs:
+      - "src/**/*.ts"
+      - "tests/**/*.ts"
+    depends_on:
+      - lint
+      - typecheck
+
+  build:
+    command: echo "Building..." && sleep 0.5 && echo "✓ dist/ ready"
+    inputs:
+      - "src/**/*.ts"
+    outputs:
+      - dist/
+    depends_on:
+      - test
+
+  serve:
+    command: |
+      echo "  VITE v5.4.0  ready in 312 ms"
+      echo ""
+      echo "  ➜  Local:   http://localhost:5173/"
+      echo "  ➜  press Ctrl+C to stop"
+      sleep 4
+    interactive: true
+    depends_on:
+      - build

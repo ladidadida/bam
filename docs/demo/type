@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# Simulate typing a command character by character, then execute it.
+# Usage: source type "your command here"
+_type_and_run() {
+    local cmd="$*"
+    printf '\e[1;32m$\e[0m '
+    for (( i=0; i<${#cmd}; i++ )); do
+        printf '%s' "${cmd:$i:1}"
+        sleep 0.04
+    done
+    echo
+    sleep 0.3
+    eval "$cmd"
+}
