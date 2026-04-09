@@ -14,7 +14,7 @@ runner = CliRunner()
 
 def test_main_no_args_shows_help() -> None:
     """Test root command with no args shows help."""
-    result = runner.invoke(app, [], color=False)
+    result = runner.invoke(app, [], env={"NO_COLOR": "1"})
     assert result.exit_code in (0, 2)
     output = (result.stdout or "") + (result.stderr or "")
     assert "Fast builds, no fluff." in output or "Usage:" in output
@@ -22,7 +22,7 @@ def test_main_no_args_shows_help() -> None:
 
 def test_help_lists_skeleton_commands() -> None:
     """Test that management flags are available."""
-    result = runner.invoke(app, ["--help"], color=False)
+    result = runner.invoke(app, ["--help"], env={"NO_COLOR": "1"})
     assert result.exit_code == 0
     assert "--list" in result.stdout
     assert "--graph" in result.stdout
@@ -32,7 +32,7 @@ def test_help_lists_skeleton_commands() -> None:
 
 def test_main_help() -> None:
     """Test main() with --help flag."""
-    result = runner.invoke(app, ["--help"], color=False)
+    result = runner.invoke(app, ["--help"], env={"NO_COLOR": "1"})
     assert result.exit_code == 0
 
 
