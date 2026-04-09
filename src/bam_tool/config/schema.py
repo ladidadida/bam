@@ -65,6 +65,7 @@ class CiConfig(BaseModel):
     )
     env: dict[str, str] = Field(default_factory=dict)
     exclude: list[str] = Field(default_factory=list)
+    install_command: str | None = None
 
 
 class BamConfig(BaseModel):

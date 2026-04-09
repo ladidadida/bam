@@ -108,6 +108,7 @@ tasks:
 ci:
   provider: github-actions
   python_version: "3.14"
+  install_command: "uv tool install ."
   exclude:
     - format       # local-only: auto-formats code, not a CI check
     - ci-checks    # local-only: aggregate alias for local dev convenience

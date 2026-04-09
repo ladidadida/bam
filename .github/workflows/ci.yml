@@ -18,7 +18,7 @@ jobs:
       with:
         enable-cache: 'true'
     - name: Install bam
-      run: uv tool install bam-tool
+      run: uv tool install .
     - name: Run lint
       run: $BAM_TOOL lint
   format-check:
@@ -32,7 +32,7 @@ jobs:
       with:
         enable-cache: 'true'
     - name: Install bam
-      run: uv tool install bam-tool
+      run: uv tool install .
     - name: Run format-check
       run: $BAM_TOOL format-check
   typecheck:
@@ -46,7 +46,7 @@ jobs:
       with:
         enable-cache: 'true'
     - name: Install bam
-      run: uv tool install bam-tool
+      run: uv tool install .
     - name: Run typecheck
       run: $BAM_TOOL typecheck
   test-unit:
@@ -60,7 +60,7 @@ jobs:
       with:
         enable-cache: 'true'
     - name: Install bam
-      run: uv tool install bam-tool
+      run: uv tool install .
     - name: Run test-unit
       run: $BAM_TOOL test-unit
   test-integration:
@@ -74,7 +74,7 @@ jobs:
       with:
         enable-cache: 'true'
     - name: Install bam
-      run: uv tool install bam-tool
+      run: uv tool install .
     - name: Run test-integration
       run: $BAM_TOOL test-integration
   test-component:
@@ -88,7 +88,7 @@ jobs:
       with:
         enable-cache: 'true'
     - name: Install bam
-      run: uv tool install bam-tool
+      run: uv tool install .
     - name: Run test-component
       run: $BAM_TOOL test-component
   build:
@@ -108,6 +108,6 @@ jobs:
       with:
         enable-cache: 'true'
     - name: Install bam
-      run: uv tool install bam-tool
+      run: uv tool install .
     - name: Run build
       run: $BAM_TOOL build

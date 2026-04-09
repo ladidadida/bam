@@ -47,7 +47,7 @@ def _github_setup_steps(ci: CiConfig) -> list[dict[str, Any]]:
     steps.append(
         {
             "name": "Install bam",
-            "run": "uv tool install bam-tool",
+            "run": ci.install_command if ci.install_command else "uv tool install bam-tool",
         }
     )
     return steps
