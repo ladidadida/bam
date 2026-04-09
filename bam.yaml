@@ -106,8 +106,11 @@ tasks:
       - test-component
 
 ci:
-  provider: gitlab-ci
+  provider: github-actions
   python_version: "3.14"
+  exclude:
+    - format       # local-only: auto-formats code, not a CI check
+    - ci-checks    # local-only: aggregate alias for local dev convenience
   triggers:
     push:
       branches: [main]

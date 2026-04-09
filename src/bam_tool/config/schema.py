@@ -64,6 +64,7 @@ class CiConfig(BaseModel):
         default_factory=lambda: {"push": {"branches": ["main"]}, "pull_request": None},
     )
     env: dict[str, str] = Field(default_factory=dict)
+    exclude: list[str] = Field(default_factory=list)
 
 
 class BamConfig(BaseModel):
