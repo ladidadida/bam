@@ -22,10 +22,10 @@ uv sync
 ## Useful Commands
 
 ```bash
-just install
-just lint
-just typecheck
-just test
+uv sync
+bam lint
+bam typecheck
+bam test-unit
 ```
 
 ## Pull Requests

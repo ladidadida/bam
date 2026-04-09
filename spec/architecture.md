@@ -353,7 +353,7 @@ bam/
 ├── pyproject.toml            # Package configuration
 ├── pytest.ini                # Test configuration
 ├── pyrightconfig.json        # Type checker config
-├── justfile                  # Task runner
+├── bam.yaml                  # Task runner (bam)
 ├── LICENSE                   # MIT License
 └── README.md                 # Project overview
 ```

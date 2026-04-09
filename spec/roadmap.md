@@ -730,7 +730,7 @@ Task output should dominate the terminal. Users run `bam run test` to see test r
 
 **Implementation Notes:**
 - cascache integration tests are optional (require Docker)
-- Use `./tests/integration-cascache/run-tests.sh` or `just test-cascache` to run
+- Use `./tests/integration-cascache/run-tests.sh` to run
 - Tests simulate multi-machine cache sharing
 - No need to install cascache locally (runs in container)
 

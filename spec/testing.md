@@ -414,12 +414,13 @@ uv run pytest --cov=bam --cov-report=xml
 
 ```bash
 # Full CI pipeline
-just ci-gitlab
+bam ci-checks
 
 # Individual checks
-just lint        # Ruff
-just typecheck   # Mypy
-just test        # Pytest
+bam lint         # Ruff
+bam typecheck    # Pyright
+bam test-unit    # Pytest (unit)
+bam test-integration  # Pytest (integration)
 ```
 
 ## Test Data Management

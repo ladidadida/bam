@@ -16,6 +16,47 @@ bam utilizes its partner projects [cascache_lib](https://gitlab.com/cascascade/c
 
 ![bam --init wizard](docs/demo/init.gif)
 
+```yaml
+version: 1
+
+cache:
+  local:
+    path: .bam/cache
+
+tasks:
+  install:
+    command: npm ci
+    inputs:
+      - package.json
+      - package-lock.json
+    outputs:
+      - node_modules/
+
+  lint:
+    command: npm run lint
+    inputs:
+      - "src/**/*"
+    depends_on:
+      - install
+
+  test:
+    command: npm test
+    inputs:
+      - "src/**/*"
+      - "tests/**/*"
+    depends_on:
+      - lint
+
+  build:
+    command: npm run build
+    inputs:
+      - "src/**/*"
+    outputs:
+      - dist/
+    depends_on:
+      - test
+```
+
 ---
 
 ### Understand your task graph at a glance
