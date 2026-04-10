@@ -1,8 +1,5 @@
-name: CI
-'on':
-  push:
-    branches:
-    - main
+✓ Generated .github/workflows/ci.yml
+  - main
   pull_request: null
 env:
   BAM_TOOL: bam
@@ -91,6 +88,20 @@ jobs:
       run: uv tool install .
     - name: Run test-component
       run: $BAM_TOOL test-component
+  schema-check:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.14'
+    - uses: astral-sh/setup-uv@v5
+      with:
+        enable-cache: 'true'
+    - name: Install bam
+      run: uv tool install .
+    - name: Run schema-check
+      run: $BAM_TOOL schema-check
   build:
     runs-on: ubuntu-latest
     needs:

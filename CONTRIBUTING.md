@@ -37,3 +37,26 @@ bam test-unit
 ## Commit Messages
 
 Use concise, imperative messages (e.g. `add task graph cycle detection`).
+
+## Remotes
+
+This project is mirrored on two remotes:
+
+| Remote | URL | Role |
+|--------|-----|------|
+| `origin` | `gitlab.com/cascascade/bam` | Primary — CI, PyPI releases |
+| `github` | `github.com/ladidadida/bam` | Mirror — schema publishing, future primary |
+
+After pushing to `origin`, please also push to `github`:
+
+```bash
+git push origin main && git push github main
+```
+
+Tags must be pushed to both remotes:
+
+```bash
+git push origin vX.Y.Z && git push github vX.Y.Z
+```
+
+See `AGENTS.md` → *Dual-Remote Setup* for full details.

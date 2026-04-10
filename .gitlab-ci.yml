@@ -62,6 +62,12 @@ typecheck:
     - .uv_dev
   stage: lint
 
+schema-check:
+  extends:
+    - .schema-check
+    - .uv_dev
+  stage: lint
+
 # ── Test ────────────────────────────────────────────────────────────────────
 
 test-unit:
@@ -138,6 +144,7 @@ build:
     - lint
     - format-check
     - typecheck
+    - schema-check
     - job: "test-unit: [3.11]"
     - job: "test-unit: [3.12]"
     - job: "test-unit: [3.13]"
@@ -156,6 +163,31 @@ build:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
 
 # ── Deploy ──────────────────────────────────────────────────────────────────
+
+# Auto-commit schema/bam.schema.json when config/schema.py changes on main.
+# Requires the project's CI/CD job token to have write access:
+# Settings → CI/CD → Token Access → allow this project to push.
+update-schema:
+  extends: .uv_dev
+  stage: deploy
+  needs:
+    - schema-check
+  script:
+    - uv run bam --schema-output schema/bam.schema.json
+    - git config user.name  "gitlab-ci-bot"
+    - git config user.email "noreply@gitlab.com"
+    - git add schema/bam.schema.json
+    - |
+      if git diff --cached --quiet; then
+        echo "schema/bam.schema.json is already up-to-date."
+      else
+        git commit -m "chore: update schema/bam.schema.json [skip ci]"
+        git push "https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git" "HEAD:${CI_DEFAULT_BRANCH}"
+      fi
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      changes:
+        - src/bam_tool/config/schema.py
 
 # Deploy to PyPI (automatic on tags)
 deploy:pypi:

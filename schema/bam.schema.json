@@ -1,0 +1,309 @@
+{
+  "$defs": {
+    "CacheConfig": {
+      "additionalProperties": false,
+      "description": "Combined cache configuration with local and optional remote backend.\n\nAttributes:\n    local: Local filesystem cache settings\n    remote: Remote CAS cache settings",
+      "properties": {
+        "local": {
+          "$ref": "#/$defs/LocalCacheConfig"
+        },
+        "remote": {
+          "$ref": "#/$defs/RemoteCacheConfig"
+        }
+      },
+      "title": "CacheConfig",
+      "type": "object"
+    },
+    "CiConfig": {
+      "additionalProperties": false,
+      "description": "CI pipeline generation settings.\n\nControls the output of ``bam ci generate``.  Each bam task becomes one CI\njob that simply calls ``bam <task>``, with ``needs:`` wired from\n``depends_on`` so the CI runner can parallelize at the job level.",
+      "properties": {
+        "provider": {
+          "default": "github-actions",
+          "enum": [
+            "github-actions",
+            "gitlab-ci"
+          ],
+          "title": "Provider",
+          "type": "string"
+        },
+        "runner": {
+          "default": "ubuntu-latest",
+          "title": "Runner",
+          "type": "string"
+        },
+        "python_version": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Python Version"
+        },
+        "triggers": {
+          "additionalProperties": true,
+          "title": "Triggers",
+          "type": "object"
+        },
+        "env": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Env",
+          "type": "object"
+        },
+        "exclude": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Exclude",
+          "type": "array"
+        },
+        "install_command": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Install Command"
+        }
+      },
+      "title": "CiConfig",
+      "type": "object"
+    },
+    "LocalCacheConfig": {
+      "additionalProperties": false,
+      "description": "Local filesystem cache configuration.\n\nAttributes:\n    enabled: Whether local cache is enabled\n    path: Directory path for cache storage",
+      "properties": {
+        "enabled": {
+          "default": true,
+          "title": "Enabled",
+          "type": "boolean"
+        },
+        "path": {
+          "default": ".cache",
+          "title": "Path",
+          "type": "string"
+        }
+      },
+      "title": "LocalCacheConfig",
+      "type": "object"
+    },
+    "RemoteCacheConfig": {
+      "additionalProperties": false,
+      "description": "Remote CAS cache configuration.\n\nAttributes:\n    enabled: Whether remote cache is enabled\n    type: Cache backend type (currently only \"cas\" supported)\n    url: CAS server URL (e.g., \"grpc://localhost:50051\")\n    token_file: Optional path to authentication token file\n    upload: Whether to upload to remote cache on put()\n    download: Whether to download from remote cache on get()\n    timeout: Request timeout in seconds\n    max_retries: Maximum number of retry attempts for transient errors\n    initial_backoff: Initial backoff delay in seconds for retry logic",
+      "properties": {
+        "enabled": {
+          "default": false,
+          "title": "Enabled",
+          "type": "boolean"
+        },
+        "type": {
+          "const": "cas",
+          "default": "cas",
+          "title": "Type",
+          "type": "string"
+        },
+        "url": {
+          "default": "grpc://localhost:50051",
+          "title": "Url",
+          "type": "string"
+        },
+        "token_file": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Token File"
+        },
+        "upload": {
+          "default": true,
+          "title": "Upload",
+          "type": "boolean"
+        },
+        "download": {
+          "default": true,
+          "title": "Download",
+          "type": "boolean"
+        },
+        "timeout": {
+          "default": 30.0,
+          "title": "Timeout",
+          "type": "number"
+        },
+        "max_retries": {
+          "default": 3,
+          "title": "Max Retries",
+          "type": "integer"
+        },
+        "initial_backoff": {
+          "default": 0.1,
+          "title": "Initial Backoff",
+          "type": "number"
+        }
+      },
+      "title": "RemoteCacheConfig",
+      "type": "object"
+    },
+    "RunnerConfig": {
+      "additionalProperties": false,
+      "description": "Runner configuration for a task.\n\nControls *how* the task command is executed.  Three types are supported:\n\n* ``shell`` (default) \u2014 run the command in a local shell, unchanged.\n* ``docker`` \u2014 run the command inside a Docker container (requires ``image``).\n* ``python-uv`` \u2014 treat the command body as an inline Python script and\n  execute it via ``uv run python``.",
+      "properties": {
+        "type": {
+          "default": "shell",
+          "enum": [
+            "shell",
+            "docker",
+            "python-uv"
+          ],
+          "title": "Type",
+          "type": "string"
+        },
+        "image": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Image"
+        }
+      },
+      "title": "RunnerConfig",
+      "type": "object"
+    },
+    "TaskConfig": {
+      "additionalProperties": false,
+      "description": "Task definition loaded from configuration.",
+      "properties": {
+        "command": {
+          "title": "Command",
+          "type": "string"
+        },
+        "runner": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/RunnerConfig"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "inputs": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Inputs",
+          "type": "array"
+        },
+        "outputs": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Outputs",
+          "type": "array"
+        },
+        "depends_on": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Depends On",
+          "type": "array"
+        },
+        "env": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Env",
+          "type": "object"
+        },
+        "stage": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Stage"
+        },
+        "timeout": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Timeout"
+        },
+        "interactive": {
+          "default": false,
+          "title": "Interactive",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "command"
+      ],
+      "title": "TaskConfig",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Configuration schema for bam.yaml \u2014 the bam workflow orchestration tool.",
+  "properties": {
+    "version": {
+      "default": 1,
+      "title": "Version",
+      "type": "integer"
+    },
+    "cache": {
+      "$ref": "#/$defs/CacheConfig"
+    },
+    "tasks": {
+      "additionalProperties": {
+        "$ref": "#/$defs/TaskConfig"
+      },
+      "title": "Tasks",
+      "type": "object"
+    },
+    "ci": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/CiConfig"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    }
+  },
+  "title": "bam",
+  "type": "object",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://raw.githubusercontent.com/ladidadida/bam/main/schema/bam.schema.json"
+}

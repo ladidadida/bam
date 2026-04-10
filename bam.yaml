@@ -73,6 +73,25 @@ tasks:
     outputs:
       - .reports/junit-component.xml
 
+  # ── Schema ───────────────────────────────────────────────────────────────────
+
+  schema-check:
+    command: >-
+      uv run bam --schema-output /tmp/bam-schema-check.json &&
+      diff schema/bam.schema.json /tmp/bam-schema-check.json ||
+      (echo "schema/bam.schema.json is stale — run: uv run bam --schema-output schema/bam.schema.json" && exit 1)
+    stage: lint
+    inputs:
+      - "src/bam_tool/config/schema.py"
+      - "schema/bam.schema.json"
+
+  schema-export:
+    command: uv run bam --schema-output schema/bam.schema.json
+    inputs:
+      - "src/bam_tool/config/schema.py"
+    outputs:
+      - "schema/bam.schema.json"
+
   # ── Build ─────────────────────────────────────────────────────────────────────
 
   build:
@@ -101,6 +120,7 @@ tasks:
       - lint
       - format-check
       - typecheck
+      - schema-check
       - test-unit
       - test-integration
       - test-component
@@ -110,8 +130,9 @@ ci:
   python_version: "3.14"
   install_command: "uv tool install ."
   exclude:
-    - format       # local-only: auto-formats code, not a CI check
-    - ci-checks    # local-only: aggregate alias for local dev convenience
+    - format        # local-only: auto-formats code, not a CI check
+    - schema-export # local-only: regenerates the schema file manually
+    - ci-checks     # local-only: aggregate alias for local dev convenience
   triggers:
     push:
       branches: [main]

@@ -1,0 +1,127 @@
+name: Update JSON Schema
+
+# Keeps schema/bam.schema.json in sync on the GitHub mirror whenever
+# src/bam_tool/config/schema.py changes. This is a mirror-only job;
+# the SchemaStore PR is opened from GitLab CI (see .gitlab-ci.yml:
+# open-schemastore-pr) because GitLab is the primary deployment remote.
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'src/bam_tool/config/schema.py'
+  workflow_dispatch:  # allow manual runs
+
+jobs:
+  update-schema:
+    name: Regenerate and commit schema/bam.schema.json
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.14'
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: 'true'
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Regenerate schema
+        run: uv run bam --schema-output schema/bam.schema.json
+
+      - name: Commit if changed
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add schema/bam.schema.json
+          if git diff --cached --quiet; then
+            echo "schema/bam.schema.json is already up-to-date — nothing to commit."
+          else
+            git commit -m "chore: update schema/bam.schema.json [skip ci]"
+            git push origin HEAD
+          fi
+
+    name: Open SchemaStore PR (on release tags)
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: update-schema
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check out SchemaStore fork
+        uses: actions/checkout@v4
+        with:
+          repository: ladidadida/schemastore
+          path: schemastore
+          token: ${{ secrets.SCHEMASTORE_PAT }}
+
+      - name: Sync fork with upstream
+        working-directory: schemastore
+        run: |
+          git remote add upstream https://github.com/SchemaStore/schemastore.git
+          git fetch upstream
+          git checkout master
+          git merge --ff-only upstream/master
+
+      - name: Add/update catalog entry
+        working-directory: schemastore
+        run: |
+          python - <<'EOF'
+          import json, pathlib, sys
+
+          catalog_path = pathlib.Path("src/api/json/catalog.json")
+          catalog = json.loads(catalog_path.read_text())
+
+          entry = {
+            "name": "bam",
+            "description": "bam workflow orchestration tool configuration (bam.yaml)",
+            "fileMatch": ["bam.yaml"],
+            "url": "https://raw.githubusercontent.com/ladidadida/bam/main/schema/bam.schema.json",
+          }
+
+          schemas = catalog.setdefault("schemas", [])
+          existing = next((s for s in schemas if s.get("name") == "bam"), None)
+          if existing:
+              existing.update(entry)
+              print("Updated existing bam catalog entry.")
+          else:
+              schemas.append(entry)
+              print("Added new bam catalog entry.")
+
+          catalog_path.write_text(json.dumps(catalog, indent=2) + "\n")
+          EOF
+
+      - name: Create pull request to SchemaStore
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.SCHEMASTORE_PAT }}
+          path: schemastore
+          push-to-fork: ladidadida/schemastore
+          branch: add-bam-schema
+          base: master
+          title: "Add bam workflow orchestration tool schema"
+          body: |
+            Adds the JSON Schema for [bam](https://github.com/ladidadida/bam) `bam.yaml`
+            configuration files.
+
+            The schema is self-hosted and auto-updated on every release at:
+            `https://raw.githubusercontent.com/ladidadida/bam/main/schema/bam.json`
+
+            Schema is generated from Pydantic models via `bam --schema`.
+
+            Triggered by release ${{ github.ref_name }}.
+          commit-message: "feat: add bam workflow orchestration tool schema"
+          labels: "new schema"

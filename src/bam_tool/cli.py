@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+import json
 import os
 import shutil
 import signal
@@ -995,6 +996,17 @@ def _main_callback(  # noqa: C901, PLR0912, PLR0913, PLR0915
         bool,
         typer.Option("--ci-dry-run", help="Print CI YAML to stdout without writing a file."),
     ] = False,
+    schema: Annotated[
+        bool,
+        typer.Option("--schema", help="Print the JSON schema for bam.yaml to stdout and exit."),
+    ] = False,
+    schema_output: Annotated[
+        Path | None,
+        typer.Option(
+            "--schema-output",
+            help="Write JSON schema to this file instead of stdout.",
+        ),
+    ] = None,
     init: Annotated[
         bool,
         typer.Option("--init", help="Interactively create a bam.yaml in the current directory."),
@@ -1062,8 +1074,25 @@ def _main_callback(  # noqa: C901, PLR0912, PLR0913, PLR0915
     Show graph:    bam --graph\n
     Validate:      bam --validate\n
     Generate CI:   bam --ci\n
+    Export schema: bam --schema\n
     Clean cache:  bam --clean
     """
+    # ── --schema / --schema-output ─────────────────────────────────────────
+    if schema or schema_output is not None:
+        raw = BamConfig.model_json_schema()
+        raw["$schema"] = "http://json-schema.org/draft-07/schema#"
+        raw["$id"] = "https://raw.githubusercontent.com/ladidadida/bam/main/schema/bam.schema.json"
+        raw["title"] = "bam"
+        raw["description"] = "Configuration schema for bam.yaml — the bam workflow orchestration tool."
+        output = json.dumps(raw, indent=2) + "\n"
+        if schema_output is not None:
+            schema_output.parent.mkdir(parents=True, exist_ok=True)
+            schema_output.write_text(output)
+            typer.secho(f"\u2713 Schema written to {schema_output}", fg=typer.colors.GREEN)
+        else:
+            typer.echo(output, nl=False)
+        return
+
     # ── --init ─────────────────────────────────────────────────────────────
     if init:
         target = Path("bam.yaml")

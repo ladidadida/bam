@@ -337,8 +337,73 @@ git push origin main
 git push origin vX.Y.Z
 ```
 
+Then mirror to GitHub:
+
+```bash
+git push github main
+git push github vX.Y.Z
+```
+
 `hatch-vcs` picks up the tag automatically; the version reported by `bam --version`
 and on PyPI is derived directly from it — no manual version file edits needed.
+
+---
+
+## Dual-Remote Setup
+
+The repository lives on **two remotes** with different roles:
+
+| Remote | URL | Role |
+|--------|-----|------|
+| `origin` | `git@gitlab.com:cascascade/bam.git` | **Primary** — active development, CI (GitLab CI), PyPI releases |
+| `github` | `git@github.com:ladidadida/bam.git` | **Mirror** — GitHub Actions CI, schema publishing, future primary |
+
+**Plan:** GitLab is currently the source of truth. The intent is to fully switch
+to GitHub as the primary remote at some point. Until then, both remotes are kept
+in sync manually after each meaningful push.
+
+### Local setup
+
+```bash
+git remote -v   # should show both origin (gitlab) and github
+# If github remote is missing:
+git remote add github git@github.com:ladidadida/bam.git
+```
+
+### Day-to-day push
+
+```bash
+git push origin main   # push to GitLab (triggers GitLab CI)
+git push github main   # mirror to GitHub (triggers GitHub Actions)
+```
+
+Or create a shell alias / git alias to push both at once:
+
+```bash
+git config alias.push-all '!git push origin "$@" && git push github "$@"'
+# Then: git push-all main
+```
+
+### Tags
+
+Always push tags to **both** remotes:
+
+```bash
+git push origin vX.Y.Z
+git push github vX.Y.Z
+```
+
+Pushing the tag to `github` is what triggers the `update-schema`
+`open-schemastore-pr` job in `.github/workflows/update-schema.yml`.
+
+### CI differences
+
+| Concern | GitLab CI (`.gitlab-ci.yml`) | GitHub Actions (`.github/workflows/`) |
+|---------|-----------------------------|-----------------------------------------|
+| Lint / test / build | ✅ Full matrix (Py 3.11–3.14 + free-threaded) | ✅ Single Python 3.14 |
+| PyPI publish | ✅ On tag push | — |
+| Schema auto-commit | ✅ `update-schema` job | ✅ `update-schema.yml` (mirror only) |
+| SchemaStore PR | ✅ `open-schemastore-pr` job (on tag) | — (deferred to GitLab while it is primary) |
 
 ---
 
