@@ -863,7 +863,7 @@ async def _run_task_async(  # noqa: C901
     )
 
 
-async def _watch_async(
+async def _watch_async(  # noqa: C901
     task: str,
     no_cache: bool,
     debounce: float,
@@ -890,9 +890,18 @@ async def _watch_async(
     max_workers = _parse_jobs_value(jobs)
     use_plain = plain or not sys.stdout.isatty()
 
+    # Detect whether the final task is interactive (long-running server/process).
+    is_interactive_watch = any(loaded_config.tasks[t].interactive for t in execution_order)
+
     # Print startup header and watched directories.
     watch_dirs = compute_watch_dirs(loaded_config, execution_order, config_file)
-    console.print(f"[bold cyan]bam watch[/] — [bold]{task}[/]  (Ctrl+C to stop)")
+    if is_interactive_watch:
+        console.print(
+            f"[bold cyan]bam watch[/] — [bold]{task}[/]"
+            "  [dim](restarts on change · Ctrl+C to exit)[/dim]"
+        )
+    else:
+        console.print(f"[bold cyan]bam watch[/] — [bold]{task}[/]  (Ctrl+C to stop)")
     for d, recursive in sorted(watch_dirs.items()):
         try:
             rel: Path | str = d.relative_to(Path.cwd())
@@ -902,6 +911,66 @@ async def _watch_async(
         console.print(f"  [dim]•[/dim] {rel}{flag}")
     console.print()
 
+    if is_interactive_watch:
+        # ── Interactive watch loop ──────────────────────────────────────────
+        # Run the full task graph (preamble + interactive process) as a
+        # cancellable asyncio Task, and concurrently watch for file changes.
+        # When a change arrives the running task is cancelled — which
+        # terminates the child process via execute_interactive_task's
+        # CancelledError handler — and the whole graph is restarted.
+        while True:
+            watch_dirs = compute_watch_dirs(loaded_config, execution_order, config_file)
+            run_task: asyncio.Task[None] = asyncio.create_task(
+                _run_task_async(task, None, False, quiet, no_cache, config, max_workers, use_plain)
+            )
+            watcher_task: asyncio.Task[Path] = asyncio.create_task(
+                wait_for_change(watch_dirs, debounce)
+            )
+
+            done, _pending = await asyncio.wait(
+                {run_task, watcher_task},
+                return_when=asyncio.FIRST_COMPLETED,
+            )
+
+            # Cancel whichever coroutine is still running and await its cleanup.
+            for t in _pending:
+                t.cancel()
+                with contextlib.suppress(BaseException):
+                    await t
+
+            if watcher_task in done and not watcher_task.cancelled():
+                # File-change triggered restart.
+                changed = watcher_task.result()
+                try:
+                    rel_changed: Path | str = changed.relative_to(Path.cwd())
+                except ValueError:
+                    rel_changed = changed
+                console.print(f"\n[cyan]↻[/] [bold]{rel_changed}[/] changed — restarting…\n")
+            else:
+                # Process exited on its own (error already reported by _run_task_async).
+                # Surface any unhandled exception, then wait for the next change
+                # before restarting automatically.
+                if not run_task.cancelled():
+                    with contextlib.suppress(typer.Exit, SystemExit):
+                        run_task.result()
+                console.print("[dim]Process exited — waiting for changes to restart…[/dim]")
+                next_change = await wait_for_change(watch_dirs, debounce)
+                try:
+                    rel_changed = next_change.relative_to(Path.cwd())
+                except ValueError:
+                    rel_changed = next_change
+                console.print(f"\n[cyan]↻[/] [bold]{rel_changed}[/] changed — restarting…\n")
+
+            # Reload config for the next iteration (bam.yaml may have changed).
+            try:
+                config_file, loaded_config, execution_order = _load()
+            except (ConfigurationError, MissingTaskError, CyclicDependencyError) as exc:
+                console.print(f"[red]Config error:[/] {exc}  (fix it and save to retry)")
+                watch_dirs = compute_watch_dirs(loaded_config, execution_order, config_file)
+                await wait_for_change(watch_dirs, debounce)
+        return  # unreachable — loop exits only via KeyboardInterrupt
+
+    # ── Non-interactive watch: sequential run → wait → re-run ─────────────
     # Initial run.
     try:
         await _run_task_async(task, None, False, quiet, no_cache, config, max_workers, use_plain)

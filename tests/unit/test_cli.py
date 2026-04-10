@@ -2,13 +2,18 @@
 
 from __future__ import annotations
 
+import asyncio
+import contextlib
 import os
 import re
+from pathlib import Path
+from unittest.mock import MagicMock, patch
 
 import pytest
 from typer.testing import CliRunner
 
-from bam_tool.cli import _parse_jobs_value, app
+from bam_tool.cli import _parse_jobs_value, _watch_async, app
+from bam_tool.config.schema import BamConfig, TaskConfig
 
 runner = CliRunner()
 
@@ -337,3 +342,127 @@ def test_stage_and_task_together_exits_nonzero() -> None:
         result = runner.invoke(app, ["lint", "--stage", "test"])
 
     assert result.exit_code == 1
+
+
+# ── Interactive watch mode tests ──────────────────────────────────────────────
+
+
+@pytest.mark.asyncio
+async def test_interactive_watch_restarts_after_file_change(tmp_path: pytest.TempPathFactory) -> None:
+    """_watch_async cancels the running interactive task and restarts it on file change."""
+    from pathlib import Path
+
+    config_file = Path("/fake/bam.yaml")
+    loaded_config = BamConfig(
+        tasks={"serve": TaskConfig(command="python -m http.server", interactive=True)}
+    )
+
+    run_call_count = 0
+
+    async def fake_run_task(*args, **kwargs) -> None:  # type: ignore[no-untyped-def]
+        nonlocal run_call_count
+        run_call_count += 1
+        await asyncio.sleep(100)  # simulate long-running server
+
+    change_call_count = 0
+
+    async def fake_wait_for_change(*args, **kwargs) -> Path:  # type: ignore[no-untyped-def]
+        nonlocal change_call_count
+        change_call_count += 1
+        if change_call_count == 1:
+            await asyncio.sleep(0.1)  # first call: return a change quickly
+            return Path("/fake/source.py")
+        # subsequent calls: block until cancelled
+        await asyncio.sleep(100)
+        return Path("/fake/never")  # never reached
+
+    fake_graph = MagicMock()
+
+    with (
+        patch("bam_tool.cli.load_config", return_value=(config_file, loaded_config)),
+        patch("bam_tool.cli.build_task_graph", return_value=fake_graph),
+        patch("bam_tool.cli.execution_order_for_targets", return_value=["serve"]),
+        patch("bam_tool.cli.compute_watch_dirs", return_value={Path("/fake"): False}),
+        patch("bam_tool.cli._run_task_async", side_effect=fake_run_task),
+        patch("bam_tool.cli.wait_for_change", side_effect=fake_wait_for_change),
+    ):
+        watch_task = asyncio.create_task(
+            _watch_async(
+                task="serve",
+                no_cache=False,
+                debounce=0.05,
+                config=None,
+                jobs=None,
+                quiet=True,
+                plain=True,
+            )
+        )
+
+        # Let the loop run through the first change + restart.
+        await asyncio.sleep(0.5)
+        watch_task.cancel()
+        with contextlib.suppress(asyncio.CancelledError):
+            await watch_task
+
+    # Must have been invoked at least twice: initial run + at least one restart.
+    assert run_call_count >= 2
+
+
+@pytest.mark.asyncio
+async def test_non_interactive_watch_uses_sequential_loop(tmp_path: pytest.TempPathFactory) -> None:
+    """_watch_async keeps the sequential run-then-wait pattern for non-interactive tasks."""
+    from pathlib import Path
+
+    config_file = Path("/fake/bam.yaml")
+    loaded_config = BamConfig(
+        tasks={"build": TaskConfig(command="echo hi", interactive=False)}
+    )
+
+    run_call_count = 0
+
+    async def fake_run_task(*args, **kwargs) -> None:  # type: ignore[no-untyped-def]
+        nonlocal run_call_count
+        run_call_count += 1
+        # Complete immediately (non-interactive)
+
+    change_call_count = 0
+
+    async def fake_wait_for_change(*args, **kwargs) -> Path:  # type: ignore[no-untyped-def]
+        nonlocal change_call_count
+        change_call_count += 1
+        if change_call_count == 1:
+            await asyncio.sleep(0.1)
+            return Path("/fake/source.py")
+        await asyncio.sleep(100)
+        return Path("/fake/never")
+
+    fake_graph = MagicMock()
+
+    with (
+        patch("bam_tool.cli.load_config", return_value=(config_file, loaded_config)),
+        patch("bam_tool.cli.build_task_graph", return_value=fake_graph),
+        patch("bam_tool.cli.execution_order_for_targets", return_value=["build"]),
+        patch("bam_tool.cli.compute_watch_dirs", return_value={Path("/fake"): False}),
+        patch("bam_tool.cli._run_task_async", side_effect=fake_run_task),
+        patch("bam_tool.cli.wait_for_change", side_effect=fake_wait_for_change),
+    ):
+        watch_task = asyncio.create_task(
+            _watch_async(
+                task="build",
+                no_cache=False,
+                debounce=0.05,
+                config=None,
+                jobs=None,
+                quiet=True,
+                plain=True,
+            )
+        )
+
+        await asyncio.sleep(0.5)
+        watch_task.cancel()
+        with contextlib.suppress(asyncio.CancelledError):
+            await watch_task
+
+    # Initial run + at least one re-run after the change.
+    assert run_call_count >= 2
+

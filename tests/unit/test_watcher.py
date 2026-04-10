@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 from pathlib import Path
 
 import pytest
@@ -133,3 +134,20 @@ async def test_wait_for_change_returns_resolved_path(tmp_path: Path) -> None:
     asyncio.create_task(modify())
     result = await wait_for_change({tmp_path: False}, debounce_seconds=0.05)
     assert result == result.resolve()
+
+
+@pytest.mark.asyncio
+async def test_wait_for_change_cancellation_cleans_up(tmp_path: Path) -> None:
+    """Cancelling wait_for_change must not hang — observer.join has a timeout."""
+    watch_file = tmp_path / "src.py"
+    watch_file.write_text("a")
+
+    watcher = asyncio.create_task(wait_for_change({tmp_path: False}, debounce_seconds=0.5))
+
+    # Cancel before any change occurs.
+    await asyncio.sleep(0.05)
+    watcher.cancel()
+    with contextlib.suppress(asyncio.CancelledError):
+        await watcher
+
+    assert watcher.done()

@@ -125,4 +125,6 @@ async def wait_for_change(
         return path.resolve()
     finally:
         observer.stop()
-        observer.join()
+        # Bounded join so that cancellation (e.g. interactive watch restart)
+        # never blocks the event loop for more than a short moment.
+        observer.join(timeout=2.0)
