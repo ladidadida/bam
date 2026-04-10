@@ -233,7 +233,7 @@ open-schemastore-pr:
     - git config user.email "noreply@gitlab.com"
     - git checkout -b add-bam-schema
     - git add src/api/json/catalog.json
-    - git diff --cached --quiet || git commit -m "feat: add bam workflow orchestration tool schema"
+    - 'git diff --cached --quiet || git commit -m "feat: add bam workflow orchestration tool schema"'
     - git push --force "https://x-access-token:${SCHEMASTORE_PAT}@github.com/ladidadida/schemastore.git" add-bam-schema
     - |
       python3 - <<'EOF'
