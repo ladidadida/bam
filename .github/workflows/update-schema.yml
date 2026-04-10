@@ -1,17 +1,12 @@
 name: Update JSON Schema
 
-# Keeps schema/bam.schema.json in sync on the GitHub mirror whenever
-# src/bam_tool/config/schema.py changes. This is a mirror-only job;
-# the SchemaStore PR is opened from GitLab CI (see .gitlab-ci.yml:
-# open-schemastore-pr) because GitLab is the primary deployment remote.
+# Keeps schema/bam.schema.json in sync on the GitHub mirror.
+# Triggered manually (Actions → Run workflow) after running bam schema-export
+# and pushing to github. The SchemaStore PR is opened from GitLab CI
+# (open-schemastore-pr job) because GitLab is the primary deployment remote.
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - 'src/bam_tool/config/schema.py'
-  workflow_dispatch:  # allow manual runs
+  workflow_dispatch:  # manual trigger only
 
 jobs:
   update-schema:

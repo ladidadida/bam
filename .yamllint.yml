@@ -1,0 +1,8 @@
+---
+extends: default
+
+rules:
+  document-start: disable  # GitLab CI / GitHub Actions don't use ---
+  line-length:
+    max: 120
+    level: warning          # warn only; URLs and shell commands can't always be wrapped

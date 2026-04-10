@@ -164,7 +164,7 @@ build:
 
 # ── Deploy ──────────────────────────────────────────────────────────────────
 
-# Auto-commit schema/bam.schema.json when config/schema.py changes on main.
+# Regenerate and commit schema/bam.schema.json — run manually from the GitLab UI.
 # Requires the project's CI/CD job token to have write access:
 # Settings → CI/CD → Token Access → allow this project to push.
 update-schema:
@@ -178,16 +178,111 @@ update-schema:
     - git config user.email "noreply@gitlab.com"
     - git add schema/bam.schema.json
     - |
+      REMOTE="https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git"
       if git diff --cached --quiet; then
         echo "schema/bam.schema.json is already up-to-date."
       else
         git commit -m "chore: update schema/bam.schema.json [skip ci]"
-        git push "https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git" "HEAD:${CI_DEFAULT_BRANCH}"
+        git push "$REMOTE" "HEAD:${CI_DEFAULT_BRANCH}"
       fi
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-      changes:
-        - src/bam_tool/config/schema.py
+      when: manual
+
+# Open a pull request against SchemaStore/schemastore — run manually on release tags.
+# Requires a GitLab CI/CD variable SCHEMASTORE_PAT (GitHub PAT, repo scope)
+# and a fork of SchemaStore at ladidadida/schemastore.
+open-schemastore-pr:
+  image: python:3.14
+  stage: deploy
+  needs:
+    - build
+  script:
+    - git clone "https://x-access-token:${SCHEMASTORE_PAT}@github.com/ladidadida/schemastore.git" schemastore
+    - cd schemastore
+    - git remote add upstream https://github.com/SchemaStore/schemastore.git
+    - git fetch upstream
+    - git checkout master
+    - git merge --ff-only upstream/master
+    - |
+      python3 - <<'EOF'
+      import json, pathlib
+
+      catalog_path = pathlib.Path("src/api/json/catalog.json")
+      catalog = json.loads(catalog_path.read_text())
+
+      entry = {
+          "name": "bam",
+          "description": "bam workflow orchestration tool configuration (bam.yaml)",
+          "fileMatch": ["bam.yaml"],
+          "url": "https://raw.githubusercontent.com/ladidadida/bam/main/schema/bam.schema.json",
+      }
+
+      schemas = catalog.setdefault("schemas", [])
+      existing = next((s for s in schemas if s.get("name") == "bam"), None)
+      if existing:
+          existing.update(entry)
+          print("Updated existing bam catalog entry.")
+      else:
+          schemas.append(entry)
+          print("Added new bam catalog entry.")
+
+      catalog_path.write_text(json.dumps(catalog, indent=2) + "\n")
+      EOF
+    - git config user.name "gitlab-ci-bot"
+    - git config user.email "noreply@gitlab.com"
+    - git checkout -b add-bam-schema
+    - git add src/api/json/catalog.json
+    - git diff --cached --quiet || git commit -m "feat: add bam workflow orchestration tool schema"
+    - git push --force "https://x-access-token:${SCHEMASTORE_PAT}@github.com/ladidadida/schemastore.git" add-bam-schema
+    - |
+      python3 - <<'EOF'
+      import json, os, urllib.request, urllib.error
+
+      token = os.environ["SCHEMASTORE_PAT"]
+      tag   = os.environ.get("CI_COMMIT_TAG", "")
+
+      payload = json.dumps({
+          "title": "Add bam workflow orchestration tool schema",
+          "body": (
+              "Adds the JSON Schema for [bam](https://github.com/ladidadida/bam) "
+              "`bam.yaml` configuration files.\n\n"
+              "The schema is self-hosted and auto-updated on every release at:\n"
+              "`https://raw.githubusercontent.com/ladidadida/bam/main/schema/bam.schema.json`\n\n"
+              "Schema is generated from Pydantic models via `bam --schema`.\n\n"
+              f"Triggered by release {tag}."
+          ),
+          "head": "ladidadida:add-bam-schema",
+          "base": "master",
+      }).encode()
+
+      req = urllib.request.Request(
+          "https://api.github.com/repos/SchemaStore/schemastore/pulls",
+          data=payload,
+          headers={
+              "Authorization": f"token {token}",
+              "Accept": "application/vnd.github+json",
+              "Content-Type": "application/json",
+              "X-GitHub-Api-Version": "2022-11-28",
+          },
+          method="POST",
+      )
+      try:
+          with urllib.request.urlopen(req) as resp:
+              data = json.loads(resp.read())
+              print(f"PR created: {data['html_url']}")
+      except urllib.error.HTTPError as e:
+          body = json.loads(e.read())
+          # 422 = PR already exists — not an error
+          if e.code == 422:
+              print(f"PR already exists: {body.get('errors', body)}")
+          else:
+              print(f"GitHub API error {e.code}: {body}")
+              raise
+      EOF
+  rules:
+    - if: $CI_COMMIT_TAG
+      when: manual
 
 # Deploy to PyPI (automatic on tags)
 deploy:pypi:
