@@ -1152,7 +1152,9 @@ def _main_callback(  # noqa: C901, PLR0912, PLR0913, PLR0915
         raw["$schema"] = "http://json-schema.org/draft-07/schema#"
         raw["$id"] = "https://raw.githubusercontent.com/ladidadida/bam/main/schema/bam.schema.json"
         raw["title"] = "bam"
-        raw["description"] = "Configuration schema for bam.yaml — the bam workflow orchestration tool."
+        raw["description"] = (
+            "Configuration schema for bam.yaml — the bam workflow orchestration tool."
+        )
         output = json.dumps(raw, indent=2) + "\n"
         if schema_output is not None:
             schema_output.parent.mkdir(parents=True, exist_ok=True)

@@ -348,7 +348,9 @@ def test_stage_and_task_together_exits_nonzero() -> None:
 
 
 @pytest.mark.asyncio
-async def test_interactive_watch_restarts_after_file_change(tmp_path: pytest.TempPathFactory) -> None:
+async def test_interactive_watch_restarts_after_file_change(
+    tmp_path: pytest.TempPathFactory,
+) -> None:
     """_watch_async cancels the running interactive task and restarts it on file change."""
     from pathlib import Path
 
@@ -414,9 +416,7 @@ async def test_non_interactive_watch_uses_sequential_loop(tmp_path: pytest.TempP
     from pathlib import Path
 
     config_file = Path("/fake/bam.yaml")
-    loaded_config = BamConfig(
-        tasks={"build": TaskConfig(command="echo hi", interactive=False)}
-    )
+    loaded_config = BamConfig(tasks={"build": TaskConfig(command="echo hi", interactive=False)})
 
     run_call_count = 0
 
@@ -465,4 +465,3 @@ async def test_non_interactive_watch_uses_sequential_loop(tmp_path: pytest.TempP
 
     # Initial run + at least one re-run after the change.
     assert run_call_count >= 2
-
