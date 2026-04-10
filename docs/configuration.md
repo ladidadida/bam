@@ -971,6 +971,6 @@ See [cli.md](cli.md) for the full watch mode reference.
 
 ---
 
-**Version:** 0.5.4  
+**Version:** 0.6.0  
 **Schema Version:** 1  
-**Last Updated:** 2026-04-09
+**Last Updated:** 2026-04-10

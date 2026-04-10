@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0] - 2026-04-10
+
+### Added
+
+- **Interactive watch mode** — `bam -w <task>` now detects when the target task is marked `interactive: true` and switches to a *restart-on-change* loop: the long-running process (dev server, REPL, etc.) is launched, watched alongside its input files, and automatically killed and restarted whenever an input changes.  Non-interactive tasks retain the existing sequential run → wait → re-run behaviour.  The startup banner shows `(restarts on change · Ctrl+C to exit)` for the interactive path.
+
+### Fixed
+
+- **GitLab CI `open-schemastore-pr` pipeline error** — the `git commit -m "feat: add bam…"` step was parsed as a YAML mapping due to the unquoted colon; wrapped in single quotes to fix the pipeline validator error.
+- **`wait_for_change` cancellation** — `observer.join()` is now called with `timeout=2.0` so cancelling the watcher coroutine (e.g. on interactive restart) never blocks the event loop indefinitely.
+
 ## [0.5.4] - 2026-04-07
 
 ### Fixed

@@ -415,4 +415,4 @@ Pushing the tag to `github` is what triggers the `update-schema`
 4. **Log extensively** — `DEBUG` for troubleshooting, `INFO` for user feedback
 5. **Test before optimizing** — correctness first
 
-**Last Updated:** 2026-04-09 (v0.5.4)
+**Last Updated:** 2026-04-10 (v0.6.0)
