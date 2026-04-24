@@ -776,7 +776,13 @@ async def _run_task_async(  # noqa: C901
         else:
             targets = []
         execution_order = execution_order_for_targets(graph, targets)
-    except (ConfigurationError, MissingTaskError, CyclicDependencyError) as exc:
+    except ConfigurationError as exc:
+        typer.secho(str(exc), fg=typer.colors.RED, err=True)
+        raise typer.Exit(code=1) from exc
+    except MissingTaskError as exc:
+        typer.secho(str(exc), fg=typer.colors.RED, err=True)
+        raise typer.Exit(code=1) from exc
+    except CyclicDependencyError as exc:
         typer.secho(str(exc), fg=typer.colors.RED, err=True)
         raise typer.Exit(code=1) from exc
 
@@ -883,7 +889,13 @@ async def _watch_async(  # noqa: C901
 
     try:
         config_file, loaded_config, execution_order = _load()
-    except (ConfigurationError, MissingTaskError, CyclicDependencyError) as exc:
+    except ConfigurationError as exc:
+        typer.secho(str(exc), fg=typer.colors.RED, err=True)
+        raise typer.Exit(code=1) from exc
+    except MissingTaskError as exc:
+        typer.secho(str(exc), fg=typer.colors.RED, err=True)
+        raise typer.Exit(code=1) from exc
+    except CyclicDependencyError as exc:
         typer.secho(str(exc), fg=typer.colors.RED, err=True)
         raise typer.Exit(code=1) from exc
 
@@ -964,7 +976,15 @@ async def _watch_async(  # noqa: C901
             # Reload config for the next iteration (bam.yaml may have changed).
             try:
                 config_file, loaded_config, execution_order = _load()
-            except (ConfigurationError, MissingTaskError, CyclicDependencyError) as exc:
+            except ConfigurationError as exc:
+                console.print(f"[red]Config error:[/] {exc}  (fix it and save to retry)")
+                watch_dirs = compute_watch_dirs(loaded_config, execution_order, config_file)
+                await wait_for_change(watch_dirs, debounce)
+            except MissingTaskError as exc:
+                console.print(f"[red]Config error:[/] {exc}  (fix it and save to retry)")
+                watch_dirs = compute_watch_dirs(loaded_config, execution_order, config_file)
+                await wait_for_change(watch_dirs, debounce)
+            except CyclicDependencyError as exc:
                 console.print(f"[red]Config error:[/] {exc}  (fix it and save to retry)")
                 watch_dirs = compute_watch_dirs(loaded_config, execution_order, config_file)
                 await wait_for_change(watch_dirs, debounce)
@@ -974,7 +994,9 @@ async def _watch_async(  # noqa: C901
     # Initial run.
     try:
         await _run_task_async(task, None, False, quiet, no_cache, config, max_workers, use_plain)
-    except typer.Exit, SystemExit:
+    except typer.Exit:
+        pass
+    except SystemExit:
         pass
 
     # Watch loop — run until the user presses Ctrl-C.
@@ -985,7 +1007,13 @@ async def _watch_async(  # noqa: C901
         # Attempt to reload config (the user may have edited bam.yaml).
         try:
             config_file, loaded_config, execution_order = _load()
-        except (ConfigurationError, MissingTaskError, CyclicDependencyError) as exc:
+        except ConfigurationError as exc:
+            console.print(f"[red]Config error:[/] {exc}  (fix it and save to retry)")
+            continue
+        except MissingTaskError as exc:
+            console.print(f"[red]Config error:[/] {exc}  (fix it and save to retry)")
+            continue
+        except CyclicDependencyError as exc:
             console.print(f"[red]Config error:[/] {exc}  (fix it and save to retry)")
             continue
 
@@ -999,7 +1027,9 @@ async def _watch_async(  # noqa: C901
             await _run_task_async(
                 task, None, False, quiet, no_cache, config, max_workers, use_plain
             )
-        except typer.Exit, SystemExit:
+        except typer.Exit:
+            pass
+        except SystemExit:
             pass
 
 
@@ -1253,7 +1283,13 @@ def _main_callback(  # noqa: C901, PLR0912, PLR0913, PLR0915
         try:
             _, loaded_config = load_config(config_path=config)
             g = build_task_graph(loaded_config.tasks)
-        except (ConfigurationError, MissingTaskError, CyclicDependencyError) as exc:
+        except ConfigurationError as exc:
+            typer.secho(str(exc), fg=typer.colors.RED, err=True)
+            raise typer.Exit(code=1) from exc
+        except MissingTaskError as exc:
+            typer.secho(str(exc), fg=typer.colors.RED, err=True)
+            raise typer.Exit(code=1) from exc
+        except CyclicDependencyError as exc:
             typer.secho(str(exc), fg=typer.colors.RED, err=True)
             raise typer.Exit(code=1) from exc
         if graph_dot:
