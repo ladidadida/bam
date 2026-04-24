@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.1] - 2026-04-24
+
+### Fixed
+
+- **Grouped exception syntax removed** — `except (A, B, C):` clauses in `cli.py` have been replaced with individual `except A:` / `except B:` / `except C:` clauses.  Python 3.14 re-introduced the old Python 2 comma syntax (`except A, B:`) as a `[BREAKING]`-opt-in feature enforced by ruff, causing a `SyntaxError` on Python 3.11–3.13 installations.
+
 ## [0.6.0] - 2026-04-10
 
 ### Added
