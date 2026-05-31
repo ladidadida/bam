@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.2] - 2026-05-31
+
+### Fixed
+
+- **Remaining `except A, B:` syntax errors fixed** — the PyPI artifact for v0.6.1 was built from an incomplete state and still contained two `except typer.Exit, SystemExit:` clauses causing `SyntaxError` on Python 3.11–3.13.  All multi-exception `except` clauses in `cli.py` now use one `except` block per exception type.
+
 ## [0.6.1] - 2026-04-24
 
 ### Fixed

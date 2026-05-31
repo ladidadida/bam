@@ -538,5 +538,5 @@ bam --validate && bam build
 
 ---
 
-**Version:** 0.6.1  
+**Version:** 0.6.2  
 **License:** MIT
